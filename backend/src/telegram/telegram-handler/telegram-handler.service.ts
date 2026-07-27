@@ -33,9 +33,7 @@ export class TelegramHandlerService implements OnModuleInit {
           firstName: msg.from?.first_name ?? null,
         });
 
-        const miniAppUrl =
-          process.env.TELEGRAM_WEB_APP_URL ??
-          'https://your-mini-app-url.example.com';
+        const miniAppUrl = 'https://nafs-iota.vercel.app';
 
         this.logger.log(`Mini App URL: ${miniAppUrl}`);
 
