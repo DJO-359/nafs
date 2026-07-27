@@ -1,3 +1,5 @@
+// backend/src/telegram/telegram-handler/telegram-handler.service.ts
+
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 
 import { UsersService } from '../../users/users.service';
@@ -40,9 +42,9 @@ export class TelegramHandlerService implements OnModuleInit {
         await bot.sendMessage(
           telegramId,
           `
-👋 Добро пожаловать в Nafs
+👋 Добро пожаловать в Nafs.
 
-Telegram подключен.
+🚀 Откройте приложение кнопкой ниже.
 `,
           {
             reply_markup: {
@@ -55,10 +57,9 @@ Telegram подключен.
                     },
                   },
                 ],
-                [{ text: '📝 Новая запись' }, { text: '📊 Мой день' }],
-                [{ text: '⏰ Напоминания' }, { text: '⚙️ Настройки' }],
               ],
               resize_keyboard: true,
+              is_persistent: true,
             },
           },
         );
