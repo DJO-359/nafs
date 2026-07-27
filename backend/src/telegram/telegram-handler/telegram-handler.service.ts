@@ -1,5 +1,3 @@
-// backend/src/telegram/telegram-handler/telegram-handler.service.ts
-
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 
 import { UsersService } from '../../users/users.service';
@@ -38,6 +36,8 @@ export class TelegramHandlerService implements OnModuleInit {
         const miniAppUrl =
           process.env.TELEGRAM_WEB_APP_URL ??
           'https://your-mini-app-url.example.com';
+
+        this.logger.log(`Mini App URL: ${miniAppUrl}`);
 
         await bot.sendMessage(
           telegramId,
