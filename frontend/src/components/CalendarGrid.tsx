@@ -1,7 +1,4 @@
-interface CalendarDay {
-  date: string;
-  status: "empty" | "partial" | "full";
-}
+import type { CalendarDay } from "../api/calendar.api";
 
 interface Props {
   days: CalendarDay[];
@@ -48,7 +45,7 @@ export default function CalendarGrid({ days, onSelect }: Props) {
           const isToday = day.date === today;
 
           const color =
-            day.status === "full"
+            day.status === "success"
               ? "bg-emerald-500 text-white"
               : day.status === "partial"
                 ? "bg-yellow-300"

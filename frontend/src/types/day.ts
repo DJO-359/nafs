@@ -23,9 +23,18 @@ export interface DiaryEntry {
   updatedAt: string;
 }
 
+export interface ReminderGroup {
+  date: string;
+  items: Reminder[];
+}
+
 export interface Day {
   date: string;
   intention: Intention | null;
-  reminders: Reminder[];
+  reminders: {
+    today: Reminder[];
+    tomorrow: Reminder[];
+    upcoming: ReminderGroup[];
+  };
   diary: DiaryEntry | null;
 }

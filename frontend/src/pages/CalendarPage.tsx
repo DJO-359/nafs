@@ -15,7 +15,7 @@ export default function CalendarPage() {
 
   const { data, isLoading } = useCalendar(year, month);
 
-  if (isLoading) {
+  if (isLoading || !data) {
     return <p>Загрузка...</p>;
   }
 

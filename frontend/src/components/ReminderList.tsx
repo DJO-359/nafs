@@ -1,6 +1,6 @@
 // frontend/src/components/ReminderList.tsx
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence } from "motion/react";
 import Card from "./ui/Card";
 import Button from "./ui/Button";
@@ -9,7 +9,7 @@ import { useCompleteReminder } from "../hooks/useCompleteReminder";
 import { useDeleteReminder } from "../hooks/useDeleteReminder";
 import { useUpdateReminder } from "../hooks/useUpdateReminder";
 import ReminderItem from "./ReminderItem";
-import type { CreateReminderDto } from "../api/reminder.api";
+import type { CreateReminderDto, ReminderRepeatType } from "../api/reminder.api";
 
 interface Reminder {
   id: string;
@@ -37,7 +37,7 @@ export default function ReminderList({ reminders, onCreate }: Props) {
   const [time, setTime] = useState("");
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(today);
-  const [repeatType, setRepeatType] = useState("none");
+  const [repeatType, setRepeatType] = useState<ReminderRepeatType>("none");
   const [repeatInterval, setRepeatInterval] = useState(1);
   const [repeatDays, setRepeatDays] = useState<number[]>([]);
   const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
@@ -179,7 +179,7 @@ export default function ReminderList({ reminders, onCreate }: Props) {
         <label className="mb-1 block text-sm font-medium">Повтор</label>
         <select
           value={repeatType}
-          onChange={(e) => setRepeatType(e.target.value)}
+          onChange={(e) => setRepeatType(e.target.value as ReminderRepeatType)}
           className="w-full rounded-lg border p-2"
         >
           <option value="none">Не повторять</option>
