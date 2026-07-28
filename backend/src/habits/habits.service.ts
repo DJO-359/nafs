@@ -27,7 +27,7 @@ export class HabitsService {
       icon: dto.icon,
       color: dto.color,
       periodType: dto.periodType,
-      customPeriodDays: dto.customPeriodDays ?? null,
+      customPeriodDays: dto.customPeriodDays ?? null, // оставляем для совместимости, но не используем в расчётах
       startDate,
       endDate,
       isArchived: dto.isArchived ?? false,
@@ -72,7 +72,7 @@ export class HabitsService {
       icon: dto.icon ?? habit.icon,
       color: dto.color ?? habit.color,
       periodType: dto.periodType ?? habit.periodType,
-      customPeriodDays: dto.customPeriodDays ?? habit.customPeriodDays,
+      customPeriodDays: dto.customPeriodDays ?? habit.customPeriodDays, // сохраняем, но не используем
       startDate: dto.startDate ?? habit.startDate,
       endDate: dto.endDate ?? habit.endDate,
       isArchived: dto.isArchived ?? habit.isArchived,
@@ -123,12 +123,8 @@ export class HabitsService {
   }
 
   private buildHabitView(habit: Habit & { completions?: HabitCompletion[] }) {
-    const totalDays = this.calculateTotalDays(
-      habit.startDate,
-      habit.endDate,
-      habit.periodType,
-      habit.customPeriodDays,
-    );
+    // ✅ теперь считаем только по датам
+    const totalDays = this.calculateTotalDays(habit.startDate, habit.endDate);
     const completedDays = this.calculateCompletedDays(habit.completions ?? []);
     const remainingDays = Math.max(0, totalDays - completedDays);
     const progress =
@@ -147,7 +143,7 @@ export class HabitsService {
       icon: habit.icon,
       color: habit.color,
       periodType: habit.periodType,
-      customPeriodDays: habit.customPeriodDays,
+      customPeriodDays: habit.customPeriodDays, // возвращаем, но не влияет на расчёты
       startDate: habit.startDate,
       endDate: habit.endDate,
       isArchived: habit.isArchived,
@@ -166,24 +162,13 @@ export class HabitsService {
     };
   }
 
-  private calculateTotalDays(
-    startDate: string,
-    endDate: string,
-    periodType: PeriodType,
-    customPeriodDays?: number | null,
-  ) {
+  // ✅ упрощённый метод – только даты
+  private calculateTotalDays(startDate: string, endDate: string) {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const diff = Math.max(
-      1,
-      Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1,
-    );
-
-    if (periodType === PeriodType.CUSTOM && customPeriodDays) {
-      return Math.max(1, customPeriodDays);
-    }
-
-    return diff;
+    const diffInDays =
+      Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    return Math.max(1, diffInDays);
   }
 
   private calculateCompletedDays(completions: HabitCompletion[]) {
