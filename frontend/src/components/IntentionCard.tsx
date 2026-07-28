@@ -1,8 +1,6 @@
 import { useState } from "react";
 import Card from "./ui/Card";
-import Button from "./ui/Button";
-import Input from "./ui/Input";
-import IntentionModal from "./IntentionModal"; // Шаг 1
+import IntentionModal from "./IntentionModal";
 
 interface Props {
   intention: {
@@ -18,83 +16,87 @@ export default function IntentionCard({
   onCreate,
   onComplete,
 }: Props) {
-  const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false); // Шаг 2
+  const [modalOpen, setModalOpen] = useState(false);
+  const [repeatMode, setRepeatMode] = useState<
+    "none" | "daily" | "weekdays" | "weekly"
+  >("none");
+  const [useLastAutomatically, setUseLastAutomatically] = useState(false);
 
-  async function handleSave() {
+  async function handleSave(text: string, repeat: string, autoUse: boolean) {
     if (!text.trim()) return;
 
     setLoading(true);
 
     try {
       await onCreate(text);
-      setText("");
+      setRepeatMode(repeat as typeof repeatMode);
+      setUseLastAutomatically(autoUse);
+      setModalOpen(false);
     } finally {
       setLoading(false);
     }
   }
 
-  // Шаг 3: функция handleEdit удалена
-
-  if (!intention) {
-    return (
-      <Card>
-        <h2 className="mb-4 text-lg font-semibold">🧭 Намерение</h2>
-
-        <Input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Введите намерение..."
-          className="mb-3"
-        />
-
-        <Button onClick={handleSave} loading={loading}>
-          Сохранить
-        </Button>
-      </Card>
-    );
-  }
+  const repeatLabel =
+    repeatMode === "daily"
+      ? "Каждый день"
+      : repeatMode === "weekdays"
+        ? "По будням"
+        : repeatMode === "weekly"
+          ? "Каждую неделю"
+          : "Не повторять";
 
   return (
     <>
       <Card>
-        <h2 className="mb-4 text-lg font-semibold">🧭 Намерение</h2>
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-lg font-semibold">🎯 Намерение дня</h2>
+            <p className="mt-1 text-sm text-gray-600">
+              {intention
+                ? `«${intention.text}»`
+                : "Сегодня намерение не выбрано."}
+            </p>
+          </div>
 
-        <p className="mb-4">{intention.text}</p>
-
-        <div className="flex gap-2">
-          {/* Шаг 4: кнопка открывает модалку */}
-          <Button
-            onClick={() => setModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            ✏️ Изменить
-          </Button>
-
-          {!intention.completed ? (
-            <Button
-              onClick={onComplete}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              ✓ Выполнено
-            </Button>
-          ) : (
-            <div className="flex items-center font-medium text-green-600">
-              ✅ Выполнено
+          {intention && (
+            <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+              {repeatMode !== "none" && <span>Повтор: {repeatLabel}</span>}
+              {useLastAutomatically && <span>Используется автоматически</span>}
             </div>
           )}
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setModalOpen(true)}
+              className="rounded-lg border border-emerald-600 px-3 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-50"
+            >
+              {intention ? "Изменить" : "Выбрать намерение"}
+            </button>
+
+            {intention && !intention.completed && (
+              <button
+                type="button"
+                onClick={onComplete}
+                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 transition hover:bg-gray-50"
+              >
+                Выполнено
+              </button>
+            )}
+          </div>
         </div>
       </Card>
 
-      {/* Шаг 5: модальное окно */}
       <IntentionModal
         open={modalOpen}
-        initialValue={intention.text}
+        initialValue={intention?.text ?? ""}
+        initialRepeat={repeatMode}
+        initialAutoUse={useLastAutomatically}
+        loading={loading}
         onClose={() => setModalOpen(false)}
-        onSave={async (text) => {
-          await onCreate(text);
-        }}
+        onSave={handleSave}
       />
     </>
   );
