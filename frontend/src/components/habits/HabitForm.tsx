@@ -37,33 +37,35 @@ function toInputDate(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
+// 1. Исправленная getPeriodDates – для CUSTOM возвращаем null
 function getPeriodDates(periodType: CreateHabitDto["periodType"]) {
-  const startDate = new Date();
-  startDate.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  const endDate = new Date(startDate);
+  const start = new Date(today);
+  const end = new Date(today);
 
   switch (periodType) {
     case "30_DAYS":
-      endDate.setDate(endDate.getDate() + 30);
+      end.setDate(end.getDate() + 30);
       break;
     case "3_MONTHS":
-      endDate.setMonth(endDate.getMonth() + 3);
+      end.setMonth(end.getMonth() + 3);
       break;
     case "6_MONTHS":
-      endDate.setMonth(endDate.getMonth() + 6);
+      end.setMonth(end.getMonth() + 6);
       break;
     case "1_YEAR":
-      endDate.setFullYear(endDate.getFullYear() + 1);
+      end.setFullYear(end.getFullYear() + 1);
       break;
     case "CUSTOM":
-      endDate.setDate(endDate.getDate() + 30);
-      break;
+      // Для CUSTOM автоматически ничего не рассчитываем
+      return null;
   }
 
   return {
-    startDate: toInputDate(startDate),
-    endDate: toInputDate(endDate),
+    startDate: toInputDate(start),
+    endDate: toInputDate(end),
   };
 }
 
@@ -86,11 +88,35 @@ export default function HabitForm({
   );
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
 
+  const today = toInputDate(new Date()); // для ограничений
+
+  // 2. Исправленная applyPeriodDates – не трогает даты при CUSTOM
   function applyPeriodDates(nextPeriodType: CreateHabitDto["periodType"]) {
-    const nextDates = getPeriodDates(nextPeriodType);
     setPeriodType(nextPeriodType);
-    setStartDate(nextDates.startDate);
-    setEndDate(nextDates.endDate);
+
+    if (nextPeriodType === "CUSTOM") {
+      return;
+    }
+
+    const nextDates = getPeriodDates(nextPeriodType);
+    if (nextDates) {
+      setStartDate(nextDates.startDate);
+      setEndDate(nextDates.endDate);
+    }
+  }
+
+  // 3. Исправленный handleStartDateChange
+  function handleStartDateChange(value: string) {
+    setStartDate(value);
+    if (endDate < value) {
+      setEndDate(value);
+    }
+  }
+
+  // 4. Исправленный handleEndDateChange
+  function handleEndDateChange(value: string) {
+    if (value < startDate) return;
+    setEndDate(value);
   }
 
   useEffect(() => {
@@ -218,7 +244,8 @@ export default function HabitForm({
                     <input
                       type="date"
                       value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
+                      min={today} // 5. ограничение сегодняшним днём
+                      onChange={(e) => handleStartDateChange(e.target.value)}
                       className="w-full rounded-lg border border-gray-300 p-2"
                     />
                   </div>
@@ -227,7 +254,8 @@ export default function HabitForm({
                     <input
                       type="date"
                       value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
+                      min={startDate}
+                      onChange={(e) => handleEndDateChange(e.target.value)}
                       className="w-full rounded-lg border border-gray-300 p-2"
                     />
                   </div>
