@@ -4,6 +4,7 @@ import IntentionCard from "../components/IntentionCard";
 import ReminderList from "../components/ReminderList";
 import DiaryCard from "../components/DiaryCard";
 import ProgressCard from "../components/ProgressCard";
+import HabitsCard from "../components/habits/HabitsCard";
 import { useDay } from "../hooks/useDay";
 import { useIntention } from "../hooks/useIntention";
 import { useReminder } from "../hooks/useReminder";
@@ -94,6 +95,8 @@ export default function DayPage() {
             onCreate={handleCreateIntention}
             onComplete={handleCompleteIntention}
           />
+
+          <HabitsCard />
 
           <ReminderList
             reminders={day.reminders}

@@ -6,6 +6,7 @@ import DayHistoryPage from "../pages/DayHistoryPage"; // импорт новой
 import HistoryPage from "../pages/HistoryPage";
 import StatsPage from "../pages/StatsPage";
 import CalendarPage from "../pages/CalendarPage";
+import HabitsPage from "../pages/HabitsPage";
 
 export const router = createBrowserRouter([
   {
@@ -31,6 +32,10 @@ export const router = createBrowserRouter([
       {
         path: "/calendar",
         element: <CalendarPage />,
+      },
+      {
+        path: "/habits",
+        element: <HabitsPage />,
       },
     ],
   },

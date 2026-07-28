@@ -5,6 +5,8 @@ import { User } from '../users/models/user.model';
 import { Intention } from '../intention/models/intention.model';
 import { Reminder } from '../reminders/models/reminder.model';
 import { DiaryEntry } from '../diary/models/diary-entry.model';
+import { Habit } from '../habits/models/habit.model';
+import { HabitCompletion } from '../habits/models/habit-completion.model';
 
 @Module({
   imports: [
@@ -18,16 +20,16 @@ import { DiaryEntry } from '../diary/models/diary-entry.model';
         username: configService.get<string>('DB_USER'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
-        // Добавленные SSL-настройки для Neon
         dialectOptions: {
           ssl: {
             require: true,
             rejectUnauthorized: false,
           },
         },
-        models: [User, Intention, Reminder, DiaryEntry],
+        models: [User, Intention, Reminder, DiaryEntry, Habit, HabitCompletion],
         autoLoadModels: true,
-        synchronize: process.env.NODE_ENV !== 'production',
+        // Явное управление через переменную окружения (по умолчанию выключено)
+        synchronize: configService.get<string>('DB_SYNC') === 'true',
         logging: process.env.NODE_ENV !== 'production',
       }),
     }),

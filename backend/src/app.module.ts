@@ -11,6 +11,7 @@ import { DiaryModule } from './diary/diary.module';
 import { IntentionModule } from './intention/intention.module';
 import { DayModule } from './day/day.module';
 import { CalendarModule } from './calendar/calendar.module';
+import { HabitsModule } from './habits/habits.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { CalendarModule } from './calendar/calendar.module';
     DiaryModule,
     IntentionModule,
     DayModule,
+    HabitsModule,
   ],
 })
 export class AppModule {}
