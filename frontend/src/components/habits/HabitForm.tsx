@@ -30,6 +30,43 @@ const colors = [
   "#14b8a6",
 ];
 
+function toInputDate(date: Date) {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getPeriodDates(periodType: CreateHabitDto["periodType"]) {
+  const startDate = new Date();
+  startDate.setHours(0, 0, 0, 0);
+
+  const endDate = new Date(startDate);
+
+  switch (periodType) {
+    case "30_DAYS":
+      endDate.setDate(endDate.getDate() + 30);
+      break;
+    case "3_MONTHS":
+      endDate.setMonth(endDate.getMonth() + 3);
+      break;
+    case "6_MONTHS":
+      endDate.setMonth(endDate.getMonth() + 6);
+      break;
+    case "1_YEAR":
+      endDate.setFullYear(endDate.getFullYear() + 1);
+      break;
+    case "CUSTOM":
+      endDate.setDate(endDate.getDate() + 30);
+      break;
+  }
+
+  return {
+    startDate: toInputDate(startDate),
+    endDate: toInputDate(endDate),
+  };
+}
+
 export default function HabitForm({
   open,
   initialHabit,
@@ -49,6 +86,13 @@ export default function HabitForm({
   );
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
 
+  function applyPeriodDates(nextPeriodType: CreateHabitDto["periodType"]) {
+    const nextDates = getPeriodDates(nextPeriodType);
+    setPeriodType(nextPeriodType);
+    setStartDate(nextDates.startDate);
+    setEndDate(nextDates.endDate);
+  }
+
   useEffect(() => {
     if (!open) return;
 
@@ -62,15 +106,12 @@ export default function HabitForm({
       setStartDate(initialHabit.startDate);
       setEndDate(initialHabit.endDate);
     } else {
-      const today = new Date().toISOString().slice(0, 10);
       setTitle("");
       setDescription("");
       setIcon("📖");
       setColor("#10b981");
-      setPeriodType("30_DAYS");
       setCustomPeriodDays(30);
-      setStartDate(today);
-      setEndDate(today);
+      applyPeriodDates("30_DAYS");
     }
   }, [open, initialHabit]);
 
@@ -159,7 +200,7 @@ export default function HabitForm({
                         name="period"
                         checked={periodType === option.value}
                         onChange={() =>
-                          setPeriodType(
+                          applyPeriodDates(
                             option.value as CreateHabitDto["periodType"],
                           )
                         }
@@ -171,35 +212,27 @@ export default function HabitForm({
               </div>
 
               {periodType === "CUSTOM" && (
-                <Input
-                  type="number"
-                  min={1}
-                  value={customPeriodDays}
-                  onChange={(e) => setCustomPeriodDays(Number(e.target.value))}
-                  placeholder="Количество дней"
-                />
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <p className="mb-1 text-sm text-gray-500">Начало</p>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-full rounded-lg border border-gray-300 p-2"
+                    />
+                  </div>
+                  <div>
+                    <p className="mb-1 text-sm text-gray-500">Окончание</p>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="w-full rounded-lg border border-gray-300 p-2"
+                    />
+                  </div>
+                </div>
               )}
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <p className="mb-1 text-sm text-gray-500">Начало</p>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 p-2"
-                  />
-                </div>
-                <div>
-                  <p className="mb-1 text-sm text-gray-500">Окончание</p>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 p-2"
-                  />
-                </div>
-              </div>
 
               <div className="flex gap-2">
                 <Button loading={loading} onClick={handleSubmit}>
