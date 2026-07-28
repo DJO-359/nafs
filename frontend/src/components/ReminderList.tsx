@@ -1,6 +1,6 @@
 // frontend/src/components/ReminderList.tsx
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import Card from "./ui/Card";
 import Button from "./ui/Button";
@@ -60,6 +60,22 @@ export default function ReminderList({ reminders, onCreate }: Props) {
     { label: "Вс", value: 0 },
   ];
 
+  // ---- 1. Текущее время и минимальное время для поля time ----
+  const now = new Date();
+  const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
+  const minTime = useMemo(() => {
+    return date === today ? currentTime : "00:00";
+  }, [date, today, currentTime]);
+
+  // ---- 2. Автоматическая коррекция времени, если дата – сегодня ----
+  useEffect(() => {
+    if (date !== today) return;
+    if (time && time < currentTime) {
+      setTime(currentTime);
+    }
+  }, [date, today, currentTime, time]);
+
   function getRepeatDescription() {
     switch (repeatType) {
       case "daily":
@@ -102,18 +118,23 @@ export default function ReminderList({ reminders, onCreate }: Props) {
       return;
     }
 
+    // ---- 4. Защита от создания в прошлом ----
+    const reminderDate = new Date(`${date}T${time}:00`);
+    if (reminderDate.getTime() <= Date.now()) {
+      alert("Нельзя создать напоминание в прошлом.");
+      return;
+    }
+
     if (editingReminder) {
       updateMutation.mutate({
         id: editingReminder.id,
         title,
-        // ИСПРАВЛЕНО: используем toISOString()
         remindAt: new Date(`${date}T${time}:00`).toISOString(),
       });
       setEditingReminder(null);
     } else {
       await onCreate({
         title,
-        // ИСПРАВЛЕНО: используем toISOString()
         remindAt: new Date(`${date}T${time}:00`).toISOString(),
         repeatType: repeatType === "none" ? undefined : repeatType,
         repeatInterval: repeatType === "interval" ? repeatInterval : undefined,
@@ -183,15 +204,21 @@ export default function ReminderList({ reminders, onCreate }: Props) {
               placeholder="Название"
               className="mb-2"
             />
+
+            {/* ---- 2. Поле даты с min={today} ---- */}
             <input
               type="date"
               value={date}
+              min={today}
               onChange={(e) => setDate(e.target.value)}
               className="mb-2 w-full rounded-lg border p-2"
             />
+
+            {/* ---- 3. Поле времени с min={minTime} ---- */}
             <input
               type="time"
               value={time}
+              min={minTime}
               onChange={(e) => setTime(e.target.value)}
               className="mb-3 w-full rounded-lg border p-2"
             />
