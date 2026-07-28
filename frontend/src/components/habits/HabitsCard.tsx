@@ -11,21 +11,17 @@ import {
 import HabitForm from "./HabitForm";
 import type { CreateHabitDto, Habit } from "../../api/habit.api";
 
+// ✅ Новая функция formatPeriod – вычисляет дни из дат
 function formatPeriod(habit: Habit) {
-  switch (habit.periodType) {
-    case "30_DAYS":
-      return "30 дней";
-    case "3_MONTHS":
-      return "3 месяца";
-    case "6_MONTHS":
-      return "6 месяцев";
-    case "1_YEAR":
-      return "1 год";
-    case "CUSTOM":
-      return `${habit.customPeriodDays ?? 30} дней`;
-    default:
-      return "Период";
-  }
+  const start = new Date(habit.startDate);
+  const end = new Date(habit.endDate);
+
+  const days =
+    Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+  if (days === 1) return "1 день";
+  if (days >= 2 && days <= 4) return `${days} дня`;
+  return `${days} дней`;
 }
 
 export default function HabitsCard() {
