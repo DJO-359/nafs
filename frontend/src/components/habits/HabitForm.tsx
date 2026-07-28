@@ -37,7 +37,7 @@ function toInputDate(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
-// 1. Исправленная getPeriodDates – для CUSTOM возвращаем null
+// 1. Исправленная getPeriodDates – для CUSTOM возвращает null
 function getPeriodDates(periodType: CreateHabitDto["periodType"]) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -59,7 +59,6 @@ function getPeriodDates(periodType: CreateHabitDto["periodType"]) {
       end.setFullYear(end.getFullYear() + 1);
       break;
     case "CUSTOM":
-      // Для CUSTOM автоматически ничего не рассчитываем
       return null;
   }
 
@@ -88,7 +87,7 @@ export default function HabitForm({
   );
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
 
-  const today = toInputDate(new Date()); // для ограничений
+  const today = toInputDate(new Date());
 
   // 2. Исправленная applyPeriodDates – не трогает даты при CUSTOM
   function applyPeriodDates(nextPeriodType: CreateHabitDto["periodType"]) {
@@ -113,9 +112,8 @@ export default function HabitForm({
     }
   }
 
-  // 4. Исправленный handleEndDateChange
+  // 4. Упрощённая handleEndDateChange – проверка через min в input
   function handleEndDateChange(value: string) {
-    if (value < startDate) return;
     setEndDate(value);
   }
 
@@ -244,7 +242,7 @@ export default function HabitForm({
                     <input
                       type="date"
                       value={startDate}
-                      min={today} // 5. ограничение сегодняшним днём
+                      min={today}
                       onChange={(e) => handleStartDateChange(e.target.value)}
                       className="w-full rounded-lg border border-gray-300 p-2"
                     />
