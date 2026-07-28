@@ -1,7 +1,7 @@
 // frontend/src/components/ReminderList.tsx
 
 import { useEffect, useState } from "react";
-import { AnimatePresence } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import Card from "./ui/Card";
 import Button from "./ui/Button";
 import Input from "./ui/Input";
@@ -44,6 +44,7 @@ export default function ReminderList({ reminders, onCreate }: Props) {
   const [repeatInterval, setRepeatInterval] = useState(1);
   const [repeatDays, setRepeatDays] = useState<number[]>([]);
   const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   const completeMutation = useCompleteReminder();
   const deleteMutation = useDeleteReminder();
@@ -84,6 +85,7 @@ export default function ReminderList({ reminders, onCreate }: Props) {
     const time = editingReminder.remindAt.slice(11, 16);
     setDate(date);
     setTime(time);
+    setIsFormOpen(true);
     // TODO: загружать repeat поля при редактировании
   }, [editingReminder]);
 
@@ -125,6 +127,7 @@ export default function ReminderList({ reminders, onCreate }: Props) {
     setRepeatType("none");
     setRepeatInterval(1);
     setRepeatDays([]);
+    setIsFormOpen(false);
   }
 
   function split(reminders: Reminder[]) {
@@ -142,104 +145,132 @@ export default function ReminderList({ reminders, onCreate }: Props) {
   }));
 
   const isEditing = editingReminder !== null;
+  const showForm = isFormOpen || isEditing;
 
   return (
     <Card>
-      <h2 className="mb-4 text-lg font-semibold">⏰ Напоминания</h2>
-
-      {isEditing && (
-        <div className="mb-3 rounded-lg bg-blue-50 p-3 text-blue-700">
-          ✏️ Редактирование напоминания
-        </div>
-      )}
-
-      <Input
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Название"
-        className="mb-2"
-      />
-      <input
-        type="date"
-        value={date}
-        onChange={(e) => setDate(e.target.value)}
-        className="mb-2 w-full rounded-lg border p-2"
-      />
-      <input
-        type="time"
-        value={time}
-        onChange={(e) => setTime(e.target.value)}
-        className="mb-3 w-full rounded-lg border p-2"
-      />
-
-      <div className="mb-3">
-        <label className="mb-1 block text-sm font-medium">Повтор</label>
-        <select
-          value={repeatType}
-          onChange={(e) => setRepeatType(e.target.value as ReminderRepeatType)}
-          className="w-full rounded-lg border p-2"
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-lg font-semibold">⏰ Напоминания</h2>
+        <button
+          type="button"
+          onClick={() => setIsFormOpen((prev) => !prev)}
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-lg font-semibold text-white shadow-sm transition hover:bg-blue-700"
+          aria-label={showForm ? "Закрыть форму" : "Открыть форму"}
         >
-          <option value="none">Не повторять</option>
-          <option value="daily">Каждый день</option>
-          <option value="weekly">Каждую неделю</option>
-          <option value="monthly">Каждый месяц</option>
-          <option value="interval">Каждые N дней</option>
-        </select>
+          {showForm ? "✕" : "+"}
+        </button>
       </div>
 
-      {repeatType === "interval" && (
-        <div className="mb-3">
-          <label className="mb-1 block text-sm">Интервал (дней)</label>
-          <input
-            type="number"
-            min={1}
-            value={repeatInterval}
-            onChange={(e) => setRepeatInterval(Number(e.target.value))}
-            className="w-full rounded-lg border p-2"
-          />
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {showForm && (
+          <motion.div
+            key="reminder-form"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            {isEditing && (
+              <div className="mb-3 rounded-lg bg-blue-50 p-3 text-blue-700">
+                ✏️ Редактирование напоминания
+              </div>
+            )}
 
-      {repeatType === "weekly" && (
-        <div className="mb-4">
-          <label className="mb-2 block text-sm font-medium">Дни недели</label>
-          <div className="flex flex-wrap gap-2">
-            {weekDays.map((day) => {
-              const selected = repeatDays.includes(day.value);
-              return (
-                <button
-                  type="button"
-                  key={day.value}
-                  onClick={() =>
-                    setRepeatDays((prev) =>
-                      selected
-                        ? prev.filter((d) => d !== day.value)
-                        : [...prev, day.value],
-                    )
-                  }
-                  className={`rounded-lg border px-3 py-2 transition ${
-                    selected
-                      ? "border-emerald-600 bg-emerald-600 text-white"
-                      : "bg-white"
-                  }`}
-                >
-                  {day.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Название"
+              className="mb-2"
+            />
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="mb-2 w-full rounded-lg border p-2"
+            />
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              className="mb-3 w-full rounded-lg border p-2"
+            />
 
-      {repeatType !== "none" && (
-        <div className="mb-3 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">
-          {getRepeatDescription()}
-        </div>
-      )}
+            <div className="mb-3">
+              <label className="mb-1 block text-sm font-medium">Повтор</label>
+              <select
+                value={repeatType}
+                onChange={(e) =>
+                  setRepeatType(e.target.value as ReminderRepeatType)
+                }
+                className="w-full rounded-lg border p-2"
+              >
+                <option value="none">Не повторять</option>
+                <option value="daily">Каждый день</option>
+                <option value="weekly">Каждую неделю</option>
+                <option value="monthly">Каждый месяц</option>
+                <option value="interval">Каждые N дней</option>
+              </select>
+            </div>
 
-      <Button onClick={handleSubmit} className="mb-4">
-        {isEditing ? "💾 Сохранить" : "Добавить напоминание"}
-      </Button>
+            {repeatType === "interval" && (
+              <div className="mb-3">
+                <label className="mb-1 block text-sm">Интервал (дней)</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={repeatInterval}
+                  onChange={(e) => setRepeatInterval(Number(e.target.value))}
+                  className="w-full rounded-lg border p-2"
+                />
+              </div>
+            )}
+
+            {repeatType === "weekly" && (
+              <div className="mb-4">
+                <label className="mb-2 block text-sm font-medium">
+                  Дни недели
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {weekDays.map((day) => {
+                    const selected = repeatDays.includes(day.value);
+                    return (
+                      <button
+                        type="button"
+                        key={day.value}
+                        onClick={() =>
+                          setRepeatDays((prev) =>
+                            selected
+                              ? prev.filter((d) => d !== day.value)
+                              : [...prev, day.value],
+                          )
+                        }
+                        className={`rounded-lg border px-3 py-2 transition ${
+                          selected
+                            ? "border-emerald-600 bg-emerald-600 text-white"
+                            : "bg-white"
+                        }`}
+                      >
+                        {day.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {repeatType !== "none" && (
+              <div className="mb-3 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">
+                {getRepeatDescription()}
+              </div>
+            )}
+
+            <Button onClick={handleSubmit} className="mb-4">
+              {isEditing ? "💾 Сохранить" : "Добавить напоминание"}
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {!reminders.today.length &&
         !reminders.tomorrow.length &&
