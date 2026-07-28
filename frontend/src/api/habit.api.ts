@@ -24,6 +24,7 @@ export interface Habit {
   progress: number;
   remainingDays: number;
   isCompletedToday: boolean;
+  isCompleted: boolean;
   completions: HabitCompletion[];
 }
 

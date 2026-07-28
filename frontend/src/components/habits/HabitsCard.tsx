@@ -125,34 +125,54 @@ export default function HabitsCard() {
                       {habit.description}
                     </p>
                   )}
-                  <div className="mt-2">
+                  <div className="mt-3">
                     <div className="mb-1 flex items-center justify-between text-xs text-gray-500">
                       <span>{habit.progress}%</span>
                       <span>
-                        {habit.remainingDays > 0
-                          ? `Осталось ${habit.remainingDays} дней`
-                          : "Завершается сегодня"}
+                        {habit.isCompleted
+                          ? "✅ Завершено"
+                          : habit.remainingDays > 0
+                            ? `Осталось ${habit.remainingDays} дней`
+                            : "Завершается сегодня"}
                       </span>
                     </div>
                     <div className="h-2 rounded-full bg-gray-200">
                       <div
-                        className="h-2 rounded-full"
+                        className="h-2 rounded-full transition-all duration-300"
                         style={{
                           width: `${Math.min(100, habit.progress)}%`,
-                          backgroundColor: habit.color,
+                          backgroundColor: habit.isCompleted
+                            ? "#10b981"
+                            : habit.color,
                         }}
                       />
                     </div>
                   </div>
+                  <div className="mt-2 text-xs text-gray-600">
+                    <p>
+                      Выполнено {habit.completedDays} / {habit.totalDays}
+                    </p>
+                    {habit.isCompleted ? (
+                      <p className="mt-1 text-emerald-700">
+                        Период полностью пройден.
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => toggleMutation.mutate(habit.id)}
-                  className={`flex h-8 w-8 items-center justify-center rounded-full border ${habit.isCompletedToday ? "border-emerald-600 bg-emerald-600 text-white" : "border-gray-300 bg-white text-gray-300"}`}
-                  aria-label="Отметить привычку"
-                >
-                  ✓
-                </button>
+                {habit.isCompleted ? (
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white">
+                    ✓
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => toggleMutation.mutate(habit.id)}
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border transition ${habit.isCompletedToday ? "border-emerald-600 bg-emerald-600 text-white" : "border-gray-300 bg-white text-gray-300"}`}
+                    aria-label="Отметить привычку"
+                  >
+                    ✓
+                  </button>
+                )}
               </div>
               <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
                 <button

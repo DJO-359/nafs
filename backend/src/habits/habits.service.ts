@@ -129,14 +129,15 @@ export class HabitsService {
       habit.periodType,
       habit.customPeriodDays,
     );
-    const completedDays = habit.completions?.length ?? 0;
+    const completedDays = this.calculateCompletedDays(habit.completions ?? []);
+    const remainingDays = Math.max(0, totalDays - completedDays);
     const progress =
-      totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0;
+      totalDays > 0 ? Math.floor((completedDays / totalDays) * 100) : 0;
     const today = new Date().toISOString().split('T')[0];
     const isCompletedToday = (habit.completions ?? []).some(
       (item) => item.completedDate === today,
     );
-    const remainingDays = this.calculateRemainingDays(habit.endDate);
+    const isCompleted = completedDays >= totalDays;
 
     return {
       id: habit.id,
@@ -157,6 +158,7 @@ export class HabitsService {
       progress,
       remainingDays,
       isCompletedToday,
+      isCompleted,
       completions: (habit.completions ?? []).map((completion) => ({
         id: completion.id,
         completedDate: completion.completedDate,
@@ -184,12 +186,8 @@ export class HabitsService {
     return diff;
   }
 
-  private calculateRemainingDays(endDate: string) {
-    const today = new Date();
-    const end = new Date(endDate);
-    const diff = Math.round(
-      (end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
-    );
-    return Math.max(0, diff);
+  private calculateCompletedDays(completions: HabitCompletion[]) {
+    const uniqueDates = new Set(completions.map((item) => item.completedDate));
+    return uniqueDates.size;
   }
 }

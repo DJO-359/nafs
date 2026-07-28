@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Card from "../components/ui/Card";
 import {
@@ -31,6 +31,7 @@ function formatPeriod(habit: Habit) {
 export default function HabitsPage() {
   const [open, setOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
+  const [celebrationHabit, setCelebrationHabit] = useState<Habit | null>(null);
   const { data: habits = [], isLoading } = useHabits();
   const createMutation = useCreateHabit();
   const updateMutation = useUpdateHabit();
@@ -45,6 +46,21 @@ export default function HabitsPage() {
     () => habits.filter((habit) => !habit.isArchived),
     [habits],
   );
+
+  useEffect(() => {
+    if (!habits.length) return;
+
+    const justCompletedHabit = habits.find(
+      (habit) =>
+        habit.isCompleted &&
+        !localStorage.getItem(`habit-celebrated-${habit.id}`),
+    );
+
+    if (justCompletedHabit) {
+      setCelebrationHabit(justCompletedHabit);
+      localStorage.setItem(`habit-celebrated-${justCompletedHabit.id}`, "1");
+    }
+  }, [habits]);
 
   async function handleSubmit(dto: CreateHabitDto) {
     if (editingHabit) {
@@ -89,6 +105,17 @@ export default function HabitsPage() {
         loading={createMutation.isPending || updateMutation.isPending}
       />
 
+      {celebrationHabit && (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+          <p className="font-semibold">🎉 Поздравляем!</p>
+          <p className="mt-1">
+            Ты успешно завершил привычку «{celebrationHabit.title}».{" "}
+            {celebrationHabit.completedDays} из {celebrationHabit.totalDays}{" "}
+            дней выполнены.
+          </p>
+        </div>
+      )}
+
       <h1 className="text-2xl font-bold">🌱 Все привычки</h1>
 
       {isLoading ? (
@@ -123,36 +150,49 @@ export default function HabitsPage() {
                     <div className="mb-1 flex items-center justify-between text-xs text-gray-500">
                       <span>{habit.progress}%</span>
                       <span>
-                        {habit.remainingDays > 0
-                          ? `Осталось ${habit.remainingDays} дней`
-                          : "Завершается сегодня"}
+                        {habit.isCompleted
+                          ? "✅ Завершено"
+                          : habit.remainingDays > 0
+                            ? `Осталось ${habit.remainingDays} дней`
+                            : "Завершается сегодня"}
                       </span>
                     </div>
                     <div className="h-2 rounded-full bg-gray-200">
                       <div
-                        className="h-2 rounded-full"
+                        className="h-2 rounded-full transition-all duration-300"
                         style={{
                           width: `${Math.min(100, habit.progress)}%`,
-                          backgroundColor: habit.color,
+                          backgroundColor: habit.isCompleted
+                            ? "#10b981"
+                            : habit.color,
                         }}
                       />
                     </div>
                   </div>
                   <div className="mt-3 text-xs text-gray-500">
                     <p>
-                      Дата окончания:{" "}
-                      {new Date(habit.endDate).toLocaleDateString("ru-RU")}
+                      Выполнено {habit.completedDays} / {habit.totalDays}
                     </p>
-                    <p>Выполнено дней: {habit.completedDays}</p>
+                    {habit.isCompleted && (
+                      <p className="mt-1 text-emerald-700">
+                        Период полностью пройден.
+                      </p>
+                    )}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => toggleMutation.mutate(habit.id)}
-                  className={`flex h-8 w-8 items-center justify-center rounded-full border ${habit.isCompletedToday ? "border-emerald-600 bg-emerald-600 text-white" : "border-gray-300 bg-white text-gray-300"}`}
-                >
-                  ✓
-                </button>
+                {habit.isCompleted ? (
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white">
+                    ✓
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => toggleMutation.mutate(habit.id)}
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border ${habit.isCompletedToday ? "border-emerald-600 bg-emerald-600 text-white" : "border-gray-300 bg-white text-gray-300"}`}
+                  >
+                    ✓
+                  </button>
+                )}
               </div>
               <div className="mt-3 flex items-center justify-between text-sm">
                 <button
