@@ -9,7 +9,10 @@ import { useCompleteReminder } from "../hooks/useCompleteReminder";
 import { useDeleteReminder } from "../hooks/useDeleteReminder";
 import { useUpdateReminder } from "../hooks/useUpdateReminder";
 import ReminderItem from "./ReminderItem";
-import type { CreateReminderDto, ReminderRepeatType } from "../api/reminder.api";
+import type {
+  CreateReminderDto,
+  ReminderRepeatType,
+} from "../api/reminder.api";
 
 interface Reminder {
   id: string;
@@ -56,24 +59,19 @@ export default function ReminderList({ reminders, onCreate }: Props) {
     { label: "Вс", value: 0 },
   ];
 
-  // Шаг 11 – функция описания повторения
   function getRepeatDescription() {
     switch (repeatType) {
       case "daily":
         return "🔁 Напоминание будет повторяться каждый день.";
-
       case "weekly":
         if (!repeatDays.length) {
           return "📅 Выберите дни недели.";
         }
         return `📅 Выбрано дней: ${repeatDays.length}`;
-
       case "monthly":
         return "🗓 Повтор каждый месяц.";
-
       case "interval":
         return `⏱ Повтор каждые ${repeatInterval} дн.`;
-
       default:
         return "";
     }
@@ -92,7 +90,6 @@ export default function ReminderList({ reminders, onCreate }: Props) {
   async function handleSubmit() {
     if (!title.trim() || !time) return;
 
-    // Шаг 13 – валидация
     if (repeatType === "weekly" && repeatDays.length === 0) {
       alert("Выберите хотя бы один день недели.");
       return;
@@ -107,20 +104,21 @@ export default function ReminderList({ reminders, onCreate }: Props) {
       updateMutation.mutate({
         id: editingReminder.id,
         title,
-        remindAt: `${date}T${time}:00`,
+        // ИСПРАВЛЕНО: используем toISOString()
+        remindAt: new Date(`${date}T${time}:00`).toISOString(),
       });
       setEditingReminder(null);
     } else {
       await onCreate({
         title,
-        remindAt: `${date}T${time}:00`,
+        // ИСПРАВЛЕНО: используем toISOString()
+        remindAt: new Date(`${date}T${time}:00`).toISOString(),
         repeatType: repeatType === "none" ? undefined : repeatType,
         repeatInterval: repeatType === "interval" ? repeatInterval : undefined,
         repeatDays: repeatType === "weekly" ? repeatDays : undefined,
       });
     }
 
-    // Очистка
     setTitle("");
     setTime("");
     setDate(today);
@@ -174,7 +172,6 @@ export default function ReminderList({ reminders, onCreate }: Props) {
         className="mb-3 w-full rounded-lg border p-2"
       />
 
-      {/* Блок выбора повторения */}
       <div className="mb-3">
         <label className="mb-1 block text-sm font-medium">Повтор</label>
         <select
@@ -234,7 +231,6 @@ export default function ReminderList({ reminders, onCreate }: Props) {
         </div>
       )}
 
-      {/* Шаг 12 – подсказка о выбранном повторении */}
       {repeatType !== "none" && (
         <div className="mb-3 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">
           {getRepeatDescription()}

@@ -29,6 +29,11 @@ export default function ReminderItem({
 }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
+  console.log({
+    raw: reminder.remindAt,
+    parsed: new Date(reminder.remindAt),
+  });
+
   return (
     <>
       <motion.li
