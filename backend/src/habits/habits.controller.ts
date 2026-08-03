@@ -9,12 +9,12 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { Request } from 'express';
 
 import { HabitsService } from './habits.service';
 import { CreateHabitDto } from './dto/create-habit.dto';
 import { UpdateHabitDto } from './dto/update-habit.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { AuthRequest } from '../auth/types/auth-request';
 
 @Controller('habits')
 @UseGuards(JwtAuthGuard)
@@ -22,40 +22,31 @@ export class HabitsController {
   constructor(private readonly habitsService: HabitsService) {}
 
   @Get()
-  findAll(@Req() req: Request & { user: { id: string } }) {
-    return this.habitsService.findAll(req.user.id);
+  findAll(@Req() req: AuthRequest) {
+    return this.habitsService.findAll(req.user.id, req.user.timezone);
   }
 
   @Post()
-  create(
-    @Req() req: Request & { user: { id: string } },
-    @Body() dto: CreateHabitDto,
-  ) {
-    return this.habitsService.create(req.user.id, dto);
+  create(@Req() req: AuthRequest, @Body() dto: CreateHabitDto) {
+    return this.habitsService.create(req.user.id, req.user.timezone, dto);
   }
 
   @Patch(':id')
   update(
-    @Req() req: Request & { user: { id: string } },
+    @Req() req: AuthRequest,
     @Param('id') id: string,
     @Body() dto: UpdateHabitDto,
   ) {
-    return this.habitsService.update(req.user.id, id, dto);
+    return this.habitsService.update(req.user.id, req.user.timezone, id, dto);
   }
 
   @Delete(':id')
-  remove(
-    @Req() req: Request & { user: { id: string } },
-    @Param('id') id: string,
-  ) {
+  remove(@Req() req: AuthRequest, @Param('id') id: string) {
     return this.habitsService.remove(req.user.id, id);
   }
 
   @Post(':id/toggle')
-  toggle(
-    @Req() req: Request & { user: { id: string } },
-    @Param('id') id: string,
-  ) {
-    return this.habitsService.toggle(req.user.id, id);
+  toggle(@Req() req: AuthRequest, @Param('id') id: string) {
+    return this.habitsService.toggle(req.user.id, req.user.timezone, id);
   }
 }

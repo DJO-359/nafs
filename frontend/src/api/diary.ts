@@ -1,14 +1,12 @@
-import { api } from "../api/axios";
+import { api } from "./axios";
+import type { DiaryEntry } from "../types/day";
 
-export async function saveDiary(text: string) {
-  const { data } = await api.post("/diary", {
-    content: text,
-  });
-
+export async function saveDiary(text: string): Promise<DiaryEntry> {
+  const { data } = await api.post<DiaryEntry>("/diary", { content: text });
   return data;
 }
 
-export async function getDiaryHistory() {
-  const { data } = await api.get("/diary/history");
+export async function getDiaryHistory(): Promise<DiaryEntry[]> {
+  const { data } = await api.get<DiaryEntry[]>("/diary/history");
   return data;
 }

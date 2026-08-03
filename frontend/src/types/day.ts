@@ -1,26 +1,16 @@
+import type { Reminder } from "../api/reminder.api";
+
 export interface Intention {
   id: string;
-  userId: string;
   text: string;
   date: string;
-  completed: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Reminder {
-  id: string;
-  title: string;
-  description?: string;
-  remindAt: string;
   completed: boolean;
 }
 
 export interface DiaryEntry {
   id: string;
   content: string;
-  createdAt: string;
-  updatedAt: string;
+  date: string;
 }
 
 export interface ReminderGroup {
@@ -28,13 +18,24 @@ export interface ReminderGroup {
   items: Reminder[];
 }
 
+export interface GroupedReminders {
+  today: Reminder[];
+  tomorrow: Reminder[];
+  upcoming: ReminderGroup[];
+}
+
+/** Ответ GET /day — экран сегодняшнего дня. */
 export interface Day {
   date: string;
   intention: Intention | null;
-  reminders: {
-    today: Reminder[];
-    tomorrow: Reminder[];
-    upcoming: ReminderGroup[];
-  };
+  reminders: GroupedReminders;
+  diary: DiaryEntry | null;
+}
+
+/** Ответ GET /day/:date — конкретный день в истории. */
+export interface DayByDate {
+  date: string;
+  intention: Intention | null;
+  reminders: Reminder[];
   diary: DiaryEntry | null;
 }

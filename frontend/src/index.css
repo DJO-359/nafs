@@ -1,5 +1,35 @@
 @import "tailwindcss";
 
+/*
+ * Токены темы. По умолчанию — светлая; внутри Telegram значения
+ * подменяются переменными клиента (--tg-*), которые проставляет
+ * lib/telegram.ts. Раньше цвета были захардкожены, поэтому при тёмной
+ * теме Telegram приложение вспыхивало белым.
+ */
+:root {
+  --app-bg: #f5f5f5;
+  --app-surface: #ffffff;
+  --app-text: #111827;
+  --app-hint: #6b7280;
+  --app-border: #e5e7eb;
+}
+
+:root[data-theme="dark"] {
+  --app-bg: #17212b;
+  --app-surface: #232e3c;
+  --app-text: #f3f4f6;
+  --app-hint: #9ca3af;
+  --app-border: #2f3b49;
+}
+
+/* Внутри Telegram приоритет у палитры клиента */
+:root {
+  --app-bg: var(--tg-bg, #f5f5f5);
+  --app-surface: var(--tg-section-bg, var(--app-surface));
+  --app-text: var(--tg-text, #111827);
+  --app-hint: var(--tg-hint, #6b7280);
+}
+
 html,
 body,
 #root {
@@ -16,5 +46,15 @@ body {
     "Segoe UI",
     sans-serif;
 
-  background: #f5f5f5;
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+/* Нижняя навигация не должна залезать под системную полосу жестов */
+.safe-bottom {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top);
 }

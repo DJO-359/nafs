@@ -14,6 +14,14 @@ import { User } from '../../users/models/user.model';
 @Table({
   tableName: 'diary_entries',
   timestamps: true,
+  indexes: [
+    // Одна запись дневника на день пользователя
+    {
+      unique: true,
+      fields: ['userId', 'date'],
+      name: 'diary_entries_user_date_uk',
+    },
+  ],
 })
 export class DiaryEntry extends Model<DiaryEntry> {
   @Column({
@@ -30,7 +38,7 @@ export class DiaryEntry extends Model<DiaryEntry> {
   })
   declare userId: string;
 
-  @BelongsTo(() => User)
+  @BelongsTo(() => User, { onDelete: 'CASCADE' })
   declare user: User;
 
   @Column({
@@ -38,6 +46,17 @@ export class DiaryEntry extends Model<DiaryEntry> {
     allowNull: false,
   })
   declare content: string;
+
+  /**
+   * День записи в часовом поясе пользователя (YYYY-MM-DD).
+   * Раньше «день» выводился из createdAt, поэтому запись задним числом была
+   * невозможна, а у пользователя в UTC+3 вечерняя запись попадала во вчера.
+   */
+  @Column({
+    type: DataType.DATEONLY,
+    allowNull: false,
+  })
+  declare date: string;
 
   @CreatedAt
   declare createdAt: Date;

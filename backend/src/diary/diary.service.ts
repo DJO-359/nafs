@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Op } from 'sequelize';
+import { Op, UniqueConstraintError } from 'sequelize';
 
 import { DiaryEntry } from './models/diary-entry.model';
+import { todayInZone } from '../common/utils/timezone.util';
 
 @Injectable()
 export class DiaryService {
@@ -11,43 +12,66 @@ export class DiaryService {
     private readonly diaryModel: typeof DiaryEntry,
   ) {}
 
-  async create(userId: string, content: string) {
-    // Проверяем, есть ли запись за сегодня
-    const todayEntry = await this.getTodayEntry(userId);
+  /**
+   * Создаёт или обновляет запись за сегодня.
+   * День определяется колонкой date в зоне пользователя, а не createdAt.
+   */
+  async create(userId: string, timezone: string, content: string) {
+    const today = todayInZone(timezone);
 
-    if (todayEntry) {
-      // Обновляем существующую запись
-      todayEntry.content = content;
-      await todayEntry.save();
-      return todayEntry;
+    const existing = await this.getByDate(userId, today);
+
+    if (existing) {
+      existing.content = content;
+      await existing.save();
+      return existing;
     }
 
-    // Создаём новую запись
-    return this.diaryModel.create({
-      userId,
-      content,
-    } as DiaryEntry);
+    try {
+      return await this.diaryModel.create({
+        userId,
+        content,
+        date: today,
+      } as Partial<DiaryEntry> as DiaryEntry);
+    } catch (error) {
+      if (error instanceof UniqueConstraintError) {
+        const concurrent = await this.getByDate(userId, today);
+
+        if (concurrent) {
+          concurrent.content = content;
+          await concurrent.save();
+          return concurrent;
+        }
+      }
+
+      throw error;
+    }
   }
 
-  async findAll(userId: string) {
+  findAll(userId: string) {
     return this.diaryModel.findAll({
-      where: {
-        userId,
-      },
-      order: [['createdAt', 'DESC']],
+      where: { userId },
+      order: [['date', 'DESC']],
     });
   }
 
-  async findOne(id: string) {
-    return this.diaryModel.findByPk(id);
-  }
-
-  async update(id: string, content: string) {
-    const entry = await this.diaryModel.findByPk(id);
+  /**
+   * Работа с одной записью всегда фильтруется по владельцу.
+   * Раньше findOne/update/remove ходили по findByPk без userId — первый же
+   * DELETE-эндпоинт по их образцу позволил бы удалить чужую запись.
+   */
+  async findOne(userId: string, id: string) {
+    const entry = await this.diaryModel.findOne({ where: { id, userId } });
 
     if (!entry) {
-      return null;
+      throw new NotFoundException('Запись не найдена');
     }
+
+    return entry;
+  }
+
+  async update(userId: string, id: string, content: string) {
+    const entry = await this.findOne(userId, id);
 
     entry.content = content;
     await entry.save();
@@ -55,87 +79,58 @@ export class DiaryService {
     return entry;
   }
 
-  async remove(id: string) {
-    const entry = await this.diaryModel.findByPk(id);
-
-    if (!entry) {
-      return null;
-    }
+  async remove(userId: string, id: string) {
+    const entry = await this.findOne(userId, id);
 
     await entry.destroy();
 
-    return {
-      deleted: true,
-    };
+    return { deleted: true };
   }
 
-  async getLastEntry(userId: string) {
+  getLastEntry(userId: string) {
     return this.diaryModel.findOne({
-      where: {
-        userId,
-      },
-      order: [['createdAt', 'DESC']],
-    });
-  }
-
-  /**
-   * Получить запись дневника за сегодняшний день.
-   * Использует createdAt для определения дня.
-   */
-  async getTodayEntry(userId: string) {
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    today.setHours(0, 0, 0, 0);
-    tomorrow.setHours(0, 0, 0, 0);
-
-    return this.diaryModel.findOne({
-      where: {
-        userId,
-        createdAt: {
-          [Op.gte]: today,
-          [Op.lt]: tomorrow,
-        },
-      },
-      order: [['createdAt', 'DESC']],
-    });
-  }
-
-  /**
-   * Получить историю всех записей дневника пользователя,
-   * отсортированных по дате создания (от новых к старым).
-   */
-  async getHistory(userId: string) {
-    return this.diaryModel.findAll({
       where: { userId },
-      order: [['createdAt', 'DESC']],
+      order: [['date', 'DESC']],
     });
   }
 
-  // ----- добавленный метод getAll -----
-  async getAll(userId: string) {
+  getTodayEntry(userId: string, timezone: string) {
+    return this.getByDate(userId, todayInZone(timezone));
+  }
+
+  getByDate(userId: string, date: string) {
+    return this.diaryModel.findOne({
+      where: { userId, date },
+    });
+  }
+
+  getHistory(userId: string) {
+    return this.findAll(userId);
+  }
+
+  /** Записи за период — для календаря вместо выгрузки всей истории. */
+  getBetween(userId: string, from: string, to: string) {
     return this.diaryModel.findAll({
       where: {
         userId,
+        date: { [Op.gte]: from, [Op.lte]: to },
       },
+      order: [['date', 'ASC']],
     });
   }
 
-  // ----- добавленный метод getByDate -----
-  async getByDate(userId: string, date: string) {
-    const start = new Date(`${date}T00:00:00`);
-    const end = new Date(`${date}T23:59:59.999`);
+  count(userId: string): Promise<number> {
+    return this.diaryModel.count({ where: { userId } });
+  }
 
-    return this.diaryModel.findOne({
-      where: {
-        userId,
-        createdAt: {
-          [Op.gte]: start,
-          [Op.lte]: end,
-        },
-      },
-      order: [['createdAt', 'DESC']],
+  /** Даты активности до указанного дня включительно — для расчёта серии. */
+  async getActiveDates(userId: string, until: string): Promise<string[]> {
+    const rows = await this.diaryModel.findAll({
+      where: { userId, date: { [Op.lte]: until } },
+      attributes: ['date'],
+      raw: true,
     });
+
+    return rows.map((row) => row.date);
   }
 }

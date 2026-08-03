@@ -1,15 +1,12 @@
 import { api } from "./axios";
+import type { Intention } from "../types/day";
 
-export async function createIntention(text: string) {
-  const { data } = await api.post("/intention", {
-    text,
-  });
-
+export async function createIntention(text: string): Promise<Intention> {
+  const { data } = await api.post<Intention>("/intention", { text });
   return data;
 }
 
-export async function completeIntention() {
-  const { data } = await api.patch("/intention/complete");
-
+export async function completeIntention(): Promise<Intention> {
+  const { data } = await api.patch<Intention>("/intention/complete");
   return data;
 }

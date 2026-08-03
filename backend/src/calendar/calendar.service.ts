@@ -3,6 +3,13 @@ import { Injectable } from '@nestjs/common';
 import { DiaryService } from '../diary/diary.service';
 import { IntentionService } from '../intention/intention.service';
 import { RemindersService } from '../reminders/reminders.service';
+import {
+  daysInMonth,
+  formatDayInZone,
+  monthRangeInZone,
+} from '../common/utils/timezone.util';
+
+export type DayStatus = 'empty' | 'partial' | 'success';
 
 @Injectable()
 export class CalendarService {
@@ -12,55 +19,71 @@ export class CalendarService {
     private readonly remindersService: RemindersService,
   ) {}
 
-  async getMonth(userId: string, year: number, month: number) {
-    const intentions = await this.intentionService.getAll(userId);
-    const diaryEntries = await this.diaryService.getAll(userId);
-    const reminders = await this.remindersService.getAll(userId);
+  /**
+   * Данные календаря за один месяц.
+   *
+   * Раньше метод трижды звал getAll(userId) — то есть выгружал всю историю
+   * пользователя за все годы ради одного месяца — и фильтровал её в JS
+   * внутри цикла по дням. Теперь из БД приходит только нужный период.
+   */
+  async getMonth(
+    userId: string,
+    timezone: string,
+    year: number,
+    month: number,
+  ) {
+    const total = daysInMonth(year, month);
+    const from = `${year}-${String(month).padStart(2, '0')}-01`;
+    const to = `${year}-${String(month).padStart(2, '0')}-${String(total).padStart(2, '0')}`;
+    const range = monthRangeInZone(year, month, timezone);
 
-    const daysInMonth = new Date(year, month, 0).getDate();
+    const [intentions, diaryEntries, reminders] = await Promise.all([
+      this.intentionService.getBetween(userId, from, to),
+      this.diaryService.getBetween(userId, from, to),
+      this.remindersService.getBetween(userId, range.start, range.end),
+    ]);
 
-    const days: { date: string; status: string }[] = [];
+    const diaryDates = new Set(diaryEntries.map((entry) => entry.date));
+    const intentionByDate = new Map(
+      intentions.map((intention) => [intention.date, intention]),
+    );
 
-    // Шаг 1: функция для определения статуса по количеству очков
-    function getScoreStatus(score: number) {
-      if (score >= 4) return 'success';
-      if (score >= 1) return 'partial';
-      return 'empty';
+    const remindersByDate = new Map<
+      string,
+      { total: number; completed: number }
+    >();
+
+    for (const reminder of reminders) {
+      // День напоминания считается в зоне пользователя, а не в UTC
+      const key = formatDayInZone(new Date(reminder.remindAt), timezone);
+      const bucket = remindersByDate.get(key) ?? { total: 0, completed: 0 };
+
+      bucket.total += 1;
+      if (reminder.completed) bucket.completed += 1;
+
+      remindersByDate.set(key, bucket);
     }
 
-    // Шаг 2: новый цикл с подсчётом очков
-    for (let day = 1; day <= daysInMonth; day++) {
+    const days: { date: string; status: DayStatus }[] = [];
+
+    for (let day = 1; day <= total; day++) {
       const date = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
       let score = 0;
 
-      // Дневник
-      const hasDiary = diaryEntries.some((entry) =>
-        entry.createdAt.toISOString().startsWith(date),
-      );
-      if (hasDiary) score++;
+      if (diaryDates.has(date)) score += 1;
 
-      // Намерение
-      const intention = intentions.find((item) => item.date === date);
-      if (intention) score++;
-      if (intention?.completed) score++;
+      const intention = intentionByDate.get(date);
+      if (intention) score += 1;
+      if (intention?.completed) score += 1;
 
-      // Напоминания
-      const remindersOfDay = reminders.filter((item) =>
-        item.remindAt.toISOString().startsWith(date),
-      );
-      if (remindersOfDay.length > 0) score++;
-      if (
-        remindersOfDay.length > 0 &&
-        remindersOfDay.every((item) => item.completed)
-      ) {
-        score++;
+      const reminderStats = remindersByDate.get(date);
+      if (reminderStats && reminderStats.total > 0) {
+        score += 1;
+        if (reminderStats.completed === reminderStats.total) score += 1;
       }
 
-      days.push({
-        date,
-        status: getScoreStatus(score),
-      });
+      days.push({ date, status: CalendarService.toStatus(score) });
     }
 
     return {
@@ -73,5 +96,11 @@ export class CalendarService {
       },
       days,
     };
+  }
+
+  private static toStatus(score: number): DayStatus {
+    if (score >= 4) return 'success';
+    if (score >= 1) return 'partial';
+    return 'empty';
   }
 }

@@ -1,40 +1,51 @@
-// frontend/src/pages/CalendarPage.tsx
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import Card from "../components/ui/Card";
 import CalendarGrid from "../components/CalendarGrid";
+import QueryState from "../components/ui/QueryState";
 import { useCalendar } from "../hooks/useCalendar";
+import { useBackButton } from "../hooks/useBackButton";
 
 export default function CalendarPage() {
   const navigate = useNavigate();
-
   const today = new Date();
+
   const [year, setYear] = useState(today.getFullYear());
-  const [month, setMonth] = useState(today.getMonth() + 1); // 1–12
+  const [month, setMonth] = useState(today.getMonth() + 1);
 
-  const { data, isLoading } = useCalendar(year, month);
+  const query = useCalendar(year, month);
 
-  if (isLoading || !data) {
-    return <p>Загрузка...</p>;
+  useBackButton();
+
+  function shiftMonth(delta: number) {
+    const next = month + delta;
+
+    if (next < 1) {
+      setMonth(12);
+      setYear((value) => value - 1);
+      return;
+    }
+
+    if (next > 12) {
+      setMonth(1);
+      setYear((value) => value + 1);
+      return;
+    }
+
+    setMonth(next);
   }
 
   return (
-    <div className="mx-auto max-w-md space-y-4 p-4">
+    <div className="space-y-4">
       <h1 className="text-2xl font-bold">📅 Календарь</h1>
 
-      {/* Переключатель месяцев */}
-      <div className="mb-4 flex items-center justify-between">
+      <div className="flex items-center justify-between">
         <button
-          className="rounded-lg border px-3 py-2"
-          onClick={() => {
-            if (month === 1) {
-              setMonth(12);
-              setYear((y) => y - 1);
-            } else {
-              setMonth((m) => m - 1);
-            }
-          }}
+          type="button"
+          onClick={() => shiftMonth(-1)}
+          className="rounded-lg border border-[var(--app-border)] px-3 py-2"
+          aria-label="Предыдущий месяц"
         >
           ◀
         </button>
@@ -47,25 +58,24 @@ export default function CalendarPage() {
         </h2>
 
         <button
-          className="rounded-lg border px-3 py-2"
-          onClick={() => {
-            if (month === 12) {
-              setMonth(1);
-              setYear((y) => y + 1);
-            } else {
-              setMonth((m) => m + 1);
-            }
-          }}
+          type="button"
+          onClick={() => shiftMonth(1)}
+          className="rounded-lg border border-[var(--app-border)] px-3 py-2"
+          aria-label="Следующий месяц"
         >
           ▶
         </button>
       </div>
 
       <Card>
-        <CalendarGrid
-          days={data.days}
-          onSelect={(date) => navigate(`/day/${date}`)}
-        />
+        <QueryState query={query}>
+          {(data) => (
+            <CalendarGrid
+              days={data.days}
+              onSelect={(date) => navigate(`/day/${date}`)}
+            />
+          )}
+        </QueryState>
       </Card>
     </div>
   );

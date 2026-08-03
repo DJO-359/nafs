@@ -1,23 +1,26 @@
 import { useState } from "react";
 import { motion } from "motion/react";
+
 import Button from "./ui/Button";
 import ConfirmModal from "./ui/ConfirmModal";
-
-interface Reminder {
-  id: string;
-  title: string;
-  remindAt: string;
-  completed: boolean;
-}
+import type { Reminder } from "../api/reminder.api";
 
 interface Props {
   reminder: Reminder;
   onComplete?: () => void;
   onDelete: () => void;
-  onEdit?: () => void; // просто сигнал, без данных
+  onEdit?: () => void;
   completing?: boolean;
   deleting?: boolean;
 }
+
+const REPEAT_LABELS: Record<string, string> = {
+  daily: "каждый день",
+  weekly: "по дням недели",
+  monthly: "каждый месяц",
+  interval: "по интервалу",
+  custom: "по интервалу",
+};
 
 export default function ReminderItem({
   reminder,
@@ -29,10 +32,12 @@ export default function ReminderItem({
 }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  console.log({
-    raw: reminder.remindAt,
-    parsed: new Date(reminder.remindAt),
+  const time = new Date(reminder.remindAt).toLocaleTimeString("ru-RU", {
+    hour: "2-digit",
+    minute: "2-digit",
   });
+
+  const repeatLabel = REPEAT_LABELS[reminder.repeatType];
 
   return (
     <>
@@ -42,44 +47,49 @@ export default function ReminderItem({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9 }}
         transition={{ duration: 0.25 }}
-        className={`rounded-xl border p-3 shadow-sm transition ${
-          reminder.completed ? "border-gray-200 bg-gray-50" : "bg-white"
+        className={`rounded-xl border border-[var(--app-border)] p-3 shadow-sm transition ${
+          reminder.completed
+            ? "bg-[var(--app-bg)] opacity-70"
+            : "bg-[var(--app-surface)]"
         }`}
       >
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
             <div
               className={
                 reminder.completed
-                  ? "line-through text-gray-400"
-                  : "font-medium"
+                  ? "truncate text-[var(--app-hint)] line-through"
+                  : "truncate font-medium"
               }
             >
               {reminder.title}
             </div>
-            <div className="text-sm text-gray-500">
-              {new Date(reminder.remindAt).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+
+            <div className="text-sm text-[var(--app-hint)]">
+              {time}
+              {repeatLabel ? ` · ${repeatLabel}` : ""}
             </div>
           </div>
 
-          <div className="flex gap-2">
-            <Button
-              className="w-auto bg-blue-600 px-3 hover:bg-blue-700"
-              onClick={onEdit}
-              disabled={completing || deleting}
-            >
-              ✏️
-            </Button>
+          <div className="flex shrink-0 gap-2">
+            {onEdit && (
+              <Button
+                className="w-auto bg-blue-600 px-3 hover:bg-blue-700"
+                onClick={onEdit}
+                disabled={completing || deleting}
+                aria-label="Редактировать"
+              >
+                ✏️
+              </Button>
+            )}
 
-            {!reminder.completed && (
+            {!reminder.completed && onComplete && (
               <Button
                 className="w-auto px-3"
                 onClick={onComplete}
                 loading={completing}
                 disabled={completing || deleting}
+                aria-label="Выполнено"
               >
                 ✓
               </Button>
@@ -90,6 +100,7 @@ export default function ReminderItem({
               onClick={() => setConfirmOpen(true)}
               loading={deleting}
               disabled={completing || deleting}
+              aria-label="Удалить"
             >
               🗑
             </Button>
@@ -102,7 +113,10 @@ export default function ReminderItem({
         title="Удалить напоминание?"
         description={`Вы уверены, что хотите удалить «${reminder.title}»?`}
         onClose={() => setConfirmOpen(false)}
-        onConfirm={onDelete}
+        onConfirm={() => {
+          setConfirmOpen(false);
+          onDelete();
+        }}
       />
     </>
   );

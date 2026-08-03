@@ -14,6 +14,14 @@ import { User } from '../../users/models/user.model';
 @Table({
   tableName: 'intentions',
   timestamps: true,
+  indexes: [
+    // Инвариант «одно намерение в день» держится индексом, а не удачей
+    {
+      unique: true,
+      fields: ['userId', 'date'],
+      name: 'intentions_user_date_uk',
+    },
+  ],
 })
 export class Intention extends Model<Intention> {
   @Column({
@@ -30,7 +38,7 @@ export class Intention extends Model<Intention> {
   })
   declare userId: string;
 
-  @BelongsTo(() => User)
+  @BelongsTo(() => User, { onDelete: 'CASCADE' })
   declare user: User;
 
   @Column({
@@ -39,6 +47,7 @@ export class Intention extends Model<Intention> {
   })
   declare text: string;
 
+  /** Дата в часовом поясе пользователя, формат YYYY-MM-DD. */
   @Column({
     type: DataType.DATEONLY,
     allowNull: false,

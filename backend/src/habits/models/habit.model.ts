@@ -24,6 +24,7 @@ export enum PeriodType {
 @Table({
   tableName: 'habits',
   timestamps: true,
+  indexes: [{ fields: ['userId'], name: 'habits_user_idx' }],
 })
 export class Habit extends Model<Habit> {
   @Column({
@@ -40,7 +41,7 @@ export class Habit extends Model<Habit> {
   })
   declare userId: string;
 
-  @BelongsTo(() => User)
+  @BelongsTo(() => User, { onDelete: 'CASCADE' })
   declare user: User;
 
   @Column({
@@ -97,7 +98,7 @@ export class Habit extends Model<Habit> {
   })
   declare isArchived: boolean;
 
-  @HasMany(() => HabitCompletion)
+  @HasMany(() => HabitCompletion, { onDelete: 'CASCADE', hooks: true })
   declare completions: HabitCompletion[];
 
   @CreatedAt

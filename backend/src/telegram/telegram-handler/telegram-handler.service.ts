@@ -1,14 +1,14 @@
-// backend/src/telegram/telegram-handler/telegram-handler.service.ts
-
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import TelegramBot from 'node-telegram-bot-api';
+import type { Message } from 'node-telegram-bot-api';
 
 import { UsersService } from '../../users/users.service';
 import { TelegramService } from '../telegram.service';
-
 import { TelegramStateService } from '../telegram-state.service';
 import { TelegramState } from '../states/telegram-state.enum';
-
 import { DiaryService } from '../../diary/diary.service';
+import { safeTimeZone } from '../../common/utils/timezone.util';
 
 @Injectable()
 export class TelegramHandlerService implements OnModuleInit {
@@ -19,177 +19,134 @@ export class TelegramHandlerService implements OnModuleInit {
     private readonly telegramService: TelegramService,
     private readonly telegramStateService: TelegramStateService,
     private readonly diaryService: DiaryService,
+    private readonly configService: ConfigService,
   ) {}
 
-  onModuleInit() {
+  onModuleInit(): void {
     const bot = this.telegramService.getBot();
 
-    bot.onText(/\/start/, async (msg) => {
-      try {
-        const telegramId = String(msg.chat.id);
+    if (!bot) {
+      return;
+    }
 
-        // Тестовый вызов удалён ✓
-
-        await this.usersService.updateTelegramUser(telegramId, {
-          username: msg.from?.username ?? null,
-          firstName: msg.from?.first_name ?? null,
-        });
-
-        const miniAppUrl = 'https://nafs-iota.vercel.app';
-
-        this.logger.log(`Mini App URL: ${miniAppUrl}`);
-
-        await bot.sendMessage(
-          telegramId,
-          `
-👋 Добро пожаловать в Nafs.
-
-🚀 Откройте приложение кнопкой ниже.
-`,
-          {
-            reply_markup: {
-              keyboard: [
-                [
-                  {
-                    text: '🚀 Открыть Nafs',
-                    web_app: {
-                      url: miniAppUrl,
-                    },
-                  },
-                ],
-              ],
-              resize_keyboard: true,
-              is_persistent: true,
-            },
-          },
-        );
-      } catch (error) {
-        this.logger.error('Ошибка обработки /start', error);
-      }
+    bot.onText(/^\/start/, (msg) => {
+      void this.handleStart(bot, msg);
     });
 
-    // Обработчик всех текстовых сообщений с защитой от ошибок
-    bot.on('message', async (msg) => {
-      try {
-        const chatId = String(msg.chat.id);
-        const text = msg.text;
+    bot.on('message', (msg) => {
+      void this.handleMessage(bot, msg);
+    });
 
-        if (!text) return;
+    this.logger.log('Обработчик сообщений Telegram запущен');
+  }
 
-        if (text.startsWith('/')) return;
+  private async handleStart(bot: TelegramBot, msg: Message): Promise<void> {
+    try {
+      const telegramId = String(msg.chat.id);
 
-        if (
-          this.telegramStateService.getState(chatId) ===
-          TelegramState.WAITING_DIARY
-        ) {
-          const user = await this.usersService.findByTelegramId(chatId);
-          if (!user) {
-            await bot.sendMessage(
-              chatId,
-              '❌ Пользователь не найден. Нажмите /start',
-            );
-            return;
-          }
+      // Профиль обновляем, но аккаунт здесь не создаём:
+      // пользователь появляется только после проверки подписи initData
+      await this.usersService.updateTelegramProfile(telegramId, {
+        username: msg.from?.username ?? null,
+        firstName: msg.from?.first_name ?? null,
+      });
 
-          await this.diaryService.create(user.id, text);
-          this.telegramStateService.clearState(chatId);
+      const miniAppUrl = this.configService.getOrThrow<string>('MINI_APP_URL');
+
+      await bot.sendMessage(
+        telegramId,
+        '👋 Добро пожаловать в Nafs.\n\n🚀 Откройте приложение кнопкой ниже.',
+        {
+          reply_markup: {
+            keyboard: [
+              [{ text: '🚀 Открыть Nafs', web_app: { url: miniAppUrl } }],
+              [{ text: '📝 Новая запись' }, { text: '📊 Мой день' }],
+            ],
+            resize_keyboard: true,
+            is_persistent: true,
+          },
+        },
+      );
+    } catch (error) {
+      this.logger.error(
+        'Ошибка обработки /start',
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
+  }
+
+  private async handleMessage(bot: TelegramBot, msg: Message): Promise<void> {
+    try {
+      const chatId = String(msg.chat.id);
+      const text = msg.text?.trim();
+
+      if (!text || text.startsWith('/')) {
+        return;
+      }
+
+      const user = await this.usersService.findByTelegramId(chatId);
+
+      if (!user) {
+        await bot.sendMessage(
+          chatId,
+          '❌ Сначала откройте приложение кнопкой «🚀 Открыть Nafs» — так создаётся ваш аккаунт.',
+        );
+        return;
+      }
+
+      if (
+        this.telegramStateService.getState(chatId) ===
+        TelegramState.WAITING_DIARY
+      ) {
+        await this.diaryService.create(
+          user.id,
+          safeTimeZone(user.timezone),
+          text,
+        );
+        this.telegramStateService.clearState(chatId);
+
+        await bot.sendMessage(
+          chatId,
+          '✅ Запись сохранена.\n\nСпасибо, что поделился.',
+        );
+        return;
+      }
+
+      switch (text) {
+        case '📝 Новая запись':
+          this.telegramStateService.setState(
+            chatId,
+            TelegramState.WAITING_DIARY,
+          );
+          await bot.sendMessage(chatId, '📝 Расскажи, что произошло сегодня?');
+          return;
+
+        case '📊 Мой день': {
+          const entry = await this.diaryService.getLastEntry(user.id);
 
           await bot.sendMessage(
             chatId,
-            `
-✅ Запись сохранена.
-
-Спасибо, что поделился.
-`,
+            entry
+              ? `📊 Мой день\n\n📝 Последняя запись (${entry.date}):\n\n${entry.content}`
+              : '📊 Мой день\n\nПока нет записей.\n\nНажмите «📝 Новая запись».',
           );
-
           return;
         }
 
-        switch (text) {
-          case '📝 Новая запись':
-            this.telegramStateService.setState(
-              chatId,
-              TelegramState.WAITING_DIARY,
-            );
-
-            await bot.sendMessage(
-              chatId,
-              `
-📝 Расскажи, что произошло сегодня?
-`,
-            );
-
-            break;
-
-          case '📊 Мой день': {
-            const user = await this.usersService.findByTelegramId(chatId);
-
-            if (!user) {
-              await bot.sendMessage(
-                chatId,
-                '❌ Пользователь не найден. Нажмите /start',
-              );
-              return;
-            }
-
-            const entry = await this.diaryService.getLastEntry(user.id);
-
-            if (!entry) {
-              await bot.sendMessage(
-                chatId,
-                `
-📊 Мой день
-
-Пока нет записей.
-
-Нажмите 📝 Новая запись
-`,
-              );
-              return;
-            }
-
-            await bot.sendMessage(
-              chatId,
-              `
-📊 Мой день
-
-📝 Последняя запись:
-
-${entry.content}
-
-Продолжай наблюдать за собой.
-`,
-            );
-
-            break;
-          }
-
-          case '⏰ Напоминания':
-            await bot.sendMessage(
-              chatId,
-              `
-⏰ Напоминания.
-`,
-            );
-
-            break;
-
-          case '⚙️ Настройки':
-            await bot.sendMessage(
-              chatId,
-              `
-⚙️ Настройки.
-`,
-            );
-
-            break;
-        }
-      } catch (error) {
-        this.logger.error('Ошибка обработки Telegram-сообщения', error);
+        default:
+          // Раньше здесь не было ветки по умолчанию, и пользователь
+          // не получал вообще никакого ответа на обычное сообщение
+          await bot.sendMessage(
+            chatId,
+            'Не понял команду. Откройте приложение кнопкой «🚀 Открыть Nafs» или нажмите «📝 Новая запись».',
+          );
+          return;
       }
-    });
-
-    this.logger.log('Telegram diary handler запущен');
+    } catch (error) {
+      this.logger.error(
+        'Ошибка обработки сообщения',
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
   }
 }

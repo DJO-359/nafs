@@ -40,7 +40,7 @@ export interface CreateHabitDto {
   isArchived?: boolean;
 }
 
-export interface UpdateHabitDto extends Partial<CreateHabitDto> {}
+export type UpdateHabitDto = Partial<CreateHabitDto>;
 
 export async function getHabits(): Promise<Habit[]> {
   const { data } = await api.get<Habit[]>("/habits");

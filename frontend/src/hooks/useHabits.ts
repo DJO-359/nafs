@@ -1,4 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+
 import {
   createHabit,
   deleteHabit,
@@ -8,6 +10,9 @@ import {
   type CreateHabitDto,
   type UpdateHabitDto,
 } from "../api/habit.api";
+import { describeError } from "../lib/errors";
+import { haptic } from "../lib/telegram";
+import { useInvalidateDayData } from "./useInvalidateDayData";
 
 export function useHabits() {
   return useQuery({
@@ -17,46 +22,71 @@ export function useHabits() {
 }
 
 export function useCreateHabit() {
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateDayData();
 
   return useMutation({
     mutationFn: (dto: CreateHabitDto) => createHabit(dto),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["habits"] });
+      toast.success("🌱 Привычка создана");
+      haptic("success");
+      invalidate();
+    },
+    // Раньше ошибки этих мутаций пропадали молча: пользователь видел
+    // закрытую форму и думал, что привычка сохранена
+    onError: (error) => {
+      toast.error(`Не удалось создать: ${describeError(error)}`);
+      haptic("error");
     },
   });
 }
 
 export function useUpdateHabit() {
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateDayData();
 
   return useMutation({
     mutationFn: ({ id, dto }: { id: string; dto: UpdateHabitDto }) =>
       updateHabit(id, dto),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["habits"] });
+      toast.success("✏️ Привычка обновлена");
+      haptic("success");
+      invalidate();
+    },
+    onError: (error) => {
+      toast.error(`Не удалось обновить: ${describeError(error)}`);
+      haptic("error");
     },
   });
 }
 
 export function useDeleteHabit() {
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateDayData();
 
   return useMutation({
     mutationFn: (id: string) => deleteHabit(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["habits"] });
+      toast.success("🗑 Привычка удалена");
+      haptic("success");
+      invalidate();
+    },
+    onError: (error) => {
+      toast.error(`Не удалось удалить: ${describeError(error)}`);
+      haptic("error");
     },
   });
 }
 
 export function useToggleHabit() {
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateDayData();
 
   return useMutation({
     mutationFn: (id: string) => toggleHabit(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["habits"] });
+      haptic("selection");
+      invalidate();
+    },
+    onError: (error) => {
+      toast.error(`Не удалось отметить: ${describeError(error)}`);
+      haptic("error");
     },
   });
 }

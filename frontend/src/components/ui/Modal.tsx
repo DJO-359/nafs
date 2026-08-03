@@ -23,7 +23,7 @@ export default function Modal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-2xl bg-white shadow-xl"
+        className="w-full max-w-md rounded-2xl bg-[var(--app-surface)] shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="border-b p-5">
@@ -37,7 +37,7 @@ export default function Modal({
 
           <button
             onClick={onClose}
-            className="rounded-lg border px-4 py-2 hover:bg-gray-100"
+            className="rounded-lg border px-4 py-2 hover:bg-[var(--app-bg)]"
           >
             Отмена
           </button>

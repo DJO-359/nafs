@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import Card from "./ui/Card";
 import Button from "./ui/Button";
@@ -15,20 +15,11 @@ interface Props {
 export default function DiaryCard({ diary }: Props) {
   const [text, setText] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
   const mutation = useDiary();
 
-  useEffect(() => {
-    if (!diary) {
-      setText("");
-      setIsEditing(false);
-      return;
-    }
-
-    if (isEditing) {
-      setText(diary.content);
-    }
-  }, [diary, isEditing]);
+  // Текст задаётся в момент открытия формы (openCreateForm/openEditForm).
+  // Синхронизация через useEffect давала каскадные перерисовки и не была
+  // нужна: пока форма открыта, diary извне не меняется.
 
   async function handleSave() {
     if (!text.trim()) return;
@@ -36,18 +27,15 @@ export default function DiaryCard({ diary }: Props) {
     await mutation.mutateAsync(text);
     setText("");
     setIsFormOpen(false);
-    setIsEditing(false);
   }
 
   function openCreateForm() {
     setText("");
-    setIsEditing(false);
     setIsFormOpen(true);
   }
 
   function openEditForm() {
     setText(diary?.content ?? "");
-    setIsEditing(true);
     setIsFormOpen(true);
   }
 
@@ -70,10 +58,9 @@ export default function DiaryCard({ diary }: Props) {
             type="button"
             onClick={() => {
               setIsFormOpen(false);
-              setIsEditing(false);
               setText("");
             }}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-lg font-semibold text-gray-700 transition hover:bg-gray-300"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--app-border)] text-lg font-semibold text-gray-700 transition hover:bg-gray-300"
             aria-label="Закрыть форму"
           >
             ✕
@@ -90,7 +77,7 @@ export default function DiaryCard({ diary }: Props) {
       )}
 
       {diary && !isFormOpen && (
-        <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+        <div className="rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] p-3 text-sm text-gray-700">
           <p className="whitespace-pre-wrap">{diary.content}</p>
         </div>
       )}
@@ -110,7 +97,7 @@ export default function DiaryCard({ diary }: Props) {
               onChange={(e) => setText(e.target.value)}
               rows={7}
               placeholder="Что сегодня произошло? Чему вы научились? За что благодарны?"
-              className="mb-4 w-full rounded-xl border border-gray-300 p-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+              className="mb-4 w-full rounded-xl border border-[var(--app-border)] p-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
             />
 
             <Button loading={mutation.isPending} onClick={handleSave}>

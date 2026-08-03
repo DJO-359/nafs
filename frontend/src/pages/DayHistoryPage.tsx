@@ -1,66 +1,79 @@
 import { useParams } from "react-router-dom";
+
+import Card from "../components/ui/Card";
+import QueryState from "../components/ui/QueryState";
 import { useDayByDate } from "../hooks/useDayByDate";
+import { useBackButton } from "../hooks/useBackButton";
+
+function formatDay(date: string): string {
+  const [year, month, day] = date.split("-").map(Number);
+
+  return new Date(year, month - 1, day).toLocaleDateString("ru-RU", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
 
 export default function DayHistoryPage() {
-  const { date } = useParams();
+  const { date = "" } = useParams();
+  const query = useDayByDate(date);
 
-  const { data, isLoading } = useDayByDate(date!);
-
-  if (isLoading) {
-    return <div className="p-4">Загрузка...</div>;
-  }
-
-  if (!data) {
-    return null;
-  }
+  useBackButton();
 
   return (
-    <main className="space-y-4 p-4">
-      <h1 className="text-2xl font-bold">📅 {data.date}</h1>
-
-      {/* Намерение */}
-      <div className="rounded-xl bg-white p-4 shadow">
-        <h2 className="mb-2 font-semibold">🧭 Намерение</h2>
-
-        {data.intention ? (
+    <div className="space-y-4">
+      <QueryState query={query}>
+        {(day) => (
           <>
-            <div>{data.intention.text}</div>
-            <div className="mt-2 text-green-600">
-              {data.intention.completed ? "✅ Выполнено" : "⏳ Не выполнено"}
-            </div>
+            <h1 className="text-2xl font-bold">📅 {formatDay(day.date)}</h1>
+
+            <Card>
+              <h2 className="mb-2 font-semibold">🧭 Намерение</h2>
+
+              {day.intention ? (
+                <>
+                  <div>{day.intention.text}</div>
+                  <div className="mt-2 text-sm text-emerald-600">
+                    {day.intention.completed
+                      ? "✅ Выполнено"
+                      : "⏳ Не выполнено"}
+                  </div>
+                </>
+              ) : (
+                <div className="text-[var(--app-hint)]">Нет намерения</div>
+              )}
+            </Card>
+
+            <Card>
+              <h2 className="mb-2 font-semibold">⏰ Напоминания</h2>
+
+              {day.reminders.length === 0 ? (
+                <div className="text-[var(--app-hint)]">Нет напоминаний</div>
+              ) : (
+                <ul className="space-y-2">
+                  {day.reminders.map((item) => (
+                    <li key={item.id}>
+                      {item.completed ? "✅" : "⭕"} {item.title}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+
+            <Card>
+              <h2 className="mb-2 font-semibold">📖 Дневник</h2>
+
+              {day.diary ? (
+                <p className="whitespace-pre-wrap">{day.diary.content}</p>
+              ) : (
+                <div className="text-[var(--app-hint)]">Записи нет</div>
+              )}
+            </Card>
           </>
-        ) : (
-          <div className="text-gray-500">Нет намерения</div>
         )}
-      </div>
-
-      {/* Напоминания */}
-      <div className="rounded-xl bg-white p-4 shadow">
-        <h2 className="mb-2 font-semibold">⏰ Напоминания</h2>
-
-        {data.reminders.length === 0 ? (
-          <div className="text-gray-500">Нет напоминаний</div>
-        ) : (
-          <ul className="space-y-2">
-            {data.reminders.map((item: any) => (
-              <li key={item.id}>
-                {item.completed ? "✅" : "⭕"} {item.title}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      {/* Дневник */}
-      <div className="rounded-xl bg-white p-4 shadow">
-        <h2 className="mb-2 font-semibold">📖 Дневник</h2>
-
-        {data.diary ? (
-          <p>{data.diary.content}</p>
-        ) : (
-          <div className="text-gray-500">Записи нет</div>
-        )}
-      </div>
-    </main>
+      </QueryState>
+    </div>
   );
 }

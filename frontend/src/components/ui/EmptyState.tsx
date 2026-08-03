@@ -1,7 +1,7 @@
 interface Props {
   icon: string;
   title: string;
-  description: string;
+  description?: string;
 }
 
 export default function EmptyState({ icon, title, description }: Props) {
@@ -11,7 +11,9 @@ export default function EmptyState({ icon, title, description }: Props) {
 
       <div className="font-semibold">{title}</div>
 
-      <p className="mt-2 text-sm text-gray-500">{description}</p>
+      {description && (
+        <p className="mt-2 text-sm text-[var(--app-hint)]">{description}</p>
+      )}
     </div>
   );
 }

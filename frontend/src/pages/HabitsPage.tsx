@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Card from "../components/ui/Card";
+import { useBackButton } from "../hooks/useBackButton";
 import {
   useCreateHabit,
   useDeleteHabit,
@@ -27,8 +28,9 @@ function formatPeriod(habit: Habit) {
 export default function HabitsPage() {
   const [open, setOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
-  const [celebrationHabit, setCelebrationHabit] = useState<Habit | null>(null);
   const { data: habits = [], isLoading } = useHabits();
+
+  useBackButton();
   const createMutation = useCreateHabit();
   const updateMutation = useUpdateHabit();
   const deleteMutation = useDeleteHabit();
@@ -43,19 +45,23 @@ export default function HabitsPage() {
     [habits],
   );
 
-  useEffect(() => {
-    if (!habits.length) return;
-
-    const justCompletedHabit = habits.find(
+  /**
+   * Поздравление с завершённой привычкой вычисляется прямо при рендере,
+   * а не через setState в эффекте: тот вызывал лишний каскад перерисовок.
+   * Отметка в localStorage ставится только при первом показе.
+   */
+  const celebrationHabit = useMemo(() => {
+    const completed = habits.find(
       (habit) =>
         habit.isCompleted &&
         !localStorage.getItem(`habit-celebrated-${habit.id}`),
     );
 
-    if (justCompletedHabit) {
-      setCelebrationHabit(justCompletedHabit);
-      localStorage.setItem(`habit-celebrated-${justCompletedHabit.id}`, "1");
+    if (completed) {
+      localStorage.setItem(`habit-celebrated-${completed.id}`, "1");
     }
+
+    return completed ?? null;
   }, [habits]);
 
   async function handleSubmit(dto: CreateHabitDto) {
@@ -74,7 +80,7 @@ export default function HabitsPage() {
       <div className="mb-4 flex items-center justify-between">
         <Link
           to="/"
-          className="rounded-lg border px-4 py-2 transition hover:bg-gray-100"
+          className="rounded-lg border px-4 py-2 transition hover:bg-[var(--app-bg)]"
         >
           ← Назад
         </Link>
@@ -91,6 +97,7 @@ export default function HabitsPage() {
       </div>
 
       <HabitForm
+        key={editingHabit?.id ?? "new"}
         open={open}
         initialHabit={editingHabit}
         onClose={() => {
@@ -132,18 +139,18 @@ export default function HabitsPage() {
                     <span className="text-xl">{habit.icon}</span>
                     <div>
                       <p className="font-semibold">{habit.title}</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-[var(--app-hint)]">
                         {formatPeriod(habit)}
                       </p>
                     </div>
                   </div>
                   {habit.description && (
-                    <p className="mt-2 text-sm text-gray-600">
+                    <p className="mt-2 text-sm text-[var(--app-hint)]">
                       {habit.description}
                     </p>
                   )}
                   <div className="mt-3">
-                    <div className="mb-1 flex items-center justify-between text-xs text-gray-500">
+                    <div className="mb-1 flex items-center justify-between text-xs text-[var(--app-hint)]">
                       <span>{habit.progress}%</span>
                       <span>
                         {habit.isCompleted
@@ -153,7 +160,7 @@ export default function HabitsPage() {
                             : "Завершается сегодня"}
                       </span>
                     </div>
-                    <div className="h-2 rounded-full bg-gray-200">
+                    <div className="h-2 rounded-full bg-[var(--app-border)]">
                       <div
                         className="h-2 rounded-full transition-all duration-300"
                         style={{
@@ -165,7 +172,7 @@ export default function HabitsPage() {
                       />
                     </div>
                   </div>
-                  <div className="mt-3 text-xs text-gray-500">
+                  <div className="mt-3 text-xs text-[var(--app-hint)]">
                     <p>
                       Выполнено {habit.completedDays} / {habit.totalDays}
                     </p>
@@ -184,7 +191,7 @@ export default function HabitsPage() {
                   <button
                     type="button"
                     onClick={() => toggleMutation.mutate(habit.id)}
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border ${habit.isCompletedToday ? "border-emerald-600 bg-emerald-600 text-white" : "border-gray-300 bg-white text-gray-300"}`}
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border ${habit.isCompletedToday ? "border-emerald-600 bg-emerald-600 text-white" : "border-[var(--app-border)] bg-[var(--app-surface)] text-gray-300"}`}
                   >
                     ✓
                   </button>
@@ -218,7 +225,7 @@ export default function HabitsPage() {
               {archivedHabits.map((habit) => (
                 <Card key={habit.id} className="mt-2">
                   <p className="font-medium">{habit.title}</p>
-                  <p className="text-sm text-gray-500">Архивная привычка</p>
+                  <p className="text-sm text-[var(--app-hint)]">Архивная привычка</p>
                 </Card>
               ))}
             </div>

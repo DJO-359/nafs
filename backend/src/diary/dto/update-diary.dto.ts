@@ -1,4 +1,12 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateDiaryDto } from './create-diary.dto';
+import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
-export class UpdateDiaryDto extends PartialType(CreateDiaryDto) {}
+/**
+ * Не PartialType: у записи дневника единственное содержательное поле,
+ * и обновление без него не имеет смысла — пусть валидация ловит это сразу.
+ */
+export class UpdateDiaryDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(10000)
+  content!: string;
+}

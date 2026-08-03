@@ -14,6 +14,15 @@ import { Habit } from './habit.model';
   tableName: 'habit_completions',
   timestamps: true,
   updatedAt: false,
+  indexes: [
+    // Одна отметка на привычку в день: без этого двойной тап создавал дубли,
+    // которые прятались за Set() при подсчёте, но копились в базе
+    {
+      unique: true,
+      fields: ['habitId', 'completedDate'],
+      name: 'habit_completions_habit_date_uk',
+    },
+  ],
 })
 export class HabitCompletion extends Model<HabitCompletion> {
   @Column({
@@ -30,7 +39,7 @@ export class HabitCompletion extends Model<HabitCompletion> {
   })
   declare habitId: string;
 
-  @BelongsTo(() => Habit)
+  @BelongsTo(() => Habit, { onDelete: 'CASCADE' })
   declare habit: Habit;
 
   @Column({

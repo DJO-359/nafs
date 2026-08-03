@@ -53,7 +53,7 @@ export default function IntentionCard({
         <div className="space-y-3">
           <div>
             <h2 className="text-lg font-semibold">🎯 Намерение дня</h2>
-            <p className="mt-1 text-sm text-gray-600">
+            <p className="mt-1 text-sm text-[var(--app-hint)]">
               {intention
                 ? `«${intention.text}»`
                 : "Сегодня намерение не выбрано."}
@@ -61,7 +61,7 @@ export default function IntentionCard({
           </div>
 
           {intention && (
-            <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+            <div className="flex flex-wrap gap-2 text-xs text-[var(--app-hint)]">
               {repeatMode !== "none" && <span>Повтор: {repeatLabel}</span>}
               {useLastAutomatically && <span>Используется автоматически</span>}
             </div>
@@ -80,7 +80,7 @@ export default function IntentionCard({
               <button
                 type="button"
                 onClick={onComplete}
-                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 transition hover:bg-gray-50"
+                className="rounded-lg border border-[var(--app-border)] px-3 py-2 text-sm text-[var(--app-hint)] transition hover:bg-[var(--app-bg)]"
               >
                 Выполнено
               </button>
@@ -90,6 +90,7 @@ export default function IntentionCard({
       </Card>
 
       <IntentionModal
+        key={modalOpen ? "open" : "closed"}
         open={modalOpen}
         initialValue={intention?.text ?? ""}
         initialRepeat={repeatMode}

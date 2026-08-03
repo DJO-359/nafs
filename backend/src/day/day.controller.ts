@@ -1,21 +1,9 @@
-import {
-  Controller,
-  Get,
-  Param, // ← добавлен Param
-  Req,
-  UseGuards,
-} from '@nestjs/common';
-import { Request } from 'express';
+import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { AuthRequest } from '../auth/types/auth-request';
+import { DayParamDto } from '../common/dto/day-param.dto';
 import { DayService } from './day.service';
-
-interface AuthRequest extends Request {
-  user: {
-    id: string;
-    telegramId: string;
-  };
-}
 
 @Controller('day')
 @UseGuards(JwtAuthGuard)
@@ -23,13 +11,16 @@ export class DayController {
   constructor(private readonly dayService: DayService) {}
 
   @Get()
-  async getToday(@Req() req: AuthRequest) {
-    return this.dayService.getToday(req.user.id);
+  getToday(@Req() req: AuthRequest) {
+    return this.dayService.getToday(req.user.id, req.user.timezone);
   }
 
-  // ----- добавленный метод для получения дня по дате -----
   @Get(':date')
-  async getByDate(@Req() req: AuthRequest, @Param('date') date: string) {
-    return this.dayService.getByDate(req.user.id, date);
+  getByDate(@Req() req: AuthRequest, @Param() params: DayParamDto) {
+    return this.dayService.getByDate(
+      req.user.id,
+      req.user.timezone,
+      params.date,
+    );
   }
 }

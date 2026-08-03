@@ -1,18 +1,24 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner"; // импорт
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
+
 import { createReminder } from "../api/reminder.api";
+import { describeError } from "../lib/errors";
+import { haptic } from "../lib/telegram";
+import { useInvalidateDayData } from "./useInvalidateDayData";
 
 export function useReminder() {
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateDayData();
 
   return useMutation({
     mutationFn: createReminder,
     onSuccess() {
       toast.success("⏰ Напоминание создано");
-
-      queryClient.invalidateQueries({
-        queryKey: ["day"],
-      });
+      haptic("success");
+      invalidate();
+    },
+    onError(error) {
+      toast.error(`Не удалось создать: ${describeError(error)}`);
+      haptic("error");
     },
   });
 }

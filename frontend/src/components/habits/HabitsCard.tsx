@@ -61,7 +61,7 @@ export default function HabitsCard() {
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold">🌱 Привычки</h2>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-[var(--app-hint)]">
             Спокойный прогресс без лишнего
           </p>
         </div>
@@ -82,6 +82,7 @@ export default function HabitsCard() {
       </div>
 
       <HabitForm
+        key={editingHabit?.id ?? "new"}
         open={open}
         initialHabit={editingHabit}
         onClose={() => {
@@ -93,17 +94,17 @@ export default function HabitsCard() {
       />
 
       {isLoading ? (
-        <p className="text-sm text-gray-500">Загрузка...</p>
+        <p className="text-sm text-[var(--app-hint)]">Загрузка...</p>
       ) : (
         <div className="space-y-3">
           {visibleHabits.length === 0 && !open && (
-            <p className="text-sm text-gray-500">Пока нет привычек</p>
+            <p className="text-sm text-[var(--app-hint)]">Пока нет привычек</p>
           )}
 
           {visibleHabits.map((habit) => (
             <div
               key={habit.id}
-              className="rounded-xl border border-gray-200 p-3"
+              className="rounded-xl border border-[var(--app-border)] p-3"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
@@ -111,18 +112,18 @@ export default function HabitsCard() {
                     <span className="text-xl">{habit.icon}</span>
                     <div>
                       <p className="font-medium">{habit.title}</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-[var(--app-hint)]">
                         {formatPeriod(habit)}
                       </p>
                     </div>
                   </div>
                   {habit.description && (
-                    <p className="mt-2 text-sm text-gray-600">
+                    <p className="mt-2 text-sm text-[var(--app-hint)]">
                       {habit.description}
                     </p>
                   )}
                   <div className="mt-3">
-                    <div className="mb-1 flex items-center justify-between text-xs text-gray-500">
+                    <div className="mb-1 flex items-center justify-between text-xs text-[var(--app-hint)]">
                       <span>{habit.progress}%</span>
                       <span>
                         {habit.isCompleted
@@ -132,7 +133,7 @@ export default function HabitsCard() {
                             : "Завершается сегодня"}
                       </span>
                     </div>
-                    <div className="h-2 rounded-full bg-gray-200">
+                    <div className="h-2 rounded-full bg-[var(--app-border)]">
                       <div
                         className="h-2 rounded-full transition-all duration-300"
                         style={{
@@ -144,7 +145,7 @@ export default function HabitsCard() {
                       />
                     </div>
                   </div>
-                  <div className="mt-2 text-xs text-gray-600">
+                  <div className="mt-2 text-xs text-[var(--app-hint)]">
                     <p>
                       Выполнено {habit.completedDays} / {habit.totalDays}
                     </p>
@@ -163,14 +164,14 @@ export default function HabitsCard() {
                   <button
                     type="button"
                     onClick={() => toggleMutation.mutate(habit.id)}
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border transition ${habit.isCompletedToday ? "border-emerald-600 bg-emerald-600 text-white" : "border-gray-300 bg-white text-gray-300"}`}
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border transition ${habit.isCompletedToday ? "border-emerald-600 bg-emerald-600 text-white" : "border-[var(--app-border)] bg-[var(--app-surface)] text-gray-300"}`}
                     aria-label="Отметить привычку"
                   >
                     ✓
                   </button>
                 )}
               </div>
-              <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+              <div className="mt-3 flex items-center justify-between text-xs text-[var(--app-hint)]">
                 <button
                   type="button"
                   onClick={() => openEdit(habit)}

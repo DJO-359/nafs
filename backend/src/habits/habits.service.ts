@@ -1,11 +1,17 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Op } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
+import { UniqueConstraintError } from 'sequelize';
 
-import { Habit, PeriodType } from './models/habit.model';
+import { Habit } from './models/habit.model';
 import { HabitCompletion } from './models/habit-completion.model';
 import { CreateHabitDto } from './dto/create-habit.dto';
 import { UpdateHabitDto } from './dto/update-habit.dto';
+import { todayInZone } from '../common/utils/timezone.util';
 
 @Injectable()
 export class HabitsService {
@@ -14,11 +20,11 @@ export class HabitsService {
     private readonly habitModel: typeof Habit,
     @InjectModel(HabitCompletion)
     private readonly habitCompletionModel: typeof HabitCompletion,
+    private readonly sequelize: Sequelize,
   ) {}
 
-  async create(userId: string, dto: CreateHabitDto) {
-    const startDate = dto.startDate;
-    const endDate = dto.endDate;
+  async create(userId: string, timezone: string, dto: CreateHabitDto) {
+    this.assertPeriodValid(dto.startDate, dto.endDate);
 
     const habit = await this.habitModel.create({
       userId,
@@ -27,113 +33,153 @@ export class HabitsService {
       icon: dto.icon,
       color: dto.color,
       periodType: dto.periodType,
-      customPeriodDays: dto.customPeriodDays ?? null, // оставляем для совместимости, но не используем в расчётах
-      startDate,
-      endDate,
+      customPeriodDays: dto.customPeriodDays ?? null,
+      startDate: dto.startDate,
+      endDate: dto.endDate,
       isArchived: dto.isArchived ?? false,
-    } as Habit);
+    } as Partial<Habit> as Habit);
 
-    return this.findOne(userId, habit.id);
+    return this.findOne(userId, timezone, habit.id);
   }
 
-  async findAll(userId: string) {
+  async findAll(userId: string, timezone: string) {
     const habits = await this.habitModel.findAll({
       where: { userId },
       include: [{ model: this.habitCompletionModel, required: false }],
       order: [['createdAt', 'DESC']],
     });
 
-    return habits.map((habit) => this.buildHabitView(habit));
+    return habits.map((habit) => this.buildHabitView(habit, timezone));
   }
 
-  async findOne(userId: string, id: string) {
+  async findOne(userId: string, timezone: string, id: string) {
     const habit = await this.habitModel.findOne({
       where: { userId, id },
       include: [{ model: this.habitCompletionModel, required: false }],
     });
 
     if (!habit) {
-      throw new NotFoundException('Habit not found');
+      throw new NotFoundException('Привычка не найдена');
     }
 
-    return this.buildHabitView(habit);
+    return this.buildHabitView(habit, timezone);
   }
 
-  async update(userId: string, id: string, dto: UpdateHabitDto) {
+  async update(
+    userId: string,
+    timezone: string,
+    id: string,
+    dto: UpdateHabitDto,
+  ) {
     const habit = await this.habitModel.findOne({ where: { userId, id } });
 
     if (!habit) {
-      throw new NotFoundException('Habit not found');
+      throw new NotFoundException('Привычка не найдена');
     }
 
-    Object.assign(habit, {
-      title: dto.title ?? habit.title,
-      description: dto.description ?? habit.description,
-      icon: dto.icon ?? habit.icon,
-      color: dto.color ?? habit.color,
-      periodType: dto.periodType ?? habit.periodType,
-      customPeriodDays: dto.customPeriodDays ?? habit.customPeriodDays, // сохраняем, но не используем
-      startDate: dto.startDate ?? habit.startDate,
-      endDate: dto.endDate ?? habit.endDate,
-      isArchived: dto.isArchived ?? habit.isArchived,
-    });
+    const startDate = dto.startDate ?? habit.startDate;
+    const endDate = dto.endDate ?? habit.endDate;
+    this.assertPeriodValid(startDate, endDate);
+
+    if (dto.title !== undefined) habit.title = dto.title;
+    // `?? habit.description` не давал очистить описание — теперь это возможно
+    if (dto.description !== undefined) {
+      habit.description = dto.description ?? null;
+    }
+    if (dto.icon !== undefined) habit.icon = dto.icon;
+    if (dto.color !== undefined) habit.color = dto.color;
+    if (dto.periodType !== undefined) habit.periodType = dto.periodType;
+    if (dto.customPeriodDays !== undefined) {
+      habit.customPeriodDays = dto.customPeriodDays ?? null;
+    }
+    if (dto.startDate !== undefined) habit.startDate = dto.startDate;
+    if (dto.endDate !== undefined) habit.endDate = dto.endDate;
+    if (dto.isArchived !== undefined) habit.isArchived = dto.isArchived;
 
     await habit.save();
 
-    return this.findOne(userId, id);
+    return this.findOne(userId, timezone, id);
   }
 
+  /** Удаление привычки и её отметок — в одной транзакции. */
   async remove(userId: string, id: string) {
     const habit = await this.habitModel.findOne({ where: { userId, id } });
 
     if (!habit) {
-      throw new NotFoundException('Habit not found');
+      throw new NotFoundException('Привычка не найдена');
     }
 
-    await this.habitCompletionModel.destroy({ where: { habitId: id } });
-    await habit.destroy();
+    await this.sequelize.transaction(async (transaction) => {
+      await this.habitCompletionModel.destroy({
+        where: { habitId: id },
+        transaction,
+      });
+      await habit.destroy({ transaction });
+    });
 
     return { deleted: true };
   }
 
-  async toggle(userId: string, id: string) {
+  /**
+   * Отмечает привычку выполненной сегодня или снимает отметку.
+   * День берётся в зоне пользователя, а не в UTC — иначе вечерняя отметка
+   * у пользователя в UTC+3 попадала бы на следующий день.
+   */
+  async toggle(userId: string, timezone: string, id: string) {
     const habit = await this.habitModel.findOne({ where: { userId, id } });
 
     if (!habit) {
-      throw new NotFoundException('Habit not found');
+      throw new NotFoundException('Привычка не найдена');
     }
 
-    const completedDate = new Date().toISOString().split('T')[0];
+    const completedDate = todayInZone(timezone);
 
-    const existingCompletion = await this.habitCompletionModel.findOne({
+    const existing = await this.habitCompletionModel.findOne({
       where: { habitId: id, completedDate },
     });
 
-    if (existingCompletion) {
-      await existingCompletion.destroy();
-      return this.findOne(userId, id);
+    if (existing) {
+      await existing.destroy();
+      return this.findOne(userId, timezone, id);
     }
 
-    await this.habitCompletionModel.create({
-      habitId: id,
-      completedDate,
-    } as HabitCompletion);
+    try {
+      await this.habitCompletionModel.create({
+        habitId: id,
+        completedDate,
+      } as Partial<HabitCompletion> as HabitCompletion);
+    } catch (error) {
+      // Двойной тап: отметку уже создал параллельный запрос — это не ошибка
+      if (!(error instanceof UniqueConstraintError)) {
+        throw error;
+      }
+    }
 
-    return this.findOne(userId, id);
+    return this.findOne(userId, timezone, id);
   }
 
-  private buildHabitView(habit: Habit & { completions?: HabitCompletion[] }) {
-    // ✅ теперь считаем только по датам
+  private assertPeriodValid(startDate: string, endDate: string): void {
+    if (endDate < startDate) {
+      throw new BadRequestException(
+        'Дата окончания не может быть раньше даты начала',
+      );
+    }
+  }
+
+  private buildHabitView(habit: Habit, timezone: string) {
+    const completions = habit.completions ?? [];
+
     const totalDays = this.calculateTotalDays(habit.startDate, habit.endDate);
-    const completedDays = this.calculateCompletedDays(habit.completions ?? []);
+    const completedDays = new Set(completions.map((item) => item.completedDate))
+      .size;
+
     const remainingDays = Math.max(0, totalDays - completedDays);
     const progress =
-      totalDays > 0 ? Math.floor((completedDays / totalDays) * 100) : 0;
-    const today = new Date().toISOString().split('T')[0];
-    const isCompletedToday = (habit.completions ?? []).some(
-      (item) => item.completedDate === today,
-    );
-    const isCompleted = completedDays >= totalDays;
+      totalDays > 0
+        ? Math.min(100, Math.floor((completedDays / totalDays) * 100))
+        : 0;
+
+    const today = todayInZone(timezone);
 
     return {
       id: habit.id,
@@ -143,7 +189,7 @@ export class HabitsService {
       icon: habit.icon,
       color: habit.color,
       periodType: habit.periodType,
-      customPeriodDays: habit.customPeriodDays, // возвращаем, но не влияет на расчёты
+      customPeriodDays: habit.customPeriodDays,
       startDate: habit.startDate,
       endDate: habit.endDate,
       isArchived: habit.isArchived,
@@ -153,26 +199,27 @@ export class HabitsService {
       totalDays,
       progress,
       remainingDays,
-      isCompletedToday,
-      isCompleted,
-      completions: (habit.completions ?? []).map((completion) => ({
+      isCompletedToday: completions.some(
+        (item) => item.completedDate === today,
+      ),
+      isCompleted: completedDays >= totalDays,
+      completions: completions.map((completion) => ({
         id: completion.id,
         completedDate: completion.completedDate,
       })),
     };
   }
 
-  // ✅ упрощённый метод – только даты
-  private calculateTotalDays(startDate: string, endDate: string) {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffInDays =
-      Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    return Math.max(1, diffInDays);
-  }
+  /** Длина периода в днях по календарным датам, включая обе границы. */
+  private calculateTotalDays(startDate: string, endDate: string): number {
+    const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
+    const [endYear, endMonth, endDay] = endDate.split('-').map(Number);
 
-  private calculateCompletedDays(completions: HabitCompletion[]) {
-    const uniqueDates = new Set(completions.map((item) => item.completedDate));
-    return uniqueDates.size;
+    const start = Date.UTC(startYear, startMonth - 1, startDay);
+    const end = Date.UTC(endYear, endMonth - 1, endDay);
+
+    const diffInDays = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
+    return Math.max(1, diffInDays);
   }
 }

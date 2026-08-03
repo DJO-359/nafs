@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { Op, UniqueConstraintError } from 'sequelize';
 
 import { Intention } from './models/intention.model';
+import { todayInZone } from '../common/utils/timezone.util';
 
 @Injectable()
 export class IntentionService {
@@ -11,81 +13,107 @@ export class IntentionService {
   ) {}
 
   /**
-   * Создать или обновить намерение на сегодня.
+   * Создаёт или обновляет намерение на сегодня.
+   *
+   * Раньше здесь был find-then-create без уникального индекса: двойной тап
+   * или ретрай создавали две строки на одну дату, после чего findOne
+   * возвращал произвольную из них. Теперь на (userId, date) есть уникальный
+   * индекс, а гонка ловится через UniqueConstraintError.
    */
-  async setTodayIntention(userId: string, text: string) {
-    const today = new Date().toISOString().split('T')[0];
+  async setTodayIntention(userId: string, timezone: string, text: string) {
+    const today = todayInZone(timezone);
 
     const existing = await this.intentionModel.findOne({
-      where: {
-        userId,
-        date: today,
-      },
+      where: { userId, date: today },
     });
 
     if (existing) {
       existing.text = text;
       existing.completed = false;
-
       await existing.save();
-
       return existing;
     }
-    return this.intentionModel.create({
-      userId,
-      text,
-      date: today,
-      completed: false,
-    } as any);
-  }
 
-  /**
-   * Получить сегодняшнее намерение.
-   */
-  async getTodayIntention(userId: string) {
-    const today = new Date().toISOString().split('T')[0];
-
-    return this.intentionModel.findOne({
-      where: {
+    try {
+      return await this.intentionModel.create({
         userId,
+        text,
         date: today,
-      },
-    });
+        completed: false,
+      } as Partial<Intention> as Intention);
+    } catch (error) {
+      if (error instanceof UniqueConstraintError) {
+        // Параллельный запрос успел создать намерение — обновляем его
+        const concurrent = await this.intentionModel.findOne({
+          where: { userId, date: today },
+        });
+
+        if (concurrent) {
+          concurrent.text = text;
+          concurrent.completed = false;
+          await concurrent.save();
+          return concurrent;
+        }
+      }
+
+      throw error;
+    }
   }
 
-  /**
-   * Отметить сегодняшнее намерение выполненным.
-   */
-  async completeTodayIntention(userId: string) {
-    const intention = await this.getTodayIntention(userId);
+  getTodayIntention(userId: string, timezone: string) {
+    return this.getByDate(userId, todayInZone(timezone));
+  }
+
+  async completeTodayIntention(userId: string, timezone: string) {
+    const intention = await this.getTodayIntention(userId, timezone);
 
     if (!intention) {
       return null;
     }
 
     intention.completed = true;
-
     await intention.save();
 
     return intention;
   }
 
-  // ----- добавленный метод getAll -----
-  async getAll(userId: string) {
-    return this.intentionModel.findAll({
-      where: {
-        userId,
-      },
+  getByDate(userId: string, date: string) {
+    return this.intentionModel.findOne({
+      where: { userId, date },
     });
   }
 
-  // ----- добавленный метод getByDate -----
-  async getByDate(userId: string, date: string) {
-    return this.intentionModel.findOne({
+  /** Намерения за период — для календаря вместо выгрузки всей истории. */
+  getBetween(userId: string, from: string, to: string) {
+    return this.intentionModel.findAll({
       where: {
         userId,
-        date,
+        date: { [Op.gte]: from, [Op.lte]: to },
       },
+      order: [['date', 'ASC']],
     });
+  }
+
+  /** Агрегаты для статистики — считаются в БД, а не выгрузкой всех строк. */
+  async getStats(
+    userId: string,
+  ): Promise<{ total: number; completed: number }> {
+    const [total, completed] = await Promise.all([
+      this.intentionModel.count({ where: { userId } }),
+      this.intentionModel.count({ where: { userId, completed: true } }),
+    ]);
+
+    return { total, completed };
+  }
+
+  /** Даты активности до указанного дня включительно — для расчёта серии. */
+  async getActiveDates(userId: string, until: string): Promise<string[]> {
+    const rows = await this.intentionModel.findAll({
+      where: { userId, date: { [Op.lte]: until } },
+      attributes: ['date'],
+      raw: true,
+    });
+
+    return rows.map((row) => row.date);
   }
 }

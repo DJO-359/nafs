@@ -33,14 +33,14 @@ export default function ProgressCard({ reminders }: Props) {
     <Card>
       <h2 className="mb-4 text-lg font-semibold">📈 Прогресс напоминаний</h2>
 
-      <div className="mb-2 h-3 overflow-hidden rounded-full bg-gray-200">
+      <div className="mb-2 h-3 overflow-hidden rounded-full bg-[var(--app-border)]">
         <div
           className="h-full bg-emerald-600 transition-all"
           style={{ width: `${percent}%` }}
         />
       </div>
 
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-[var(--app-hint)]">
         Выполнено {completed} из {total} напоминаний
       </p>
 

@@ -3,6 +3,18 @@ import { Injectable } from '@nestjs/common';
 import { DiaryService } from '../diary/diary.service';
 import { IntentionService } from '../intention/intention.service';
 import { RemindersService } from '../reminders/reminders.service';
+import { todayInZone } from '../common/utils/timezone.util';
+import { calculateStreak } from './streak.util';
+
+export interface StatsResponse {
+  diaryEntries: number;
+  intentions: number;
+  completedIntentions: number;
+  reminders: number;
+  completedReminders: number;
+  streak: number;
+  activeDays: number;
+}
 
 @Injectable()
 export class StatsService {
@@ -12,62 +24,41 @@ export class StatsService {
     private readonly remindersService: RemindersService,
   ) {}
 
-  async getStats(userId: string) {
-    const diaryEntries = await this.diaryService.getAll(userId);
-    const intentions = await this.intentionService.getAll(userId);
-    const reminders = await this.remindersService.getAll(userId);
+  async getStats(userId: string, timezone: string): Promise<StatsResponse> {
+    const today = todayInZone(timezone);
 
-    // Множество для уникальных дат активности
+    // Счётчики считает БД, а не выгрузка всех строк в память
+    const [
+      diaryCount,
+      intentionStats,
+      reminderStats,
+      diaryDates,
+      intentionDates,
+      reminderDates,
+    ] = await Promise.all([
+      this.diaryService.count(userId),
+      this.intentionService.getStats(userId),
+      this.remindersService.getStats(userId),
+      this.diaryService.getActiveDates(userId, today),
+      this.intentionService.getActiveDates(userId, today),
+      this.remindersService.getTriggeredDates(userId, timezone),
+    ]);
+
     const activeDays = new Set<string>();
 
-    // Добавляем даты из дневника
-    for (const diary of diaryEntries) {
-      activeDays.add(diary.createdAt.toISOString().slice(0, 10));
-    }
-
-    // Добавляем даты из намерений
-    for (const intention of intentions) {
-      activeDays.add(intention.date);
-    }
-
-    // Добавляем даты из напоминаний
-    for (const reminder of reminders) {
-      activeDays.add(reminder.remindAt.toISOString().slice(0, 10));
-    }
-
-    // ------ вычисление серии (streak) ------
-    const sortedDays = [...activeDays].sort().reverse();
-
-    let streak = 0;
-    let currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0);
-
-    for (const day of sortedDays) {
-      const date = new Date(day);
-      date.setHours(0, 0, 0, 0);
-
-      const diff =
-        (currentDate.getTime() - date.getTime()) / (1000 * 60 * 60 * 24);
-
-      if (diff === 0) {
-        streak++;
-        currentDate.setDate(currentDate.getDate() - 1);
-      } else if (diff === 1) {
-        streak++;
-        currentDate.setDate(currentDate.getDate() - 1);
-      } else {
-        break;
+    for (const date of [...diaryDates, ...intentionDates, ...reminderDates]) {
+      if (date && date <= today) {
+        activeDays.add(date);
       }
     }
-    // -------------------------------------
 
     return {
-      diaryEntries: diaryEntries.length,
-      intentions: intentions.length,
-      completedIntentions: intentions.filter((i) => i.completed).length,
-      reminders: reminders.length,
-      completedReminders: reminders.filter((r) => r.completed).length,
-      streak, // ← теперь реальное значение
+      diaryEntries: diaryCount,
+      intentions: intentionStats.total,
+      completedIntentions: intentionStats.completed,
+      reminders: reminderStats.total,
+      completedReminders: reminderStats.completed,
+      streak: calculateStreak(activeDays, today),
       activeDays: activeDays.size,
     };
   }

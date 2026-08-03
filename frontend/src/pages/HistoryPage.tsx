@@ -1,41 +1,48 @@
 import Card from "../components/ui/Card";
+import QueryState from "../components/ui/QueryState";
 import { useDiaryHistory } from "../hooks/useDiaryHistory";
-import { Link } from "react-router-dom";
+import { useBackButton } from "../hooks/useBackButton";
+
+function formatDay(date: string): string {
+  const [year, month, day] = date.split("-").map(Number);
+
+  return new Date(year, month - 1, day).toLocaleDateString("ru-RU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
 
 export default function HistoryPage() {
-  const { data, isLoading } = useDiaryHistory();
+  const query = useDiaryHistory();
 
-  if (isLoading) {
-    return <p>Загрузка...</p>;
-  }
+  useBackButton();
 
   return (
-    <div className="mx-auto max-w-md p-4 space-y-4">
-      <div className="mb-4">
-        <Link
-          to="/"
-          className="rounded-lg border px-4 py-2 transition hover:bg-gray-100"
-        >
-          ← Назад
-        </Link>
-      </div>
-
+    <div className="space-y-4">
       <h1 className="text-2xl font-bold">📖 История дневника</h1>
 
-      {data.length === 0 ? (
-        <Card>
-          <p>Записей пока нет.</p>
-        </Card>
-      ) : (
-        data.map((entry: any) => (
-          <Card key={entry.id}>
-            <div className="mb-2 text-sm text-gray-500">
-              {new Date(entry.createdAt).toLocaleString("ru-RU")}
-            </div>
-            <p className="whitespace-pre-wrap">{entry.content}</p>
-          </Card>
-        ))
-      )}
+      {/* Раньше здесь читалось data.length по возможному undefined:
+          при ошибке запроса страница падала с TypeError */}
+      <QueryState
+        query={query}
+        isEmpty={(entries) => entries.length === 0}
+        emptyTitle="Записей пока нет"
+      >
+        {(entries) => (
+          <div className="space-y-4">
+            {entries.map((entry) => (
+              <Card key={entry.id}>
+                <div className="mb-2 text-sm text-[var(--app-hint)]">
+                  {formatDay(entry.date)}
+                </div>
+
+                <p className="whitespace-pre-wrap">{entry.content}</p>
+              </Card>
+            ))}
+          </div>
+        )}
+      </QueryState>
     </div>
   );
 }

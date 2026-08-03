@@ -1,18 +1,24 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner"; // импорт
-import { createIntention, completeIntention } from "../api/intention.api";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
+
+import { completeIntention, createIntention } from "../api/intention.api";
+import { describeError } from "../lib/errors";
+import { haptic } from "../lib/telegram";
+import { useInvalidateDayData } from "./useInvalidateDayData";
 
 export function useIntention() {
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateDayData();
 
   const createMutation = useMutation({
     mutationFn: createIntention,
     onSuccess() {
       toast.success("🧭 Намерение сохранено");
-
-      queryClient.invalidateQueries({
-        queryKey: ["day"],
-      });
+      haptic("success");
+      invalidate();
+    },
+    onError(error) {
+      toast.error(`Не удалось сохранить намерение: ${describeError(error)}`);
+      haptic("error");
     },
   });
 
@@ -20,15 +26,14 @@ export function useIntention() {
     mutationFn: completeIntention,
     onSuccess() {
       toast.success("🎉 Намерение выполнено");
-
-      queryClient.invalidateQueries({
-        queryKey: ["day"],
-      });
+      haptic("success");
+      invalidate();
+    },
+    onError(error) {
+      toast.error(`Не удалось отметить: ${describeError(error)}`);
+      haptic("error");
     },
   });
 
-  return {
-    createMutation,
-    completeMutation,
-  };
+  return { createMutation, completeMutation };
 }

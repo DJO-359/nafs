@@ -1,9 +1,9 @@
-import Calendar from "../components/Calendar";
+import StatsView from "../components/StatsPage";
 
+/**
+ * Раньше этот роут рендерил <Calendar/> — вкладка «Статистика» показывала
+ * второй календарь, а готовый экран статистики был недостижим.
+ */
 export default function StatsPage() {
-  return (
-    <div className="space-y-4">
-      <Calendar />
-    </div>
-  );
+  return <StatsView />;
 }

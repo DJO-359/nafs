@@ -1,18 +1,21 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class TelegramAuthDto {
+  /**
+   * Сырая строка window.Telegram.WebApp.initData.
+   * Подпись проверяется на сервере — клиенту здесь не доверяем ничему.
+   */
   @IsString()
-  telegramId!: string;
+  @IsNotEmpty()
+  @MaxLength(4096)
+  initData!: string;
 
+  /**
+   * Часовой пояс клиента (IANA, из Intl.DateTimeFormat().resolvedOptions()).
+   * Нужен, чтобы «сегодня» на сервере совпадало с «сегодня» у пользователя.
+   */
   @IsOptional()
   @IsString()
-  username?: string;
-
-  @IsOptional()
-  @IsString()
-  firstName?: string;
-
-  @IsOptional()
-  @IsString()
-  lastName?: string;
+  @MaxLength(64)
+  timezone?: string;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
@@ -75,17 +75,32 @@ export default function HabitForm({
   onSubmit,
   loading = false,
 }: Props) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [icon, setIcon] = useState("📖");
-  const [color, setColor] = useState("#10b981");
-  const [periodType, setPeriodType] =
-    useState<CreateHabitDto["periodType"]>("30_DAYS");
-  const [customPeriodDays, setCustomPeriodDays] = useState(30);
-  const [startDate, setStartDate] = useState(
-    new Date().toISOString().slice(0, 10),
+  // Значения по умолчанию для новой привычки — период на 30 дней от сегодня
+  const defaultDates = getPeriodDates("30_DAYS") ?? {
+    startDate: toInputDate(new Date()),
+    endDate: toInputDate(new Date()),
+  };
+
+  // Состояние инициализируется из props; сброс делает родитель через key —
+  // синхронизация через useEffect вызывала каскадные перерисовки
+  const [title, setTitle] = useState(initialHabit?.title ?? "");
+  const [description, setDescription] = useState(
+    initialHabit?.description ?? "",
   );
-  const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
+  const [icon, setIcon] = useState(initialHabit?.icon ?? "📖");
+  const [color, setColor] = useState(initialHabit?.color ?? "#10b981");
+  const [periodType, setPeriodType] = useState<CreateHabitDto["periodType"]>(
+    initialHabit?.periodType ?? "30_DAYS",
+  );
+  // Для своего периода пользователь задаёт даты напрямую, отдельного поля
+  // ввода нет — значение только передаётся на бэкенд как есть
+  const customPeriodDays = initialHabit?.customPeriodDays ?? 30;
+  const [startDate, setStartDate] = useState(
+    initialHabit?.startDate ?? defaultDates.startDate,
+  );
+  const [endDate, setEndDate] = useState(
+    initialHabit?.endDate ?? defaultDates.endDate,
+  );
 
   const today = toInputDate(new Date());
 
@@ -117,27 +132,8 @@ export default function HabitForm({
     setEndDate(value);
   }
 
-  useEffect(() => {
-    if (!open) return;
-
-    if (initialHabit) {
-      setTitle(initialHabit.title);
-      setDescription(initialHabit.description ?? "");
-      setIcon(initialHabit.icon);
-      setColor(initialHabit.color);
-      setPeriodType(initialHabit.periodType);
-      setCustomPeriodDays(initialHabit.customPeriodDays ?? 30);
-      setStartDate(initialHabit.startDate);
-      setEndDate(initialHabit.endDate);
-    } else {
-      setTitle("");
-      setDescription("");
-      setIcon("📖");
-      setColor("#10b981");
-      setCustomPeriodDays(30);
-      applyPeriodDates("30_DAYS");
-    }
-  }, [open, initialHabit]);
+  // Поля больше не синхронизируются эффектом: значения заданы при создании
+  // компонента, а родитель пересоздаёт форму через key при смене привычки
 
   async function handleSubmit() {
     if (!title.trim()) return;
@@ -164,7 +160,7 @@ export default function HabitForm({
           transition={{ duration: 0.2, ease: "easeInOut" }}
           className="mt-3 overflow-hidden"
         >
-          <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+          <div className="rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] p-3">
             <div className="space-y-3">
               <Input
                 value={title}
@@ -177,18 +173,18 @@ export default function HabitForm({
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
                 placeholder="Описание"
-                className="w-full rounded-lg border border-gray-300 p-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                className="w-full rounded-lg border border-[var(--app-border)] p-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
               />
 
               <div>
-                <p className="mb-2 text-sm text-gray-500">Иконка</p>
+                <p className="mb-2 text-sm text-[var(--app-hint)]">Иконка</p>
                 <div className="flex flex-wrap gap-2">
                   {icons.map((item) => (
                     <button
                       key={item}
                       type="button"
                       onClick={() => setIcon(item)}
-                      className={`rounded-lg border p-2 text-lg ${icon === item ? "border-emerald-600 bg-emerald-50" : "border-gray-200 bg-white"}`}
+                      className={`rounded-lg border p-2 text-lg ${icon === item ? "border-emerald-600 bg-emerald-50" : "border-[var(--app-border)] bg-[var(--app-surface)]"}`}
                     >
                       {item}
                     </button>
@@ -197,7 +193,7 @@ export default function HabitForm({
               </div>
 
               <div>
-                <p className="mb-2 text-sm text-gray-500">Цвет</p>
+                <p className="mb-2 text-sm text-[var(--app-hint)]">Цвет</p>
                 <div className="flex flex-wrap gap-2">
                   {colors.map((item) => (
                     <button
@@ -212,7 +208,7 @@ export default function HabitForm({
               </div>
 
               <div>
-                <p className="mb-2 text-sm text-gray-500">Период</p>
+                <p className="mb-2 text-sm text-[var(--app-hint)]">Период</p>
                 <div className="space-y-2">
                   {periodOptions.map((option) => (
                     <label
@@ -238,23 +234,23 @@ export default function HabitForm({
               {periodType === "CUSTOM" && (
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <p className="mb-1 text-sm text-gray-500">Начало</p>
+                    <p className="mb-1 text-sm text-[var(--app-hint)]">Начало</p>
                     <input
                       type="date"
                       value={startDate}
                       min={today}
                       onChange={(e) => handleStartDateChange(e.target.value)}
-                      className="w-full rounded-lg border border-gray-300 p-2"
+                      className="w-full rounded-lg border border-[var(--app-border)] p-2"
                     />
                   </div>
                   <div>
-                    <p className="mb-1 text-sm text-gray-500">Окончание</p>
+                    <p className="mb-1 text-sm text-[var(--app-hint)]">Окончание</p>
                     <input
                       type="date"
                       value={endDate}
                       min={startDate}
                       onChange={(e) => handleEndDateChange(e.target.value)}
-                      className="w-full rounded-lg border border-gray-300 p-2"
+                      className="w-full rounded-lg border border-[var(--app-border)] p-2"
                     />
                   </div>
                 </div>
@@ -267,7 +263,7 @@ export default function HabitForm({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 transition hover:bg-gray-50"
+                  className="rounded-lg border border-[var(--app-border)] px-4 py-2 text-sm text-[var(--app-hint)] transition hover:bg-[var(--app-bg)]"
                 >
                   Отмена
                 </button>

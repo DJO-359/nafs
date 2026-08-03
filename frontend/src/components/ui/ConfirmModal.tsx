@@ -37,7 +37,7 @@ export default function ConfirmModal({
         </>
       }
     >
-      <p className="text-gray-600">{description}</p>
+      <p className="text-[var(--app-hint)]">{description}</p>
     </Modal>
   );
 }

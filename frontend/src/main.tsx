@@ -5,18 +5,24 @@ import "./index.css";
 
 import App from "./app/App";
 import { Providers } from "./app/providers";
-import { ensureAuth } from "./hooks/useAuth";
+import { initTelegram } from "./lib/telegram";
 
-async function bootstrap() {
-  await ensureAuth();
+// ready() и expand() должны вызываться как можно раньше: без них Telegram
+// держит собственный лоадер поверх приложения и не разворачивает окно
+initTelegram();
 
-  createRoot(document.getElementById("root")!).render(
-    <StrictMode>
-      <Providers>
-        <App />
-      </Providers>
-    </StrictMode>,
-  );
+const container = document.getElementById("root");
+
+if (!container) {
+  throw new Error("Не найден элемент #root");
 }
 
-bootstrap();
+// Дерево рендерится всегда. Авторизация живёт внутри AuthGate,
+// поэтому сетевая ошибка даёт экран с объяснением, а не белый экран.
+createRoot(container).render(
+  <StrictMode>
+    <Providers>
+      <App />
+    </Providers>
+  </StrictMode>,
+);

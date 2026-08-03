@@ -1,9 +1,22 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
+
 import { Reminder } from './models/reminder.model';
 import { CreateReminderDto } from './dto/create-reminder.dto';
+import { UpdateReminderDto } from './dto/update-reminder.dto';
 import { ReminderRepeatType } from './enums/reminder-repeat-type.enum';
+import {
+  addDaysInZone,
+  dayRangeInZone,
+  formatDayInZone,
+  getZonedParts,
+  todayInZone,
+  zonedTimeToUtc,
+} from '../common/utils/timezone.util';
+
+/** Час, на который переносится напоминание кнопкой «Завтра». */
+const TOMORROW_SNOOZE_HOUR = 9;
 
 @Injectable()
 export class RemindersService {
@@ -12,7 +25,7 @@ export class RemindersService {
     private readonly reminderModel: typeof Reminder,
   ) {}
 
-  async create(userId: string, dto: CreateReminderDto) {
+  create(userId: string, dto: CreateReminderDto) {
     return this.reminderModel.create({
       userId,
       title: dto.title,
@@ -22,177 +35,215 @@ export class RemindersService {
       repeatInterval: dto.repeatInterval ?? 1,
       repeatDays: dto.repeatDays ?? null,
       completed: false,
-    } as Reminder);
+      snoozedUntil: null,
+      lastTriggeredAt: null,
+    } as Partial<Reminder> as Reminder);
   }
 
-  async findAll(userId: string) {
+  findAll(userId: string) {
     return this.reminderModel.findAll({
-      where: {
-        userId,
-      },
+      where: { userId },
       order: [['remindAt', 'ASC']],
     });
   }
 
-  async getTodayReminders(userId: string) {
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-    today.setHours(0, 0, 0, 0);
-    tomorrow.setHours(0, 0, 0, 0);
-
-    return this.reminderModel.findAll({
-      where: {
-        userId,
-        remindAt: {
-          [Op.gte]: today,
-          [Op.lt]: tomorrow,
-        },
-      },
-      order: [['remindAt', 'ASC']],
-    });
-  }
-
-  async complete(id: string, userId: string) {
+  /** Владелец проверяется всегда — иначе чужой id из URL сработал бы. */
+  private async findOwned(userId: string, id: string): Promise<Reminder> {
     const reminder = await this.reminderModel.findOne({
       where: { id, userId },
     });
+
     if (!reminder) {
       throw new NotFoundException('Напоминание не найдено');
     }
+
+    return reminder;
+  }
+
+  async complete(userId: string, id: string) {
+    const reminder = await this.findOwned(userId, id);
+
     reminder.completed = true;
+    reminder.snoozedUntil = null;
     await reminder.save();
+
     return reminder;
   }
 
   async remove(userId: string, id: string) {
-    const reminder = await this.reminderModel.findOne({
-      where: { id, userId },
-    });
-    if (!reminder) return null;
+    const reminder = await this.findOwned(userId, id);
+
     await reminder.destroy();
+
     return { deleted: true };
   }
 
-  async update(userId: string, id: string, dto: CreateReminderDto) {
-    const reminder = await this.reminderModel.findOne({
-      where: { id, userId },
-    });
-    if (!reminder) return null;
-    reminder.title = dto.title;
-    reminder.description = dto.description ?? null;
-    reminder.remindAt = new Date(dto.remindAt);
+  async update(userId: string, id: string, dto: UpdateReminderDto) {
+    const reminder = await this.findOwned(userId, id);
+
+    if (dto.title !== undefined) reminder.title = dto.title;
+    if (dto.description !== undefined) {
+      reminder.description = dto.description ?? null;
+    }
+    if (dto.remindAt !== undefined) {
+      reminder.remindAt = new Date(dto.remindAt);
+      // Изменили время — старый перенос больше не актуален
+      reminder.snoozedUntil = null;
+      reminder.completed = false;
+    }
+    if (dto.repeatType !== undefined) reminder.repeatType = dto.repeatType;
+    if (dto.repeatInterval !== undefined) {
+      reminder.repeatInterval = dto.repeatInterval;
+    }
+    if (dto.repeatDays !== undefined) {
+      reminder.repeatDays = dto.repeatDays ?? null;
+    }
+
     await reminder.save();
+
     return reminder;
   }
 
-  async getAll(userId: string) {
-    return this.reminderModel.findAll({
-      where: { userId },
-    });
-  }
+  getByDate(userId: string, timezone: string, date: string) {
+    const { start, end } = dayRangeInZone(date, timezone);
 
-  async getByDate(userId: string, date: string) {
-    const start = new Date(`${date}T00:00:00`);
-    const end = new Date(`${date}T23:59:59.999`);
     return this.reminderModel.findAll({
       where: {
         userId,
-        remindAt: {
-          [Op.gte]: start,
-          [Op.lte]: end,
-        },
+        // Полуинтервал вместо <= 23:59:59.999, чтобы не терять последнюю мс
+        remindAt: { [Op.gte]: start, [Op.lt]: end },
       },
       order: [['remindAt', 'ASC']],
     });
   }
 
-  // ----- обновлённый метод getUpcomingReminders с группировкой -----
-  async getUpcomingReminders(userId: string) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    const dayAfterTomorrow = new Date(today);
-    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+  /**
+   * Напоминания на сегодня, завтра и дальше — для экрана дня.
+   * Границы суток считаются в зоне пользователя.
+   */
+  async getUpcomingReminders(userId: string, timezone: string) {
+    const today = todayInZone(timezone);
+    const todayRange = dayRangeInZone(today, timezone);
+    const tomorrowRange = dayRangeInZone(
+      formatDayInZone(addDaysInZone(todayRange.start, 1, timezone), timezone),
+      timezone,
+    );
 
     const reminders = await this.reminderModel.findAll({
       where: {
         userId,
-        remindAt: {
-          [Op.gte]: today,
-        },
+        remindAt: { [Op.gte]: todayRange.start },
       },
       order: [['remindAt', 'ASC']],
     });
 
-    // Группировка напоминаний, начиная с afterTomorrow, по датам
+    const todayItems: Reminder[] = [];
+    const tomorrowItems: Reminder[] = [];
     const groupedUpcoming = new Map<string, Reminder[]>();
 
     for (const reminder of reminders) {
-      const d = new Date(reminder.remindAt);
-      if (d >= dayAfterTomorrow) {
-        const key = d.toISOString().slice(0, 10);
-        if (!groupedUpcoming.has(key)) {
-          groupedUpcoming.set(key, []);
+      const at = new Date(reminder.remindAt).getTime();
+
+      if (at < todayRange.end.getTime()) {
+        todayItems.push(reminder);
+      } else if (at < tomorrowRange.end.getTime()) {
+        tomorrowItems.push(reminder);
+      } else {
+        const key = formatDayInZone(new Date(reminder.remindAt), timezone);
+        const bucket = groupedUpcoming.get(key);
+
+        if (bucket) {
+          bucket.push(reminder);
+        } else {
+          groupedUpcoming.set(key, [reminder]);
         }
-        groupedUpcoming.get(key)!.push(reminder);
       }
     }
 
     return {
-      today: reminders.filter((r) => {
-        const d = new Date(r.remindAt);
-        return d >= today && d < tomorrow;
-      }),
-      tomorrow: reminders.filter((r) => {
-        const d = new Date(r.remindAt);
-        return d >= tomorrow && d < dayAfterTomorrow;
-      }),
-      upcoming: Array.from(groupedUpcoming.entries()).map(([date, items]) => ({
+      today: todayItems,
+      tomorrow: tomorrowItems,
+      upcoming: [...groupedUpcoming.entries()].map(([date, items]) => ({
         date,
         items,
       })),
     };
   }
 
-  // ----- Новые методы для работы с отдельными напоминаниями (без userId) -----
+  /**
+   * Перенос «через час» — считается от текущего момента, а не от remindAt.
+   * К моменту нажатия кнопки планировщик уже сдвинул remindAt по расписанию,
+   * поэтому раньше «через час» на ежедневном давало «завтра + 1 час».
+   */
+  async snoozeByHours(userId: string, id: string, hours: number) {
+    const reminder = await this.findOwned(userId, id);
 
-  async completeById(id: string) {
-    const reminder = await this.reminderModel.findByPk(id);
-    if (!reminder) {
-      return null;
-    }
-    reminder.completed = true;
+    const target = new Date(Date.now() + hours * 60 * 60 * 1000);
+    reminder.snoozedUntil = target;
     await reminder.save();
+
     return reminder;
   }
 
-  async postponeHour(id: string) {
-    const reminder = await this.reminderModel.findByPk(id);
-    if (!reminder) {
-      return null;
-    }
-    const remindAt = new Date(reminder.remindAt);
-    remindAt.setHours(remindAt.getHours() + 1);
-    reminder.remindAt = remindAt;
-    reminder.completed = false;
+  /** Перенос на завтра — на утро следующего дня в зоне пользователя. */
+  async snoozeToTomorrow(userId: string, id: string, timezone: string) {
+    const reminder = await this.findOwned(userId, id);
+
+    const tomorrow = addDaysInZone(new Date(), 1, timezone);
+    const parts = getZonedParts(tomorrow, timezone);
+
+    reminder.snoozedUntil = zonedTimeToUtc(
+      parts.year,
+      parts.month,
+      parts.day,
+      TOMORROW_SNOOZE_HOUR,
+      0,
+      0,
+      timezone,
+    );
+
     await reminder.save();
+
     return reminder;
   }
 
-  async postponeTomorrow(id: string) {
-    const reminder = await this.reminderModel.findByPk(id);
-    if (!reminder) {
-      return null;
-    }
-    const remindAt = new Date(reminder.remindAt);
-    remindAt.setDate(remindAt.getDate() + 1);
-    reminder.remindAt = remindAt;
-    reminder.completed = false;
-    await reminder.save();
-    return reminder;
+  /** Напоминания за период — для календаря вместо выгрузки всей истории. */
+  getBetween(userId: string, from: Date, to: Date) {
+    return this.reminderModel.findAll({
+      where: {
+        userId,
+        remindAt: { [Op.gte]: from, [Op.lt]: to },
+      },
+      order: [['remindAt', 'ASC']],
+    });
+  }
+
+  async getStats(
+    userId: string,
+  ): Promise<{ total: number; completed: number }> {
+    const [total, completed] = await Promise.all([
+      this.reminderModel.count({ where: { userId } }),
+      this.reminderModel.count({ where: { userId, completed: true } }),
+    ]);
+
+    return { total, completed };
+  }
+
+  /**
+   * Даты, когда напоминание реально срабатывало.
+   * Именно lastTriggeredAt, а не remindAt: у повторяющихся напоминаний
+   * remindAt всегда в будущем, и раньше это обнуляло серию дней.
+   */
+  async getTriggeredDates(userId: string, timezone: string): Promise<string[]> {
+    const rows = await this.reminderModel.findAll({
+      where: { userId, lastTriggeredAt: { [Op.ne]: null } },
+      attributes: ['lastTriggeredAt'],
+      raw: true,
+    });
+
+    return rows
+      .map((row) => row.lastTriggeredAt)
+      .filter((value): value is Date => Boolean(value))
+      .map((value) => formatDayInZone(new Date(value), timezone));
   }
 }

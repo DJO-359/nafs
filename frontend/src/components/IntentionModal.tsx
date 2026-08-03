@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Button from "./ui/Button";
 import Input from "./ui/Input";
 import Modal from "./ui/Modal";
@@ -30,17 +30,12 @@ export default function IntentionModal({
   onClose,
   onSave,
 }: Props) {
-  const [text, setText] = useState("");
+  // Начальные значения берутся прямо из props; при открытии родитель
+  // пересоздаёт компонент через key, поэтому синхронизация через useEffect
+  // (и вызванные ею каскадные перерисовки) больше не нужна
+  const [text, setText] = useState(initialValue);
   const [repeat, setRepeat] = useState(initialRepeat);
   const [autoUse, setAutoUse] = useState(initialAutoUse);
-
-  useEffect(() => {
-    if (open) {
-      setText(initialValue);
-      setRepeat(initialRepeat);
-      setAutoUse(initialAutoUse);
-    }
-  }, [initialValue, initialRepeat, initialAutoUse, open]);
 
   async function handleSave() {
     if (!text.trim()) return;
@@ -61,7 +56,7 @@ export default function IntentionModal({
     >
       <div className="space-y-4">
         <div>
-          <p className="mb-2 text-sm text-gray-500">Текст намерения</p>
+          <p className="mb-2 text-sm text-[var(--app-hint)]">Текст намерения</p>
           <Input
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -70,11 +65,11 @@ export default function IntentionModal({
         </div>
 
         <div>
-          <label className="mb-2 block text-sm text-gray-500">Повтор</label>
+          <label className="mb-2 block text-sm text-[var(--app-hint)]">Повтор</label>
           <select
             value={repeat}
             onChange={(e) => setRepeat(e.target.value as typeof repeat)}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-2 text-sm"
           >
             <option value="none">Не повторять</option>
             <option value="daily">Каждый день</option>
@@ -83,18 +78,18 @@ export default function IntentionModal({
           </select>
         </div>
 
-        <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+        <label className="flex items-center gap-2 rounded-lg border border-[var(--app-border)] bg-[var(--app-bg)] p-3 text-sm text-gray-700">
           <input
             type="checkbox"
             checked={autoUse}
             onChange={(e) => setAutoUse(e.target.checked)}
-            className="rounded border-gray-300"
+            className="rounded border-[var(--app-border)]"
           />
           <span>Использовать последнее намерение автоматически</span>
         </label>
 
         <div>
-          <p className="mb-2 text-sm font-medium text-gray-600">
+          <p className="mb-2 text-sm font-medium text-[var(--app-hint)]">
             Быстрый выбор
           </p>
           <div className="flex flex-wrap gap-2">
@@ -103,7 +98,7 @@ export default function IntentionModal({
                 key={option}
                 type="button"
                 onClick={() => setText(option)}
-                className="rounded-full border border-gray-200 px-3 py-1.5 text-sm text-gray-600 transition hover:bg-gray-50"
+                className="rounded-full border border-[var(--app-border)] px-3 py-1.5 text-sm text-[var(--app-hint)] transition hover:bg-[var(--app-bg)]"
               >
                 {option}
               </button>
