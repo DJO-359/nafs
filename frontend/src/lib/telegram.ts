@@ -34,15 +34,15 @@ interface BackButton {
 }
 
 interface HapticFeedback {
-  impactOccurred: (style: 'light' | 'medium' | 'heavy') => void;
-  notificationOccurred: (type: 'error' | 'success' | 'warning') => void;
+  impactOccurred: (style: "light" | "medium" | "heavy") => void;
+  notificationOccurred: (type: "error" | "success" | "warning") => void;
   selectionChanged: () => void;
 }
 
 interface TelegramWebApp {
   initData: string;
   initDataUnsafe?: { user?: TelegramUser };
-  colorScheme?: 'light' | 'dark';
+  colorScheme?: "light" | "dark";
   themeParams?: ThemeParams;
   ready: () => void;
   expand: () => void;
@@ -82,9 +82,9 @@ export function getTelegramUser(): TelegramUser | null {
 /** Часовой пояс устройства — от него сервер считает «сегодня». */
 export function getTimezone(): string {
   try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   } catch {
-    return 'UTC';
+    return "UTC";
   }
 }
 
@@ -95,6 +95,12 @@ export function getTimezone(): string {
 export function initTelegram(): void {
   const webApp = getWebApp();
 
+  // ---- ДОБАВЛЕННЫЕ ЛОГИ ДЛЯ ОТЛАДКИ ----
+  console.log("Telegram WebApp:", webApp);
+  console.log("initData:", webApp?.initData);
+  console.log("initDataUnsafe:", webApp?.initDataUnsafe);
+  // ---------------------------------------
+
   if (!webApp) {
     return;
   }
@@ -104,7 +110,7 @@ export function initTelegram(): void {
 
   applyTheme(webApp);
 
-  webApp.onEvent?.('themeChanged', () => applyTheme(webApp));
+  webApp.onEvent?.("themeChanged", () => applyTheme(webApp));
 }
 
 function applyTheme(webApp: TelegramWebApp): void {
@@ -112,14 +118,14 @@ function applyTheme(webApp: TelegramWebApp): void {
   const theme = webApp.themeParams ?? {};
 
   const variables: Record<string, string | undefined> = {
-    '--tg-bg': theme.bg_color,
-    '--tg-text': theme.text_color,
-    '--tg-hint': theme.hint_color,
-    '--tg-link': theme.link_color,
-    '--tg-button': theme.button_color,
-    '--tg-button-text': theme.button_text_color,
-    '--tg-secondary-bg': theme.secondary_bg_color,
-    '--tg-section-bg': theme.section_bg_color,
+    "--tg-bg": theme.bg_color,
+    "--tg-text": theme.text_color,
+    "--tg-hint": theme.hint_color,
+    "--tg-link": theme.link_color,
+    "--tg-button": theme.button_color,
+    "--tg-button-text": theme.button_text_color,
+    "--tg-secondary-bg": theme.secondary_bg_color,
+    "--tg-section-bg": theme.section_bg_color,
   };
 
   for (const [name, value] of Object.entries(variables)) {
@@ -128,18 +134,18 @@ function applyTheme(webApp: TelegramWebApp): void {
     }
   }
 
-  root.dataset.theme = webApp.colorScheme ?? 'light';
+  root.dataset.theme = webApp.colorScheme ?? "light";
 }
 
 /** Тактильный отклик. Молча игнорируется вне Telegram. */
 export function haptic(
-  type: 'success' | 'error' | 'warning' | 'selection' = 'success',
+  type: "success" | "error" | "warning" | "selection" = "success",
 ): void {
   const feedback = getWebApp()?.HapticFeedback;
 
   if (!feedback) return;
 
-  if (type === 'selection') {
+  if (type === "selection") {
     feedback.selectionChanged();
     return;
   }
