@@ -95,11 +95,22 @@ export function getTimezone(): string {
 export function initTelegram(): void {
   const webApp = getWebApp();
 
-  // ---- ДОБАВЛЕННЫЕ ЛОГИ ДЛЯ ОТЛАДКИ ----
-  console.log("Telegram WebApp:", webApp);
-  console.log("initData:", webApp?.initData);
-  console.log("initDataUnsafe:", webApp?.initDataUnsafe);
-  // ---------------------------------------
+  // ---- РАСШИРЕННАЯ ДИАГНОСТИКА ----
+  console.log("========== TELEGRAM DEBUG ==========");
+  console.log("WebApp =", webApp);
+
+  console.log("initData.length =", webApp?.initData?.length);
+  console.log("initData =", JSON.stringify(webApp?.initData));
+
+  console.log("initDataUnsafe =", webApp?.initDataUnsafe);
+  console.log("user =", webApp?.initDataUnsafe?.user);
+
+  console.log("query_id =", (webApp?.initDataUnsafe as any)?.query_id);
+  console.log("auth_date =", (webApp?.initDataUnsafe as any)?.auth_date);
+  console.log("hash =", (webApp?.initDataUnsafe as any)?.hash);
+
+  console.log("====================================");
+  // -----------------------------------
 
   if (!webApp) {
     return;
