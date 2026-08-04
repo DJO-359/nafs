@@ -85,6 +85,22 @@ export class TelegramHandlerService implements OnModuleInit {
         `handleStart: sendMessage completed for chatId=${telegramId}`,
       );
     } catch (error) {
+      console.dir(error, { depth: null });
+      const isSequelizeError =
+        error &&
+        typeof error === 'object' &&
+        'parent' in error &&
+        'original' in error &&
+        'sql' in error;
+      if (isSequelizeError) {
+        console.error('Sequelize error details:', {
+          message: (error as any).message,
+          parent: (error as any).parent,
+          original: (error as any).original,
+          sql: (error as any).sql,
+          parameters: (error as any).parameters,
+        });
+      }
       this.logger.error(
         `Ошибка обработки /start для chatId=${telegramId}`,
         error instanceof Error ? error.stack : String(error),

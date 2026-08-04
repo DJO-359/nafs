@@ -85,6 +85,22 @@ export class TelegramUpdateService implements OnModuleInit {
       await bot.answerCallbackQuery(query.id, { text });
       await this.clearButtons(bot, query);
     } catch (error) {
+      console.dir(error, { depth: null });
+      const isSequelizeError =
+        error &&
+        typeof error === 'object' &&
+        'parent' in error &&
+        'original' in error &&
+        'sql' in error;
+      if (isSequelizeError) {
+        console.error('Sequelize error details:', {
+          message: (error as any).message,
+          parent: (error as any).parent,
+          original: (error as any).original,
+          sql: (error as any).sql,
+          parameters: (error as any).parameters,
+        });
+      }
       this.logger.error(
         'Ошибка обработки callback_query',
         error instanceof Error ? error.stack : String(error),

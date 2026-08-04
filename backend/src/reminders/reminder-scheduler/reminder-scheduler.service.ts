@@ -49,6 +49,22 @@ export class ReminderSchedulerService {
         try {
           await this.processReminder(reminder, now);
         } catch (error) {
+          console.dir(error, { depth: null });
+          const isSequelizeError =
+            error &&
+            typeof error === 'object' &&
+            'parent' in error &&
+            'original' in error &&
+            'sql' in error;
+          if (isSequelizeError) {
+            console.error('Sequelize error details:', {
+              message: (error as any).message,
+              parent: (error as any).parent,
+              original: (error as any).original,
+              sql: (error as any).sql,
+              parameters: (error as any).parameters,
+            });
+          }
           this.logger.error(
             `Ошибка обработки напоминания ${reminder.id}`,
             error instanceof Error ? error.stack : String(error),
@@ -56,6 +72,22 @@ export class ReminderSchedulerService {
         }
       }
     } catch (error) {
+      console.dir(error, { depth: null });
+      const isSequelizeError =
+        error &&
+        typeof error === 'object' &&
+        'parent' in error &&
+        'original' in error &&
+        'sql' in error;
+      if (isSequelizeError) {
+        console.error('Sequelize error details:', {
+          message: (error as any).message,
+          parent: (error as any).parent,
+          original: (error as any).original,
+          sql: (error as any).sql,
+          parameters: (error as any).parameters,
+        });
+      }
       this.logger.error(
         'Ошибка тика планировщика',
         error instanceof Error ? error.stack : String(error),
