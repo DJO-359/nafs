@@ -14,32 +14,46 @@ import { HabitCompletion } from '../habits/models/habit-completion.model';
     SequelizeModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        dialect: 'postgres' as const,
-        host: configService.getOrThrow<string>('DB_HOST'),
-        port: configService.getOrThrow<number>('DB_PORT'),
-        username: configService.getOrThrow<string>('DB_USER'),
-        password: configService.getOrThrow<string>('DB_PASSWORD'),
-        database: configService.getOrThrow<string>('DB_NAME'),
-        dialectOptions: configService.get<boolean>('DB_SSL')
-          ? {
-              ssl: {
-                require: true,
-                // Сертификат провайдера проверяем — иначе TLS не защищает от MITM
-                rejectUnauthorized: true,
-              },
-            }
-          : {},
-        models: [User, Intention, Reminder, DiaryEntry, Habit, HabitCompletion],
-        autoLoadModels: true,
-        /**
-         * Схема управляется миграциями (npm run db:migrate).
-         * DB_SYNC оставлен только для локальной песочницы и по умолчанию выключен:
-         * sync() умеет молча терять данные при изменении типа колонки.
-         */
-        synchronize: configService.get<boolean>('DB_SYNC') === true,
-        logging: configService.get<boolean>('DB_LOGGING') === true,
-      }),
+      useFactory: (configService: ConfigService) => {
+        // ---- ВРЕМЕННЫЕ ЛОГИ ДЛЯ ОТЛАДКИ ----
+        console.log('DB_SYNC =', configService.get('DB_SYNC'));
+        console.log('DB_SSL =', configService.get('DB_SSL'));
+        // -------------------------------------
+
+        return {
+          dialect: 'postgres' as const,
+          host: configService.getOrThrow<string>('DB_HOST'),
+          port: configService.getOrThrow<number>('DB_PORT'),
+          username: configService.getOrThrow<string>('DB_USER'),
+          password: configService.getOrThrow<string>('DB_PASSWORD'),
+          database: configService.getOrThrow<string>('DB_NAME'),
+          dialectOptions: configService.get<boolean>('DB_SSL')
+            ? {
+                ssl: {
+                  require: true,
+                  // Сертификат провайдера проверяем — иначе TLS не защищает от MITM
+                  rejectUnauthorized: true,
+                },
+              }
+            : {},
+          models: [
+            User,
+            Intention,
+            Reminder,
+            DiaryEntry,
+            Habit,
+            HabitCompletion,
+          ],
+          autoLoadModels: true,
+          /**
+           * Схема управляется миграциями (npm run db:migrate).
+           * DB_SYNC оставлен только для локальной песочницы и по умолчанию выключен:
+           * sync() умеет молча терять данные при изменении типа колонки.
+           */
+          synchronize: configService.get<boolean>('DB_SYNC') === true,
+          logging: configService.get<boolean>('DB_LOGGING') === true,
+        };
+      },
     }),
   ],
 })
