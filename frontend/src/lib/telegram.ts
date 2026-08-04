@@ -1,10 +1,7 @@
 /**
  * Обёртка над Telegram WebApp.
  *
- * Скрипт telegram-web-app.js подключается в index.html. Раньше его не было
- * вовсе, поэтому window.Telegram.WebApp не существовал: приложение не вызывало
- * ready() (Telegram держал лоадер поверх интерфейса), не разворачивалось на
- * весь экран и не читало тему клиента.
+ * Скрипт telegram-web-app.js подключается в index.html.
  */
 
 export interface TelegramUser {
@@ -42,20 +39,29 @@ interface HapticFeedback {
 interface TelegramWebApp {
   initData: string;
   initDataUnsafe?: { user?: TelegramUser };
+
+  version?: string;
+  platform?: string;
   colorScheme?: "light" | "dark";
+
   themeParams?: ThemeParams;
+
   ready: () => void;
   expand: () => void;
   close: () => void;
+
   BackButton?: BackButton;
   HapticFeedback?: HapticFeedback;
+
   onEvent?: (event: string, handler: () => void) => void;
   offEvent?: (event: string, handler: () => void) => void;
 }
 
 declare global {
   interface Window {
-    Telegram?: { WebApp?: TelegramWebApp };
+    Telegram?: {
+      WebApp?: TelegramWebApp;
+    };
   }
 }
 
@@ -63,13 +69,11 @@ export function getWebApp(): TelegramWebApp | null {
   return window.Telegram?.WebApp ?? null;
 }
 
-/** Приложение открыто внутри Telegram и получило подписанные данные. */
 export function isInsideTelegram(): boolean {
   const webApp = getWebApp();
   return Boolean(webApp && webApp.initData);
 }
 
-/** Сырая подписанная строка для отправки на бэкенд. */
 export function getInitData(): string | null {
   const webApp = getWebApp();
   return webApp?.initData ? webApp.initData : null;
@@ -79,7 +83,6 @@ export function getTelegramUser(): TelegramUser | null {
   return getWebApp()?.initDataUnsafe?.user ?? null;
 }
 
-/** Часовой пояс устройства — от него сервер считает «сегодня». */
 export function getTimezone(): string {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
@@ -88,29 +91,37 @@ export function getTimezone(): string {
   }
 }
 
-/**
- * Сообщает Telegram, что интерфейс готов, разворачивает окно
- * и прокидывает тему клиента в CSS-переменные.
- */
 export function initTelegram(): void {
   const webApp = getWebApp();
 
-  // ---- РАСШИРЕННАЯ ДИАГНОСТИКА ----
   console.log("========== TELEGRAM DEBUG ==========");
+
+  console.log("window.Telegram =", window.Telegram);
   console.log("WebApp =", webApp);
 
-  console.log("initData.length =", webApp?.initData?.length);
+  console.log("version =", webApp?.version);
+  console.log("platform =", webApp?.platform);
+
+  console.log("location =", window.location.href);
+  console.log("search =", window.location.search);
+  console.log("hash =", window.location.hash);
+
+  console.log(
+    "launchParams =",
+    new URLSearchParams(window.location.search).toString(),
+  );
+
+  console.log("initData.length =", webApp?.initData?.length ?? 0);
   console.log("initData =", JSON.stringify(webApp?.initData));
 
   console.log("initDataUnsafe =", webApp?.initDataUnsafe);
-  console.log("user =", webApp?.initDataUnsafe?.user);
 
+  console.log("user =", webApp?.initDataUnsafe?.user);
   console.log("query_id =", (webApp?.initDataUnsafe as any)?.query_id);
   console.log("auth_date =", (webApp?.initDataUnsafe as any)?.auth_date);
   console.log("hash =", (webApp?.initDataUnsafe as any)?.hash);
 
   console.log("====================================");
-  // -----------------------------------
 
   if (!webApp) {
     return;
@@ -126,6 +137,7 @@ export function initTelegram(): void {
 
 function applyTheme(webApp: TelegramWebApp): void {
   const root = document.documentElement;
+
   const theme = webApp.themeParams ?? {};
 
   const variables: Record<string, string | undefined> = {
@@ -148,7 +160,6 @@ function applyTheme(webApp: TelegramWebApp): void {
   root.dataset.theme = webApp.colorScheme ?? "light";
 }
 
-/** Тактильный отклик. Молча игнорируется вне Telegram. */
 export function haptic(
   type: "success" | "error" | "warning" | "selection" = "success",
 ): void {
@@ -164,7 +175,6 @@ export function haptic(
   feedback.notificationOccurred(type);
 }
 
-/** Нативная кнопка «Назад» на вложенных экранах. */
 export function bindBackButton(handler: () => void): () => void {
   const backButton = getWebApp()?.BackButton;
 
