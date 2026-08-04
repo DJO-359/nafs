@@ -18,6 +18,9 @@ import { HabitCompletion } from '../habits/models/habit-completion.model';
         // ---- ВРЕМЕННЫЕ ЛОГИ ДЛЯ ОТЛАДКИ ----
         console.log('DB_SYNC =', configService.get('DB_SYNC'));
         console.log('DB_SSL =', configService.get('DB_SSL'));
+        console.log('DB_HOST =', configService.get('DB_HOST'));
+        console.log('DB_NAME =', configService.get('DB_NAME'));
+        console.log('DB_USER =', configService.get('DB_USER'));
         // -------------------------------------
 
         return {
@@ -51,7 +54,7 @@ import { HabitCompletion } from '../habits/models/habit-completion.model';
            * sync() умеет молча терять данные при изменении типа колонки.
            */
           synchronize: configService.get<boolean>('DB_SYNC') === true,
-          logging: configService.get<boolean>('DB_LOGGING') === true,
+          logging: true, // Принудительно включено для отладки
         };
       },
     }),
