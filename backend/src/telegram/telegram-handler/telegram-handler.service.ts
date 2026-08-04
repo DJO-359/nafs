@@ -24,16 +24,24 @@ export class TelegramHandlerService implements OnModuleInit {
 
   onModuleInit(): void {
     const bot = this.telegramService.getBot();
+    this.logger.log('onModuleInit: checking Telegram bot instance');
 
     if (!bot) {
+      this.logger.warn('onModuleInit: Telegram bot instance is not available');
       return;
     }
 
     bot.onText(/^\/start/, (msg) => {
+      this.logger.log(
+        `onText /start received: chatId=${msg.chat?.id} text=${msg.text}`,
+      );
       void this.handleStart(bot, msg);
     });
 
     bot.on('message', (msg) => {
+      this.logger.log(
+        `onMessage received: chatId=${msg.chat?.id} text=${msg.text}`,
+      );
       void this.handleMessage(bot, msg);
     });
 
@@ -41,9 +49,12 @@ export class TelegramHandlerService implements OnModuleInit {
   }
 
   private async handleStart(bot: TelegramBot, msg: Message): Promise<void> {
-    try {
-      const telegramId = String(msg.chat.id);
+    const telegramId = String(msg.chat.id);
+    this.logger.log(
+      `handleStart: invoked for chatId=${telegramId} text=${msg.text}`,
+    );
 
+    try {
       // Профиль обновляем, но аккаунт здесь не создаём:
       // пользователь появляется только после проверки подписи initData
       await this.usersService.updateTelegramProfile(telegramId, {
@@ -52,6 +63,9 @@ export class TelegramHandlerService implements OnModuleInit {
       });
 
       const miniAppUrl = this.configService.getOrThrow<string>('MINI_APP_URL');
+      this.logger.log(
+        `handleStart: sending welcome message with MINI_APP_URL=${miniAppUrl}`,
+      );
 
       await bot.sendMessage(
         telegramId,
@@ -67,9 +81,12 @@ export class TelegramHandlerService implements OnModuleInit {
           },
         },
       );
+      this.logger.log(
+        `handleStart: sendMessage completed for chatId=${telegramId}`,
+      );
     } catch (error) {
       this.logger.error(
-        'Ошибка обработки /start',
+        `Ошибка обработки /start для chatId=${telegramId}`,
         error instanceof Error ? error.stack : String(error),
       );
     }
@@ -79,8 +96,12 @@ export class TelegramHandlerService implements OnModuleInit {
     try {
       const chatId = String(msg.chat.id);
       const text = msg.text?.trim();
+      this.logger.log(
+        `handleMessage: invoked for chatId=${chatId} text=${text}`,
+      );
 
       if (!text || text.startsWith('/')) {
+        this.logger.log(`handleMessage: ignoring text=${text}`);
         return;
       }
 
