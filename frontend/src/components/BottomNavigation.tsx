@@ -12,8 +12,15 @@ const ITEMS = [
 
 export default function BottomNavigation() {
   return (
-    <nav className="fixed inset-x-0 bottom-0 border-t border-[var(--app-border)] bg-[var(--app-surface)]">
-      <div className="safe-bottom mx-auto flex max-w-md justify-around px-2 pt-2">
+    <nav className="fixed left-4 right-4 bottom-4 z-50">
+      <div
+        className="flex h-[72px] items-center justify-around rounded-[28px] border border-white/40 bg-white/72 px-3 backdrop-blur-[20px] shadow-[0_12px_40px_rgba(0,0,0,0.12)]"
+        style={{
+          background: "rgba(255,255,255,0.72)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+        }}
+      >
         {ITEMS.map((item) => (
           <NavLink
             key={item.to}
@@ -21,15 +28,19 @@ export default function BottomNavigation() {
             end={item.to === "/"}
             onClick={() => haptic("selection")}
             className={({ isActive }) =>
-              `flex flex-col items-center gap-0.5 px-2 text-xs transition ${
+              `group flex items-center gap-2 rounded-full transition-all duration-[250ms] ease-out ${
                 isActive
-                  ? "font-semibold text-emerald-600"
-                  : "text-[var(--app-hint)]"
+                  ? "h-[46px] px-4 bg-white/92 shadow-[0_6px_20px_rgba(0,0,0,0.08)] text-[#2F855A] scale-[1.05]"
+                  : "h-[46px] px-3 text-[#9CA3AF]"
               }`
             }
           >
-            <span className="text-lg">{item.icon}</span>
-            {item.label}
+            <span
+              className={`text-lg transition duration-[250ms] ease-out ${isActive ? "scale-[1.08]" : "scale-100"}`}
+            >
+              {item.icon}
+            </span>
+            <span className="text-[11px] leading-4">{item.label}</span>
           </NavLink>
         ))}
       </div>

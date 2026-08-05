@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { forwardRef, useImperativeHandle, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Card from "../ui/Card";
 import {
@@ -10,6 +10,10 @@ import {
 } from "../../hooks/useHabits";
 import HabitForm from "./HabitForm";
 import type { CreateHabitDto, Habit } from "../../api/habit.api";
+
+export interface HabitsCardHandle {
+  openCreate: () => void;
+}
 
 // ✅ Новая функция formatPeriod – вычисляет дни из дат
 function formatPeriod(habit: Habit) {
@@ -24,7 +28,7 @@ function formatPeriod(habit: Habit) {
   return `${days} дней`;
 }
 
-export default function HabitsCard() {
+const HabitsCard = forwardRef<HabitsCardHandle, {}>(function HabitsCard(_, ref) {
   const [open, setOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const { data: habits = [], isLoading } = useHabits();
@@ -51,6 +55,10 @@ export default function HabitsCard() {
     setOpen(true);
   }
 
+  useImperativeHandle(ref, () => ({
+    openCreate,
+  }));
+
   function openEdit(habit: Habit) {
     setEditingHabit(habit);
     setOpen(true);
@@ -58,27 +66,11 @@ export default function HabitsCard() {
 
   return (
     <Card>
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold">🌱 Привычки</h2>
-          <p className="text-sm text-[var(--app-hint)]">
-            Спокойный прогресс без лишнего
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            if (open) {
-              setOpen(false);
-              setEditingHabit(null);
-            } else {
-              openCreate();
-            }
-          }}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-lg font-semibold text-white shadow-sm transition hover:bg-emerald-700"
-        >
-          {open ? "✕" : "+"}
-        </button>
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold">🌱 Привычки</h2>
+        <p className="mt-1 text-sm text-[var(--app-hint)]">
+          Спокойный прогресс без лишнего
+        </p>
       </div>
 
       <HabitForm
@@ -96,104 +88,56 @@ export default function HabitsCard() {
       {isLoading ? (
         <p className="text-sm text-[var(--app-hint)]">Загрузка...</p>
       ) : (
-        <div className="space-y-3">
+        <div>
           {visibleHabits.length === 0 && !open && (
             <p className="text-sm text-[var(--app-hint)]">Пока нет привычек</p>
           )}
 
-          {visibleHabits.map((habit) => (
-            <div
-              key={habit.id}
-              className="rounded-xl border border-[var(--app-border)] p-3"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">{habit.icon}</span>
-                    <div>
-                      <p className="font-medium">{habit.title}</p>
-                      <p className="text-xs text-[var(--app-hint)]">
-                        {formatPeriod(habit)}
-                      </p>
-                    </div>
-                  </div>
-                  {habit.description && (
-                    <p className="mt-2 text-sm text-[var(--app-hint)]">
-                      {habit.description}
-                    </p>
-                  )}
-                  <div className="mt-3">
-                    <div className="mb-1 flex items-center justify-between text-xs text-[var(--app-hint)]">
-                      <span>{habit.progress}%</span>
-                      <span>
-                        {habit.isCompleted
-                          ? "✅ Завершено"
-                          : habit.remainingDays > 0
-                            ? `Осталось ${habit.remainingDays} дней`
-                            : "Завершается сегодня"}
-                      </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-[var(--app-border)]">
-                      <div
-                        className="h-2 rounded-full transition-all duration-300"
-                        style={{
-                          width: `${Math.min(100, habit.progress)}%`,
-                          backgroundColor: habit.isCompleted
-                            ? "#10b981"
-                            : habit.color,
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-2 text-xs text-[var(--app-hint)]">
-                    <p>
-                      Выполнено {habit.completedDays} / {habit.totalDays}
-                    </p>
-                    {habit.isCompleted ? (
-                      <p className="mt-1 text-emerald-700">
-                        Период полностью пройден.
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
-                {habit.isCompleted ? (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white">
-                    ✓
-                  </div>
-                ) : (
+          <div className="space-y-[14px]">
+            {visibleHabits.map((habit) => (
+              <div
+                key={habit.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => openEdit(habit)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    openEdit(habit);
+                  }
+                }}
+                className="group w-full cursor-pointer transform rounded-[22px] bg-white p-5 shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition duration-[250ms] ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200"
+              >
+                <div className="flex items-start gap-4">
                   <button
                     type="button"
-                    onClick={() => toggleMutation.mutate(habit.id)}
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border transition ${habit.isCompletedToday ? "border-emerald-600 bg-emerald-600 text-white" : "border-[var(--app-border)] bg-[var(--app-surface)] text-gray-300"}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      toggleMutation.mutate(habit.id);
+                    }}
+                    className={`flex h-[34px] w-[34px] items-center justify-center rounded-full border transition duration-[250ms] ease-out ${habit.isCompletedToday ? "border-emerald-600 bg-emerald-600 text-white" : "border-[var(--app-border)] bg-white text-transparent"}`}
                     aria-label="Отметить привычку"
                   >
                     ✓
                   </button>
-                )}
+                  <div className="min-w-0">
+                    <p className="text-[17px] font-semibold text-slate-900">
+                      {habit.title}
+                    </p>
+                    {habit.description ? (
+                      <p className="mt-1 text-[14px] text-[#7A7A7A]">
+                        {habit.description}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
               </div>
-              <div className="mt-3 flex items-center justify-between text-xs text-[var(--app-hint)]">
-                <button
-                  type="button"
-                  onClick={() => openEdit(habit)}
-                  className="text-emerald-700 hover:underline"
-                >
-                  ✏️ Изменить
-                </button>
-                <button
-                  type="button"
-                  onClick={() => deleteMutation.mutate(habit.id)}
-                  className="text-red-600 hover:underline"
-                >
-                  Удалить
-                </button>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
 
           {habits.length > 5 && (
             <Link
               to="/habits"
-              className="block text-center text-sm font-medium text-emerald-700 hover:underline"
+              className="mt-3 block text-center text-sm font-medium text-emerald-700 hover:underline"
             >
               Показать все привычки
             </Link>

@@ -1,21 +1,50 @@
 import { Link } from "react-router-dom";
 
+import { useRef } from "react";
 import IntentionCard from "../components/IntentionCard";
 import ReminderList from "../components/ReminderList";
 import DiaryCard from "../components/DiaryCard";
 import ProgressCard from "../components/ProgressCard";
-import HabitsCard from "../components/habits/HabitsCard";
+import HabitsCard, {
+  type HabitsCardHandle,
+} from "../components/habits/HabitsCard";
 import QueryState from "../components/ui/QueryState";
 import { useDay } from "../hooks/useDay";
 import { useIntention } from "../hooks/useIntention";
 import { useReminder } from "../hooks/useReminder";
 import type { CreateReminderDto } from "../api/reminder.api";
 
-function greetingFor(hour: number): string {
-  if (hour < 6) return "Доброй ночи 🌙";
-  if (hour < 12) return "Доброе утро ☀️";
-  if (hour < 18) return "Добрый день 🌤";
-  return "Добрый вечер 🌙";
+import morningImage from "../assets/images/backgrounds/morning.jpg";
+import dayImage from "../assets/images/backgrounds/day.jpg";
+import eveningImage from "../assets/images/backgrounds/evening.jpg";
+import nightImage from "../assets/images/backgrounds/night.jpg";
+
+type DayPart = "morning" | "day" | "evening" | "night";
+
+const heroThemes: Record<DayPart, { greeting: string; image: string }> = {
+  morning: {
+    greeting: "Доброе утро ☀️",
+    image: morningImage,
+  },
+  day: {
+    greeting: "Добрый день ☀️",
+    image: dayImage,
+  },
+  evening: {
+    greeting: "Добрый вечер 🌅",
+    image: eveningImage,
+  },
+  night: {
+    greeting: "Доброй ночи 🌙",
+    image: nightImage,
+  },
+};
+
+function getDayPart(hour: number): DayPart {
+  if (hour >= 5 && hour < 12) return "morning";
+  if (hour >= 12 && hour < 18) return "day";
+  if (hour >= 18 && hour < 22) return "evening";
+  return "night";
 }
 
 /** Разбирает YYYY-MM-DD как локальную дату, без сдвига через UTC. */
@@ -28,6 +57,7 @@ export default function DayPage() {
   const dayQuery = useDay();
   const { createMutation, completeMutation } = useIntention();
   const reminderMutation = useReminder();
+  const habitsRef = useRef<HabitsCardHandle>(null);
 
   // Контейнер и отступы даёт Layout. Раньше здесь был второй min-h-screen
   // с собственным p-4, из-за чего отступы удваивались.
@@ -38,24 +68,45 @@ export default function DayPage() {
           (item) => !item.completed,
         ).length;
 
+        const currentHour = new Date().getHours();
+        const dayPart = getDayPart(currentHour);
+        const theme = heroThemes[dayPart];
+
         return (
           <div>
-            <header className="mb-6">
-              <h1 className="text-3xl font-bold">
-                {greetingFor(new Date().getHours())}
-              </h1>
+            <header
+              className="mb-6 overflow-hidden rounded-[28px] shadow-xl transition-all duration-300 ease-out"
+              style={{
+                minHeight: 280,
+                backgroundImage: `linear-gradient(rgba(0,0,0,.25), rgba(0,0,0,.45)), url(${theme.image})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
+              }}
+            >
+              <div className="relative h-full w-full px-6 py-6 sm:px-8 sm:py-8">
+                <div className="relative z-10 flex h-full flex-col justify-between text-white">
+                  <div>
+                    <p className="text-sm font-medium uppercase tracking-[0.18em] text-white/80">
+                      Сегодня
+                    </p>
+                    <h1 className="mt-3 text-4xl font-semibold text-white sm:text-5xl">
+                      {theme.greeting}
+                    </h1>
+                  </div>
 
-              <p className="mt-1 text-[var(--app-hint)]">
-                Сегодня{" "}
-                {parseDay(day.date).toLocaleDateString("ru-RU", {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                })}
-              </p>
+                  <p className="text-base text-white/75">
+                    {parseDay(day.date).toLocaleDateString("ru-RU", {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                    })}
+                  </p>
+                </div>
+              </div>
             </header>
 
-            <div className="mb-6 rounded-xl bg-emerald-600 p-4 text-white">
+            <div className="space-y-4">
               <div className="text-lg font-semibold">Сегодня</div>
 
               <div className="mt-3 flex justify-between">
@@ -91,7 +142,7 @@ export default function DayPage() {
                 }}
               />
 
-              <HabitsCard />
+              <HabitsCard ref={habitsRef} />
 
               <ReminderList
                 reminders={day.reminders}
@@ -105,22 +156,35 @@ export default function DayPage() {
               <ProgressCard reminders={day.reminders} />
             </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <Link
-                to="/calendar"
-                className="rounded-xl bg-[var(--app-surface)] p-4 text-center shadow transition hover:shadow-md"
-              >
-                📅
-                <div className="mt-2 font-medium">Календарь</div>
-              </Link>
+            <div className="relative">
+              <div className="mt-6 grid grid-cols-2 gap-3">
+                <Link
+                  to="/calendar"
+                  className="rounded-xl bg-[var(--app-surface)] p-4 text-center shadow transition hover:shadow-md"
+                >
+                  📅
+                  <div className="mt-2 font-medium">Календарь</div>
+                </Link>
 
-              <Link
-                to="/history"
-                className="rounded-xl bg-[var(--app-surface)] p-4 text-center shadow transition hover:shadow-md"
+                <Link
+                  to="/history"
+                  className="rounded-xl bg-[var(--app-surface)] p-4 text-center shadow transition hover:shadow-md"
+                >
+                  📖
+                  <div className="mt-2 font-medium">История</div>
+                </Link>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => habitsRef.current?.openCreate()}
+                className="absolute left-1/2 bottom-[-24px] -translate-x-1/2 flex h-[64px] w-[64px] items-center justify-center rounded-full bg-white shadow-[0_12px_30px_rgba(0,0,0,0.15)] transition duration-[250ms] ease-out active:scale-[0.95]"
+                aria-label="Добавить привычку"
               >
-                📖
-                <div className="mt-2 font-medium">История</div>
-              </Link>
+                <span className="text-[30px] font-semibold text-slate-900">
+                  +
+                </span>
+              </button>
             </div>
           </div>
         );
