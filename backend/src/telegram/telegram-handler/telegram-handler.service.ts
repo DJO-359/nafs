@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import TelegramBot from 'node-telegram-bot-api';
+import path from 'path';
 import type { Message } from 'node-telegram-bot-api';
 
 import { UsersService } from '../../users/users.service';
@@ -9,6 +10,7 @@ import { TelegramStateService } from '../telegram-state.service';
 import { TelegramState } from '../states/telegram-state.enum';
 import { DiaryService } from '../../diary/diary.service';
 import { safeTimeZone } from '../../common/utils/timezone.util';
+import { WELCOME_MESSAGE } from '../messages/welcome.message';
 
 @Injectable()
 export class TelegramHandlerService implements OnModuleInit {
@@ -62,27 +64,49 @@ export class TelegramHandlerService implements OnModuleInit {
         firstName: msg.from?.first_name ?? null,
       });
 
+      const user = await this.usersService.findByTelegramId(telegramId);
       const miniAppUrl = this.configService.getOrThrow<string>('MINI_APP_URL');
+
+      if (!user || !user.welcomeCompleted) {
+        this.logger.log(
+          `handleStart: sending first-time welcome flow for chatId=${telegramId}`,
+        );
+
+        const imagePath = path.resolve(
+          __dirname,
+          '../../assets/images/welcome.png',
+        );
+
+        await bot.sendPhoto(telegramId, imagePath, {
+          caption: WELCOME_MESSAGE,
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '🚀 Открыть Nafs', web_app: { url: miniAppUrl } }],
+            ],
+          },
+        });
+
+        if (user) {
+          await this.usersService.updateWelcomeCompleted(user.id);
+        }
+
+        return;
+      }
+
       this.logger.log(
-        `handleStart: sending welcome message with MINI_APP_URL=${miniAppUrl}`,
+        `handleStart: sending returning user message for chatId=${telegramId}`,
       );
 
       await bot.sendMessage(
         telegramId,
-        '👋 Добро пожаловать в Nafs.\n\n🚀 Откройте приложение кнопкой ниже.',
+        '🌿 С возвращением в Nafs.\n\nСегодня — новый день.\n\nПусть он станет ещё одним шагом к лучшей версии себя.\n\nНажмите кнопку ниже, чтобы открыть приложение.',
         {
           reply_markup: {
-            keyboard: [
+            inline_keyboard: [
               [{ text: '🚀 Открыть Nafs', web_app: { url: miniAppUrl } }],
-              [{ text: '📝 Новая запись' }, { text: '📊 Мой день' }],
             ],
-            resize_keyboard: true,
-            is_persistent: true,
           },
         },
-      );
-      this.logger.log(
-        `handleStart: sendMessage completed for chatId=${telegramId}`,
       );
     } catch (error) {
       console.dir(error, { depth: null });

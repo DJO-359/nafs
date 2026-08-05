@@ -103,6 +103,13 @@ export class User extends Model<User> {
   })
   declare onboardingCompleted: boolean;
 
+  @Default(false)
+  @Column({
+    type: DataType.BOOLEAN,
+    allowNull: false,
+  })
+  declare welcomeCompleted: boolean;
+
   /**
    * Момент, когда бот получил от Telegram 403 (пользователь заблокировал бота).
    * Пока заполнено — напоминания в Telegram не отправляются.

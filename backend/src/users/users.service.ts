@@ -81,6 +81,13 @@ export class UsersService {
     return user;
   }
 
+  async updateWelcomeCompleted(userId: string): Promise<void> {
+    await this.userModel.update(
+      { welcomeCompleted: true },
+      { where: { id: userId } },
+    );
+  }
+
   /** Отмечает, что бот заблокирован пользователем — рассылку ему прекращаем. */
   async markTelegramBlocked(userId: string): Promise<void> {
     await this.userModel.update(
