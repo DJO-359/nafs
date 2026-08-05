@@ -106,6 +106,13 @@ export class UsersService {
     );
   }
 
+  async updateOnboardingCompleted(userId: string): Promise<void> {
+    await this.userModel.update(
+      { onboardingCompleted: true },
+      { where: { id: userId } },
+    );
+  }
+
   /** Отмечает, что бот заблокирован пользователем — рассылку ему прекращаем. */
   async markTelegramBlocked(userId: string): Promise<void> {
     await this.userModel.update(

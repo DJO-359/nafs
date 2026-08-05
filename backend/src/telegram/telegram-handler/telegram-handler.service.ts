@@ -276,6 +276,8 @@ export class TelegramHandlerService implements OnModuleInit {
 
         // Mark welcomeCompleted true
         await this.usersService.updateWelcomeCompleted(user.id);
+        // Mark onboarding as completed so frontend skips in-app onboarding
+        await this.usersService.updateOnboardingCompleted(user.id);
         this.telegramStateService.clearState(telegramId);
         return;
       }
