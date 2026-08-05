@@ -77,6 +77,32 @@ export class User extends Model<User> {
   })
   declare timezone: string;
 
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+  })
+  declare wakeTime: string | null;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+  })
+  declare sleepTime: string | null;
+
+  @Default(false)
+  @Column({
+    type: DataType.BOOLEAN,
+    allowNull: false,
+  })
+  declare eveningReminderEnabled: boolean;
+
+  @Default(false)
+  @Column({
+    type: DataType.BOOLEAN,
+    allowNull: false,
+  })
+  declare onboardingCompleted: boolean;
+
   /**
    * Момент, когда бот получил от Telegram 403 (пользователь заблокировал бота).
    * Пока заполнено — напоминания в Telegram не отправляются.

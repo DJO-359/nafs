@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 
 import { User, AuthProvider } from './models/user.model';
 import { safeTimeZone } from '../common/utils/timezone.util';
+import type { CompleteOnboardingDto } from './dto/complete-onboarding.dto';
 
 export interface UpsertTelegramUserInput {
   telegramId: string;
@@ -93,5 +94,27 @@ export class UsersService {
       { timezone: safeTimeZone(timezone) },
       { where: { id: userId } },
     );
+  }
+
+  async completeOnboarding(
+    userId: string,
+    dto: CompleteOnboardingDto,
+  ): Promise<User> {
+    await this.userModel.update(
+      {
+        wakeTime: dto.wakeTime,
+        sleepTime: dto.sleepTime,
+        eveningReminderEnabled: dto.eveningReminderEnabled,
+        onboardingCompleted: true,
+      },
+      { where: { id: userId } },
+    );
+
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new Error('Пользователь не найден');
+    }
+
+    return user;
   }
 }
