@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import TelegramBot from 'node-telegram-bot-api';
 import path from 'path';
+import { createReadStream, existsSync } from 'fs';
 import type { Message } from 'node-telegram-bot-api';
 
 import { UsersService } from '../../users/users.service';
@@ -77,7 +78,11 @@ export class TelegramHandlerService implements OnModuleInit {
           '../../assets/images/welcome.png',
         );
 
-        await bot.sendPhoto(telegramId, imagePath, {
+        // Логируем путь и проверяем существование файла
+        this.logger.log(`Image path: ${imagePath}`);
+        this.logger.log(`File exists: ${existsSync(imagePath)}`);
+
+        await bot.sendPhoto(telegramId, createReadStream(imagePath), {
           caption: WELCOME_MESSAGE,
           reply_markup: {
             inline_keyboard: [
@@ -195,8 +200,6 @@ export class TelegramHandlerService implements OnModuleInit {
         }
 
         default:
-          // Раньше здесь не было ветки по умолчанию, и пользователь
-          // не получал вообще никакого ответа на обычное сообщение
           await bot.sendMessage(
             chatId,
             'Не понял команду. Откройте приложение кнопкой «🚀 Открыть Nafs» или нажмите «📝 Новая запись».',
