@@ -88,6 +88,24 @@ export class UsersService {
     );
   }
 
+  async updateWakeTime(userId: string, wakeTime: string): Promise<void> {
+    await this.userModel.update({ wakeTime }, { where: { id: userId } });
+  }
+
+  async updateSleepTime(userId: string, sleepTime: string): Promise<void> {
+    await this.userModel.update({ sleepTime }, { where: { id: userId } });
+  }
+
+  async updateEveningReminderEnabled(
+    userId: string,
+    enabled: boolean,
+  ): Promise<void> {
+    await this.userModel.update(
+      { eveningReminderEnabled: enabled },
+      { where: { id: userId } },
+    );
+  }
+
   /** Отмечает, что бот заблокирован пользователем — рассылку ему прекращаем. */
   async markTelegramBlocked(userId: string): Promise<void> {
     await this.userModel.update(

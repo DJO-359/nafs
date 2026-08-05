@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import TelegramBot from 'node-telegram-bot-api';
 import path from 'path';
-import { createReadStream, existsSync } from 'fs';
+import { existsSync } from 'fs';
 import type { Message } from 'node-telegram-bot-api';
 
 import { UsersService } from '../../users/users.service';
@@ -39,6 +39,10 @@ export class TelegramHandlerService implements OnModuleInit {
         `onText /start received: chatId=${msg.chat?.id} text=${msg.text}`,
       );
       void this.handleStart(bot, msg);
+    });
+
+    bot.on('callback_query', (q) => {
+      void this.handleCallback(bot, q);
     });
 
     bot.on('message', (msg) => {
@@ -82,19 +86,17 @@ export class TelegramHandlerService implements OnModuleInit {
         this.logger.log(`Image path: ${imagePath}`);
         this.logger.log(`File exists: ${existsSync(imagePath)}`);
 
-        await bot.sendPhoto(telegramId, createReadStream(imagePath), {
+        await bot.sendPhoto(telegramId, imagePath, {
           caption: WELCOME_MESSAGE,
           reply_markup: {
             inline_keyboard: [
-              [{ text: '🚀 Открыть Nafs', web_app: { url: miniAppUrl } }],
+              [{ text: '✨ Начать настройку', callback_data: 'setup:start' }],
             ],
           },
         });
 
-        if (user) {
-          await this.usersService.updateWelcomeCompleted(user.id);
-        }
-
+        // Do NOT mark `welcomeCompleted` here. The flag should be set only
+        // after the user completes the full setup flow (wake → sleep → reminder).
         return;
       }
 
@@ -132,6 +134,157 @@ export class TelegramHandlerService implements OnModuleInit {
       }
       this.logger.error(
         `Ошибка обработки /start для chatId=${telegramId}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
+  }
+
+  private async handleCallback(bot: TelegramBot, q: any): Promise<void> {
+    try {
+      const callbackData = q.data as string | undefined;
+      const telegramId = String(q.message?.chat?.id ?? q.from?.id);
+
+      if (!callbackData) {
+        await bot.answerCallbackQuery(q.id);
+        return;
+      }
+
+      const user = await this.usersService.findByTelegramId(telegramId);
+
+      // If user doesn't exist, ask to open app to create account
+      if (!user) {
+        await bot.answerCallbackQuery(q.id, {
+          text: 'Сначала откройте приложение, чтобы создать аккаунт.',
+        });
+        await bot.sendMessage(
+          telegramId,
+          'Пожалуйста, откройте приложение кнопкой «🚀 Открыть Nafs», чтобы создать аккаунт.',
+        );
+        return;
+      }
+
+      // callback format: setup:start | setup:wake:07:00 | setup:sleep:23:00 | setup:reminder:yes
+      const parts = callbackData.split(':');
+
+      if (parts[0] === 'setup' && parts[1] === 'start') {
+        // Step 1: ask wake time
+        const times = [
+          '06:00',
+          '06:30',
+          '07:00',
+          '07:30',
+          '08:00',
+          '08:30',
+          '09:00',
+        ];
+        const keyboard = times.map((t) => [
+          { text: t, callback_data: `setup:wake:${t}` },
+        ]);
+
+        await bot.answerCallbackQuery(q.id);
+        await bot.sendMessage(
+          telegramId,
+          '🌅 Во сколько ты обычно просыпаешься?',
+          {
+            reply_markup: { inline_keyboard: keyboard },
+          },
+        );
+        this.telegramStateService.setState(
+          telegramId,
+          TelegramState.SETUP_WAKE,
+        );
+        return;
+      }
+
+      if (parts[0] === 'setup' && parts[1] === 'wake' && parts[2]) {
+        const wake = parts[2];
+        await this.usersService.updateWakeTime(user.id, wake);
+        await bot.answerCallbackQuery(q.id, { text: `Сохранено: ${wake}` });
+
+        // Step 2: ask sleep time
+        const times = [
+          '21:00',
+          '21:30',
+          '22:00',
+          '22:30',
+          '23:00',
+          '23:30',
+          '00:00',
+        ];
+        const keyboard = times.map((t) => [
+          { text: t, callback_data: `setup:sleep:${t}` },
+        ]);
+        await bot.sendMessage(
+          telegramId,
+          '🌙 Во сколько ты обычно ложишься спать?',
+          {
+            reply_markup: { inline_keyboard: keyboard },
+          },
+        );
+        this.telegramStateService.setState(
+          telegramId,
+          TelegramState.SETUP_SLEEP,
+        );
+        return;
+      }
+
+      if (parts[0] === 'setup' && parts[1] === 'sleep' && parts[2]) {
+        const sleep = parts[2];
+        await this.usersService.updateSleepTime(user.id, sleep);
+        await bot.answerCallbackQuery(q.id, { text: `Сохранено: ${sleep}` });
+
+        // Step 3: ask evening reminder
+        const keyboard = [
+          [{ text: '✅ Да', callback_data: `setup:reminder:yes` }],
+          [{ text: '❌ Нет', callback_data: `setup:reminder:no` }],
+        ];
+        await bot.sendMessage(
+          telegramId,
+          '🔔 Хочешь получать вечернее напоминание перед завершением дня?',
+          {
+            reply_markup: { inline_keyboard: keyboard },
+          },
+        );
+        this.telegramStateService.setState(
+          telegramId,
+          TelegramState.SETUP_REMINDER,
+        );
+        return;
+      }
+
+      if (parts[0] === 'setup' && parts[1] === 'reminder' && parts[2]) {
+        const enabled = parts[2] === 'yes';
+        await this.usersService.updateEveningReminderEnabled(user.id, enabled);
+        await bot.answerCallbackQuery(q.id, {
+          text: `Сохранено: ${enabled ? 'Да' : 'Нет'}`,
+        });
+
+        // Finish
+        const miniAppUrl =
+          this.configService.getOrThrow<string>('MINI_APP_URL');
+        await bot.sendMessage(
+          telegramId,
+          '🌿 Всё готово.\n\nNafs настроен под твой ритм дня.\n\nТеперь можно открыть приложение.',
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: '🚀 Открыть Nafs', web_app: { url: miniAppUrl } }],
+              ],
+            },
+          },
+        );
+
+        // Mark welcomeCompleted true
+        await this.usersService.updateWelcomeCompleted(user.id);
+        this.telegramStateService.clearState(telegramId);
+        return;
+      }
+
+      // Unknown callback
+      await bot.answerCallbackQuery(q.id);
+    } catch (error) {
+      this.logger.error(
+        'Ошибка обработки callback_query',
         error instanceof Error ? error.stack : String(error),
       );
     }
