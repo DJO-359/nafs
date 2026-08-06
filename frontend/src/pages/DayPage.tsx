@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 
 import { useRef } from "react";
-import IntentionCard from "../components/IntentionCard";
 import ReminderList from "../components/ReminderList";
 import DiaryCard from "../components/DiaryCard";
 import ProgressCard from "../components/ProgressCard";
@@ -11,7 +10,6 @@ import HabitsCard, {
 import QueryState from "../components/ui/QueryState";
 import { useDay } from "../hooks/useDay";
 import { useHabits } from "../hooks/useHabits";
-import { useIntention } from "../hooks/useIntention";
 import { useReminder } from "../hooks/useReminder";
 import type { CreateReminderDto } from "../api/reminder.api";
 
@@ -57,7 +55,6 @@ function parseDay(date: string): Date {
 export default function DayPage() {
   const dayQuery = useDay();
   const { data: habits = [] } = useHabits();
-  const { createMutation, completeMutation } = useIntention();
   const reminderMutation = useReminder();
   const habitsRef = useRef<HabitsCardHandle>(null);
 
@@ -109,6 +106,20 @@ export default function DayPage() {
                       month: "long",
                     })}
                   </p>
+
+                  <div
+                    className="mt-5 rounded-[22px] border border-[rgba(255,255,255,0.10)] bg-[rgba(20,32,52,0.45)] px-5 py-5"
+                    style={{ backdropFilter: "blur(18px)" }}
+                  >
+                    <p className="text-[12px] uppercase tracking-[0.12em] text-[rgba(255,255,255,0.65)]">
+                      ◎ намерение дня
+                    </p>
+                    <p className="mt-3 text-[28px] font-semibold text-white leading-tight">
+                      {day.intention?.text
+                        ? day.intention.text
+                        : "Сегодня намерение ещё не выбрано."}
+                    </p>
+                  </div>
                 </div>
               </div>
             </header>
@@ -152,16 +163,6 @@ export default function DayPage() {
             </div>
 
             <div className="space-y-4">
-              <IntentionCard
-                intention={day.intention}
-                onCreate={async (text: string) => {
-                  await createMutation.mutateAsync(text);
-                }}
-                onComplete={async () => {
-                  await completeMutation.mutateAsync();
-                }}
-              />
-
               <HabitsCard ref={habitsRef} />
 
               <ReminderList
