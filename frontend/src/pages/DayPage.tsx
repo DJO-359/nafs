@@ -67,13 +67,13 @@ export default function DayPage() {
     <QueryState query={dayQuery}>
       {(day) => {
         const visibleHabits = habits.slice(0, 4);
+        const completedHabits = habits.filter(
+          (habit) => habit.isCompletedToday,
+        ).length;
         const progressPercent =
           habits.length === 0
             ? 0
-            : Math.round(
-                habits.reduce((value, habit) => value + habit.progress, 0) /
-                  habits.length,
-              );
+            : Math.round((completedHabits / habits.length) * 100);
         const ringRadius = 45;
         const ringCircumference = 2 * Math.PI * ringRadius;
         const ringOffset = ringCircumference * (1 - progressPercent / 100);
@@ -127,7 +127,7 @@ export default function DayPage() {
                 <div className="flex h-full flex-col justify-center">
                   <div className="flex items-center gap-2 text-sm font-medium text-white/90">
                     {/* <span className="text-lg">☀️</span> */}
-                    <span>прогресс дня</span>
+                    <span>ПРОГРЕСС ДНЯ</span>
                   </div>
 
                   <div className="mt-3 flex flex-col items-start gap-3">
