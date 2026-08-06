@@ -24,19 +24,19 @@ type DayPart = "morning" | "day" | "evening" | "night";
 
 const heroThemes: Record<DayPart, { greeting: string; image: string }> = {
   morning: {
-    greeting: "Доброе утро ☀️",
+    greeting: "Доброе утро",
     image: morningImage,
   },
   day: {
-    greeting: "Добрый день ☀️",
+    greeting: "Добрый день",
     image: dayImage,
   },
   evening: {
-    greeting: "Добрый вечер 🌅",
+    greeting: "Добрый вечер",
     image: eveningImage,
   },
   night: {
-    greeting: "Доброй ночи 🌙",
+    greeting: "Доброй ночи",
     image: nightImage,
   },
 };
@@ -74,9 +74,6 @@ export default function DayPage() {
           habits.length === 0
             ? 0
             : Math.round((completedHabits / habits.length) * 100);
-        const ringRadius = 45;
-        const ringCircumference = 2 * Math.PI * ringRadius;
-        const ringOffset = ringCircumference * (1 - progressPercent / 100);
 
         const currentHour = new Date().getHours();
         const dayPart = getDayPart(currentHour);
@@ -117,62 +114,29 @@ export default function DayPage() {
             </header>
 
             <div
-              className="mb-4 overflow-hidden rounded-3xl p-6 shadow-[0_16px_40px_rgba(0,0,0,0.20)]"
+              className="mb-4 overflow-hidden rounded-[20px] p-5 shadow-[0_16px_40px_rgba(0,0,0,0.20)]"
               style={{
-                background: "linear-gradient(180deg, #10263F 0%, #132F4B 100%)",
+                height: 118,
+                background: "linear-gradient(180deg, #10263F, #132F4B)",
                 boxShadow: "inset 0 1px rgba(255,255,255,.05)",
               }}
             >
               <div className="grid grid-cols-[35%_1px_65%] items-center gap-6 h-full">
                 <div className="flex h-full flex-col justify-center">
-                  <div className="flex items-center gap-2 text-sm font-medium text-white/90">
-                    {/* <span className="text-lg">☀️</span> */}
-                    <span>ПРОГРЕСС ДНЯ</span>
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="text-[18px] font-semibold text-white">
+                      Прогресс дня
+                    </p>
+                    <p className="text-[18px] font-semibold text-white">
+                      {progressPercent}%
+                    </p>
                   </div>
 
-                  <div className="mt-3 flex flex-col items-start gap-3">
-                    <div className="relative h-[110px] w-[110px]">
-                      <svg viewBox="0 0 100 100" className="h-full w-full">
-                        <circle
-                          cx="50"
-                          cy="50"
-                          r={45}
-                          className="fill-none stroke-white/15 stroke-10"
-                        />
-                        <circle
-                          cx="50"
-                          cy="50"
-                          r={45}
-                          className="fill-none stroke-10 transition-all duration-400 ease-out"
-                          stroke={
-                            progressPercent <= 30
-                              ? "#EF4444"
-                              : progressPercent <= 70
-                                ? "#F59E0B"
-                                : "#22C55E"
-                          }
-                          strokeDasharray={ringCircumference}
-                          strokeDashoffset={ringOffset}
-                          strokeLinecap="round"
-                          transform="rotate(-90 50 50)"
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center text-[34px] font-bold text-white">
-                        {progressPercent}%
-                      </div>
-                    </div>
-
-                    {/* <p className="mt-3 text-sm leading-6 text-white/75">
-                      {progressPercent === 100
-                        ? "✨ Сегодня прожит осознанно"
-                        : progressPercent >= 76
-                          ? "🌙 День подходит к завершению"
-                          : progressPercent >= 51
-                            ? "☀️ День идёт своим чередом"
-                            : progressPercent >= 26
-                              ? "🌿 Спокойный ритм"
-                              : "🌅 День начинается"}
-                    </p> */}
+                  <div className="mt-3 h-2 rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-[#4F8CFF] transition-[width] duration-400 ease-out"
+                      style={{ width: `${progressPercent}%` }}
+                    />
                   </div>
                 </div>
 
