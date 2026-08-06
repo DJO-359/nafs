@@ -1,15 +1,17 @@
 import { Link } from "react-router-dom";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import ReminderList from "../components/ReminderList";
 import DiaryCard from "../components/DiaryCard";
 import ProgressCard from "../components/ProgressCard";
 import HabitsCard, {
   type HabitsCardHandle,
 } from "../components/habits/HabitsCard";
+import IntentionModal from "../components/IntentionModal";
 import QueryState from "../components/ui/QueryState";
 import { useDay } from "../hooks/useDay";
 import { useHabits } from "../hooks/useHabits";
+import { useIntention } from "../hooks/useIntention";
 import { useReminder } from "../hooks/useReminder";
 import type { CreateReminderDto } from "../api/reminder.api";
 
@@ -55,8 +57,10 @@ function parseDay(date: string): Date {
 export default function DayPage() {
   const dayQuery = useDay();
   const { data: habits = [] } = useHabits();
+  const { createMutation } = useIntention();
   const reminderMutation = useReminder();
   const habitsRef = useRef<HabitsCardHandle>(null);
+  const [isIntentionOpen, setIsIntentionOpen] = useState(false);
 
   // Контейнер и отступы даёт Layout. Раньше здесь был второй min-h-screen
   // с собственным p-4, из-за чего отступы удваивались.
@@ -91,9 +95,6 @@ export default function DayPage() {
               <div className="relative h-full w-full px-6 py-6 sm:px-8 sm:py-8">
                 <div className="relative z-10 flex h-full flex-col justify-between text-white">
                   <div>
-                    {/* <p className="text-sm font-medium uppercase tracking-[0.18em] text-white/80">
-                      Сегодня
-                    </p> */}
                     <h1 className="mt-3 text-4xl font-semibold text-white sm:text-5xl">
                       {theme.greeting}
                     </h1>
@@ -107,19 +108,38 @@ export default function DayPage() {
                     })}
                   </p>
 
-                  <div
-                    className="mt-5 rounded-[22px] border border-[rgba(255,255,255,0.10)] bg-[rgba(20,32,52,0.45)] px-5 py-5"
-                    style={{ backdropFilter: "blur(18px)" }}
+                  <button
+                    type="button"
+                    onClick={() => setIsIntentionOpen(true)}
+                    className="mt-5 block max-w-[290px] w-[78%] rounded-[20px] border border-[rgba(255,255,255,0.12)] bg-[rgba(15,20,28,0.22)] px-5 py-5 text-left text-white transition duration-250 ease-in-out hover:-translate-y-0.5 active:scale-[0.98]"
+                    style={{
+                      backdropFilter: "blur(14px)",
+                      boxShadow: "inset 0 1px rgba(255,255,255,.08)",
+                    }}
                   >
-                    <p className="text-[12px] uppercase tracking-[0.12em] text-[rgba(255,255,255,0.65)]">
-                      ◎ намерение дня
-                    </p>
-                    <p className="mt-3 text-[28px] font-semibold text-white leading-tight">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-[12px] uppercase tracking-[0.12em] text-[rgba(255,255,255,0.70)]">
+                        ◎ намерение дня
+                      </p>
+                      <span className="text-[18px] font-semibold text-white">
+                        &gt;
+                      </span>
+                    </div>
+                    <p className="mt-3 text-[20px] font-semibold leading-[1.3] text-white">
                       {day.intention?.text
                         ? day.intention.text
                         : "Сегодня намерение ещё не выбрано."}
                     </p>
-                  </div>
+                  </button>
+                  <IntentionModal
+                    open={isIntentionOpen}
+                    initialValue={day.intention?.text ?? ""}
+                    onClose={() => setIsIntentionOpen(false)}
+                    onSave={async (text) => {
+                      await createMutation.mutateAsync(text);
+                      setIsIntentionOpen(false);
+                    }}
+                  />
                 </div>
               </div>
             </header>
