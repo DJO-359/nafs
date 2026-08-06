@@ -97,9 +97,9 @@ export default function DayPage() {
               <div className="relative h-full w-full px-6 py-6 sm:px-8 sm:py-8">
                 <div className="relative z-10 flex h-full flex-col justify-between text-white">
                   <div>
-                    <p className="text-sm font-medium uppercase tracking-[0.18em] text-white/80">
+                    {/* <p className="text-sm font-medium uppercase tracking-[0.18em] text-white/80">
                       Сегодня
-                    </p>
+                    </p> */}
                     <h1 className="mt-3 text-4xl font-semibold text-white sm:text-5xl">
                       {theme.greeting}
                     </h1>
@@ -126,8 +126,8 @@ export default function DayPage() {
               <div className="grid grid-cols-[35%_1px_65%] items-center gap-6 h-full">
                 <div className="flex h-full flex-col justify-center">
                   <div className="flex items-center gap-2 text-sm font-medium text-white/90">
-                    <span className="text-lg">☀️</span>
-                    <span>Сегодня</span>
+                    {/* <span className="text-lg">☀️</span> */}
+                    <span>прогресс дня</span>
                   </div>
 
                   <div className="mt-3 flex flex-col items-start gap-3">
@@ -162,7 +162,7 @@ export default function DayPage() {
                       </div>
                     </div>
 
-                    <p className="mt-3 text-sm leading-6 text-white/75">
+                    {/* <p className="mt-3 text-sm leading-6 text-white/75">
                       {progressPercent === 100
                         ? "✨ Сегодня прожит осознанно"
                         : progressPercent >= 76
@@ -172,7 +172,7 @@ export default function DayPage() {
                             : progressPercent >= 26
                               ? "🌿 Спокойный ритм"
                               : "🌅 День начинается"}
-                    </p>
+                    </p> */}
                   </div>
                 </div>
 
