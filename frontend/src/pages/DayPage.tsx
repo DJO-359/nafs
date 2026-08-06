@@ -66,10 +66,10 @@ export default function DayPage() {
   return (
     <QueryState query={dayQuery}>
       {(day) => {
-        const visibleHabits = habits.slice(0, 4);
         const completedHabits = habits.filter(
           (habit) => habit.isCompletedToday,
         ).length;
+        const remainingHabits = habits.length - completedHabits;
         const progressPercent =
           habits.length === 0
             ? 0
@@ -121,55 +121,33 @@ export default function DayPage() {
                 boxShadow: "inset 0 1px rgba(255,255,255,.05)",
               }}
             >
-              <div className="grid grid-cols-[35%_1px_65%] items-center gap-6 h-full">
-                <div className="flex h-full flex-col justify-center">
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="text-[18px] font-semibold text-white">
-                      Прогресс дня
-                    </p>
-                    <p className="text-[18px] font-semibold text-white">
-                      {progressPercent}%
-                    </p>
-                  </div>
-
-                  <div className="mt-3 h-2 rounded-full bg-white/10 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-[#4F8CFF]"
-                      style={{
-                        width: `${progressPercent}%`,
-                        transition: "width .4s ease",
-                      }}
-                    />
-                  </div>
+              <div className="flex h-full flex-col justify-between">
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-[18px] font-semibold text-white">
+                    Прогресс дня
+                  </p>
+                  <p className="text-[18px] font-semibold text-white">
+                    {progressPercent}%
+                  </p>
                 </div>
 
-                <div className="h-30 w-px bg-white/10" />
-
-                <div className="flex h-full flex-col justify-center">
-                  {visibleHabits.length > 0 ? (
-                    <div>
-                      {visibleHabits.map((habit) => (
-                        <div
-                          key={habit.id}
-                          className="flex items-center gap-3 mb-4 last:mb-0"
-                        >
-                          <div
-                            className={`grid h-6.5 w-6.5 place-items-center rounded-full text-white ${habit.isCompletedToday ? "bg-emerald-500" : "bg-white/10 text-white/70"}`}
-                          >
-                            {habit.isCompletedToday ? "✔" : "○"}
-                          </div>
-                          <p className="text-[17px] font-medium text-white">
-                            {habit.title}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-white/75">
-                      🌱 Сегодня ещё нет привычек
-                    </p>
-                  )}
+                <div className="mt-3 h-2 rounded-full bg-white/10 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-[#5D8EFF]"
+                    style={{
+                      width: `${progressPercent}%`,
+                      transition: "width .35s ease",
+                    }}
+                  />
                 </div>
+
+                <p className="text-sm text-white/75">
+                  {habits.length === 0
+                    ? "Нет привычек на сегодня"
+                    : remainingHabits === 0
+                      ? "Все привычки выполнены. Отличная работа."
+                      : `Ещё ${remainingHabits} привычк${remainingHabits % 10 === 1 && remainingHabits !== 11 ? "а" : remainingHabits % 10 >= 2 && remainingHabits % 10 <= 4 && !(remainingHabits >= 12 && remainingHabits <= 14) ? "и" : ""} до идеального дня.`}
+                </p>
               </div>
             </div>
 
