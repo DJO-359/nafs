@@ -115,56 +115,98 @@ export default function DayPage() {
               </div>
             </header>
 
-            <div className="mb-4 overflow-hidden rounded-[28px] bg-white/90 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur-sm">
-              <div className="grid grid-cols-[60%_40%] gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <h2 className="text-lg font-semibold text-slate-900">
-                      Сегодня
-                    </h2>
+            <div
+              className="mb-4 overflow-hidden rounded-[24px] p-6 shadow-[0_12px_35px_rgba(0,0,0,0.18)]"
+              style={{
+                background: "linear-gradient(180deg, #10263F 0%, #132F4B 100%)",
+              }}
+            >
+              <div className="grid gap-6 md:grid-cols-[35%_30%_35%]">
+                <div className="flex flex-col justify-between gap-5">
+                  <div className="flex items-center gap-2 text-sm font-medium text-white/90">
+                    <span className="text-lg">☀️</span>
+                    <span>Сегодня</span>
                   </div>
 
-                  <div className="space-y-3">
-                    {visibleTodayItems.map((item) => (
-                      <div key={item.id} className="flex items-center gap-3">
-                        <div
-                          className={`grid h-6 w-6 place-items-center rounded-full border transition duration-[250ms] ease-out ${item.completed ? "border-emerald-600 bg-emerald-600 text-white" : "border-[var(--app-border)] bg-white text-transparent"}`}
-                        >
-                          ✓
-                        </div>
-                        <p className="text-base font-semibold text-slate-900">
-                          {item.title}
-                        </p>
-                      </div>
-                    ))}
+                  <div>
+                    <p className="text-5xl font-semibold text-white">
+                      {progressPercent}%
+                    </p>
+                    <p className="mt-3 max-w-[220px] text-sm leading-6 text-white/75">
+                      {progressPercent === 100
+                        ? "✨ Сегодня прожит осознанно"
+                        : progressPercent >= 76
+                          ? "🌙 День подходит к завершению"
+                          : progressPercent >= 51
+                            ? "☀️ День идёт своим чередом"
+                            : progressPercent >= 26
+                              ? "🌿 Спокойный ритм"
+                              : "🌅 День начинается"}
+                    </p>
                   </div>
                 </div>
 
-                <div className="flex flex-col items-center justify-center gap-4 rounded-[24px] bg-slate-50/80 p-4">
-                  <div className="relative h-[100px] w-[100px]">
+                <div className="flex flex-col justify-center gap-3">
+                  {visibleTodayItems.length > 0 ? (
+                    <div className="space-y-3">
+                      {visibleTodayItems.map((item) => (
+                        <div key={item.id} className="flex items-center gap-3">
+                          <div
+                            className={`grid h-6 w-6 place-items-center rounded-full border text-sm transition duration-[250ms] ease-out ${item.completed ? "border-emerald-500 bg-emerald-500 text-white" : "border-white/30 bg-transparent text-transparent"}`}
+                          >
+                            ✓
+                          </div>
+                          <p className="text-sm font-medium text-white">
+                            {item.title}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-[18px] border border-white/10 p-4 text-sm leading-6 text-white/80">
+                      <p className="text-2xl">🌱</p>
+                      <p className="mt-2 font-semibold text-white">
+                        Сегодня ещё нет привычек
+                      </p>
+                      <p className="mt-1 text-[13px] text-white/70">
+                        Нажмите "+" чтобы добавить первую.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col items-center justify-center gap-3">
+                  <div className="relative h-[96px] w-[96px]">
                     <svg viewBox="0 0 100 100" className="h-full w-full">
                       <circle
                         cx="50"
                         cy="50"
-                        r={ringRadius}
-                        className="fill-none stroke-[var(--app-border)] stroke-[10]"
+                        r={44}
+                        className="fill-none stroke-white/15 stroke-[8]"
                       />
                       <circle
                         cx="50"
                         cy="50"
-                        r={ringRadius}
-                        className="fill-none stroke-emerald-600 stroke-[10] transition-all duration-300 ease-out"
+                        r={44}
+                        className="fill-none stroke-[8] transition-all duration-[400ms] ease-out"
+                        stroke={
+                          progressPercent <= 30
+                            ? "#EF4444"
+                            : progressPercent <= 70
+                              ? "#F59E0B"
+                              : "#22C55E"
+                        }
                         strokeDasharray={ringCircumference}
                         strokeDashoffset={ringOffset}
                         strokeLinecap="round"
                         transform="rotate(-90 50 50)"
                       />
                     </svg>
-                    <div className="absolute inset-0 flex items-center justify-center text-xl font-semibold text-slate-900">
+                    <div className="absolute inset-0 flex items-center justify-center text-xl font-semibold text-white">
                       {progressPercent}%
                     </div>
                   </div>
-                  <div className="text-sm uppercase tracking-[0.16em] text-[var(--app-hint)]">
+                  <div className="text-sm uppercase tracking-[0.18em] text-white/70">
                     Прогресс дня
                   </div>
                 </div>
