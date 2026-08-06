@@ -64,9 +64,18 @@ export default function DayPage() {
   return (
     <QueryState query={dayQuery}>
       {(day) => {
-        const remainingToday = day.reminders.today.filter(
-          (item) => !item.completed,
+        const todayItems = day.reminders.today;
+        const completedToday = todayItems.filter(
+          (item) => item.completed,
         ).length;
+        const progressPercent =
+          todayItems.length === 0
+            ? 0
+            : Math.round((completedToday / todayItems.length) * 100);
+        const visibleTodayItems = todayItems.slice(0, 4);
+        const ringRadius = 44;
+        const ringCircumference = 2 * Math.PI * ringRadius;
+        const ringOffset = ringCircumference * (1 - progressPercent / 100);
 
         const currentHour = new Date().getHours();
         const dayPart = getDayPart(currentHour);
@@ -106,27 +115,58 @@ export default function DayPage() {
               </div>
             </header>
 
-            <div className="space-y-4">
-              <div className="text-lg font-semibold">Сегодня</div>
+            <div className="mb-4 overflow-hidden rounded-[28px] bg-white/90 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur-sm">
+              <div className="grid grid-cols-[60%_40%] gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <h2 className="text-lg font-semibold text-slate-900">
+                      Сегодня
+                    </h2>
+                  </div>
 
-              <div className="mt-3 flex justify-between">
-                <div>
-                  <div className="text-2xl font-bold">{remainingToday}</div>
-                  <div className="text-sm opacity-80">Осталось</div>
+                  <div className="space-y-3">
+                    {visibleTodayItems.map((item) => (
+                      <div key={item.id} className="flex items-center gap-3">
+                        <div
+                          className={`grid h-6 w-6 place-items-center rounded-full border transition duration-[250ms] ease-out ${item.completed ? "border-emerald-600 bg-emerald-600 text-white" : "border-[var(--app-border)] bg-white text-transparent"}`}
+                        >
+                          ✓
+                        </div>
+                        <p className="text-base font-semibold text-slate-900">
+                          {item.title}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
-                <div>
-                  <div className="text-2xl font-bold">
-                    {day.intention?.completed ? "✓" : "○"}
+                <div className="flex flex-col items-center justify-center gap-4 rounded-[24px] bg-slate-50/80 p-4">
+                  <div className="relative h-[100px] w-[100px]">
+                    <svg viewBox="0 0 100 100" className="h-full w-full">
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r={ringRadius}
+                        className="fill-none stroke-[var(--app-border)] stroke-[10]"
+                      />
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r={ringRadius}
+                        className="fill-none stroke-emerald-600 stroke-[10] transition-all duration-300 ease-out"
+                        strokeDasharray={ringCircumference}
+                        strokeDashoffset={ringOffset}
+                        strokeLinecap="round"
+                        transform="rotate(-90 50 50)"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center text-xl font-semibold text-slate-900">
+                      {progressPercent}%
+                    </div>
                   </div>
-                  <div className="text-sm opacity-80">Намерение</div>
-                </div>
-
-                <div>
-                  <div className="text-2xl font-bold">
-                    {day.diary ? "✓" : "○"}
+                  <div className="text-sm uppercase tracking-[0.16em] text-[var(--app-hint)]">
+                    Прогресс дня
                   </div>
-                  <div className="text-sm opacity-80">Дневник</div>
                 </div>
               </div>
             </div>
