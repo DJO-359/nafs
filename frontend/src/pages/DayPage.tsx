@@ -10,6 +10,7 @@ import HabitsCard, {
 } from "../components/habits/HabitsCard";
 import QueryState from "../components/ui/QueryState";
 import { useDay } from "../hooks/useDay";
+import { useHabits } from "../hooks/useHabits";
 import { useIntention } from "../hooks/useIntention";
 import { useReminder } from "../hooks/useReminder";
 import type { CreateReminderDto } from "../api/reminder.api";
@@ -55,6 +56,7 @@ function parseDay(date: string): Date {
 
 export default function DayPage() {
   const dayQuery = useDay();
+  const { data: habits = [] } = useHabits();
   const { createMutation, completeMutation } = useIntention();
   const reminderMutation = useReminder();
   const habitsRef = useRef<HabitsCardHandle>(null);
@@ -64,16 +66,15 @@ export default function DayPage() {
   return (
     <QueryState query={dayQuery}>
       {(day) => {
-        const todayItems = day.reminders.today;
-        const completedToday = todayItems.filter(
-          (item) => item.completed,
-        ).length;
+        const visibleHabits = habits.slice(0, 4);
         const progressPercent =
-          todayItems.length === 0
+          habits.length === 0
             ? 0
-            : Math.round((completedToday / todayItems.length) * 100);
-        const visibleTodayItems = todayItems.slice(0, 4);
-        const ringRadius = 44;
+            : Math.round(
+                habits.reduce((value, habit) => value + habit.progress, 0) /
+                  habits.length,
+              );
+        const ringRadius = 45;
         const ringCircumference = 2 * Math.PI * ringRadius;
         const ringOffset = ringCircumference * (1 - progressPercent / 100);
 
@@ -116,23 +117,52 @@ export default function DayPage() {
             </header>
 
             <div
-              className="mb-4 overflow-hidden rounded-[24px] p-6 shadow-[0_12px_35px_rgba(0,0,0,0.18)]"
+              className="mb-4 overflow-hidden rounded-3xl p-6 shadow-[0_16px_40px_rgba(0,0,0,0.20)]"
               style={{
                 background: "linear-gradient(180deg, #10263F 0%, #132F4B 100%)",
+                boxShadow: "inset 0 1px rgba(255,255,255,.05)",
               }}
             >
-              <div className="grid gap-6 md:grid-cols-[35%_30%_35%]">
-                <div className="flex flex-col justify-between gap-5">
+              <div className="grid grid-cols-[35%_1px_65%] items-center gap-6 h-full">
+                <div className="flex h-full flex-col justify-center">
                   <div className="flex items-center gap-2 text-sm font-medium text-white/90">
                     <span className="text-lg">☀️</span>
                     <span>Сегодня</span>
                   </div>
 
-                  <div>
-                    <p className="text-5xl font-semibold text-white">
-                      {progressPercent}%
-                    </p>
-                    <p className="mt-3 max-w-[220px] text-sm leading-6 text-white/75">
+                  <div className="mt-3 flex flex-col items-start gap-3">
+                    <div className="relative h-[110px] w-[110px]">
+                      <svg viewBox="0 0 100 100" className="h-full w-full">
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r={45}
+                          className="fill-none stroke-white/15 stroke-10"
+                        />
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r={45}
+                          className="fill-none stroke-10 transition-all duration-400 ease-out"
+                          stroke={
+                            progressPercent <= 30
+                              ? "#EF4444"
+                              : progressPercent <= 70
+                                ? "#F59E0B"
+                                : "#22C55E"
+                          }
+                          strokeDasharray={ringCircumference}
+                          strokeDashoffset={ringOffset}
+                          strokeLinecap="round"
+                          transform="rotate(-90 50 50)"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center text-[34px] font-bold text-white">
+                        {progressPercent}%
+                      </div>
+                    </div>
+
+                    <p className="mt-3 text-sm leading-6 text-white/75">
                       {progressPercent === 100
                         ? "✨ Сегодня прожит осознанно"
                         : progressPercent >= 76
@@ -146,69 +176,32 @@ export default function DayPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-col justify-center gap-3">
-                  {visibleTodayItems.length > 0 ? (
-                    <div className="space-y-3">
-                      {visibleTodayItems.map((item) => (
-                        <div key={item.id} className="flex items-center gap-3">
+                <div className="h-30 w-px bg-white/10" />
+
+                <div className="flex h-full flex-col justify-center">
+                  {visibleHabits.length > 0 ? (
+                    <div>
+                      {visibleHabits.map((habit) => (
+                        <div
+                          key={habit.id}
+                          className="flex items-center gap-3 mb-4 last:mb-0"
+                        >
                           <div
-                            className={`grid h-6 w-6 place-items-center rounded-full border text-sm transition duration-[250ms] ease-out ${item.completed ? "border-emerald-500 bg-emerald-500 text-white" : "border-white/30 bg-transparent text-transparent"}`}
+                            className={`grid h-6.5 w-6.5 place-items-center rounded-full text-white ${habit.isCompletedToday ? "bg-emerald-500" : "bg-white/10 text-white/70"}`}
                           >
-                            ✓
+                            {habit.isCompletedToday ? "✔" : "○"}
                           </div>
-                          <p className="text-sm font-medium text-white">
-                            {item.title}
+                          <p className="text-[17px] font-medium text-white">
+                            {habit.title}
                           </p>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="rounded-[18px] border border-white/10 p-4 text-sm leading-6 text-white/80">
-                      <p className="text-2xl">🌱</p>
-                      <p className="mt-2 font-semibold text-white">
-                        Сегодня ещё нет привычек
-                      </p>
-                      <p className="mt-1 text-[13px] text-white/70">
-                        Нажмите "+" чтобы добавить первую.
-                      </p>
-                    </div>
+                    <p className="text-sm text-white/75">
+                      🌱 Сегодня ещё нет привычек
+                    </p>
                   )}
-                </div>
-
-                <div className="flex flex-col items-center justify-center gap-3">
-                  <div className="relative h-[96px] w-[96px]">
-                    <svg viewBox="0 0 100 100" className="h-full w-full">
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r={44}
-                        className="fill-none stroke-white/15 stroke-[8]"
-                      />
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r={44}
-                        className="fill-none stroke-[8] transition-all duration-[400ms] ease-out"
-                        stroke={
-                          progressPercent <= 30
-                            ? "#EF4444"
-                            : progressPercent <= 70
-                              ? "#F59E0B"
-                              : "#22C55E"
-                        }
-                        strokeDasharray={ringCircumference}
-                        strokeDashoffset={ringOffset}
-                        strokeLinecap="round"
-                        transform="rotate(-90 50 50)"
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center text-xl font-semibold text-white">
-                      {progressPercent}%
-                    </div>
-                  </div>
-                  <div className="text-sm uppercase tracking-[0.18em] text-white/70">
-                    Прогресс дня
-                  </div>
                 </div>
               </div>
             </div>
