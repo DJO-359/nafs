@@ -134,8 +134,11 @@ export default function DayPage() {
 
                   <div className="mt-3 h-2 rounded-full bg-white/10 overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-[#4F8CFF] transition-[width] duration-400 ease-out"
-                      style={{ width: `${progressPercent}%` }}
+                      className="h-full rounded-full bg-[#4F8CFF]"
+                      style={{
+                        width: `${progressPercent}%`,
+                        transition: "width .4s ease",
+                      }}
                     />
                   </div>
                 </div>
