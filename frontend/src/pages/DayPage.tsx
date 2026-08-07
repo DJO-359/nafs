@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { useRef, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import ReminderList from "../components/ReminderList";
 import DiaryCard from "../components/DiaryCard";
 import ProgressCard from "../components/ProgressCard";
@@ -61,6 +62,7 @@ export default function DayPage() {
   const reminderMutation = useReminder();
   const habitsRef = useRef<HabitsCardHandle>(null);
   const [isIntentionOpen, setIsIntentionOpen] = useState(false);
+  const [isRemindersOpen, setIsRemindersOpen] = useState(false);
 
   // Контейнер и отступы даёт Layout. Раньше здесь был второй min-h-screen
   // с собственным p-4, из-за чего отступы удваивались.
@@ -80,6 +82,15 @@ export default function DayPage() {
         const dayPart = getDayPart(currentHour);
         const theme = heroThemes[dayPart];
 
+        const activeRemindersCount =
+          day.reminders.today.filter((reminder) => !reminder.completed).length +
+          day.reminders.tomorrow.filter((reminder) => !reminder.completed)
+            .length +
+          day.reminders.upcoming
+            .flatMap((group) => group.items)
+            .filter((reminder) => !reminder.completed).length;
+        const hasActiveReminders = activeRemindersCount > 0;
+
         return (
           <div>
             <header
@@ -93,6 +104,18 @@ export default function DayPage() {
               }}
             >
               <div className="relative h-full w-full px-6 py-6 sm:px-8 sm:py-8">
+                <button
+                  type="button"
+                  onClick={() => setIsRemindersOpen(true)}
+                  className="absolute right-6 top-6 flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-white transition duration-200 hover:bg-white/15 active:scale-95"
+                  aria-label="Открыть напоминания"
+                >
+                  <span className="text-xl">🔔</span>
+                  {hasActiveReminders && (
+                    <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-red-500" />
+                  )}
+                </button>
+
                 <div className="relative z-10 flex h-full flex-col justify-between text-white">
                   <div>
                     <h1 className="mt-3 text-4xl font-semibold text-white sm:text-5xl">
@@ -144,6 +167,59 @@ export default function DayPage() {
               </div>
             </header>
 
+            <AnimatePresence>
+              {isRemindersOpen && (
+                <>
+                  <motion.div
+                    key="reminder-backdrop"
+                    className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setIsRemindersOpen(false)}
+                  />
+
+                  <motion.div
+                    key="reminder-sheet"
+                    className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-t-[28px] bg-[var(--app-surface)] p-5 shadow-2xl"
+                    initial={{ y: "100%" }}
+                    animate={{ y: 0 }}
+                    exit={{ y: "100%" }}
+                    transition={{ type: "spring", stiffness: 260, damping: 28 }}
+                  >
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm uppercase tracking-[0.16em] text-[var(--app-hint)]">
+                          Напоминания
+                        </p>
+                        <h2 className="text-xl font-semibold">
+                          Быстрый доступ
+                        </h2>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsRemindersOpen(false)}
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl text-slate-700 transition hover:bg-slate-100"
+                        aria-label="Закрыть напоминания"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <div className="max-h-[calc(90vh-108px)] overflow-y-auto pr-1">
+                      <ReminderList
+                        reminders={day.reminders}
+                        onCreate={async (dto: CreateReminderDto) => {
+                          await reminderMutation.mutateAsync(dto);
+                        }}
+                      />
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+
             <div
               className="mb-4 overflow-hidden rounded-[20px] p-5 shadow-[0_16px_40px_rgba(0,0,0,0.20)]"
               style={{
@@ -184,13 +260,6 @@ export default function DayPage() {
 
             <div className="space-y-4">
               <HabitsCard ref={habitsRef} />
-
-              <ReminderList
-                reminders={day.reminders}
-                onCreate={async (dto: CreateReminderDto) => {
-                  await reminderMutation.mutateAsync(dto);
-                }}
-              />
 
               <DiaryCard diary={day.diary} />
 
