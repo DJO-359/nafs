@@ -1,43 +1,24 @@
-import { useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
-import Button from "./ui/Button";
-import { useDiary } from "../hooks/useDiary";
+import type { DiaryEntry } from "../types/day";
 
 interface Props {
-  diary: {
-    content: string;
-    date: string;
-  } | null;
+  diary: DiaryEntry[] | null;
 }
 
 export default function DiaryCard({ diary }: Props) {
   const navigate = useNavigate();
-  const [text, setText] = useState("");
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const mutation = useDiary();
+  const latestDiary = diary?.length ? diary[diary.length - 1] : null;
 
-  async function handleSave() {
-    if (!text.trim()) return;
+  function formatLocalDate(date: Date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
 
-    await mutation.mutateAsync(text);
-    setText("");
-    setIsFormOpen(false);
-  }
-
-  function openCreateForm() {
-    setText("");
-    setIsFormOpen(true);
-  }
-
-  function openEditForm() {
-    setText(diary?.content ?? "");
-    setIsFormOpen(true);
+    return `${year}-${month}-${day}`;
   }
 
   const handleCardClick = () => {
-    // Navigate to full day view; Day page shows all entries and edit UI
-    navigate(`/day/${diary?.date ?? new Date().toISOString().slice(0, 10)}`);
+    navigate(`/day/${formatLocalDate(new Date())}`);
   };
 
   return (
@@ -48,7 +29,7 @@ export default function DiaryCard({ diary }: Props) {
           onClick={handleCardClick}
           className="absolute inset-0 z-30 cursor-pointer pointer-events-auto"
           aria-label={
-            diary ? "Редактировать дневник" : "Добавить запись в дневник"
+            latestDiary ? "Открыть дневник" : "Добавить запись в дневник"
           }
         />
 
@@ -72,13 +53,13 @@ export default function DiaryCard({ diary }: Props) {
 
           <div className="relative z-20 mt-4 flex-1">
             <p className="line-clamp-2 max-w-[90%] text-[18px] font-medium leading-7 text-white">
-              {diary?.content ?? "Сегодня ещё нет записи"}
+              {latestDiary?.content ?? "Сегодня ещё нет записи"}
             </p>
           </div>
 
           <div className="relative z-20 text-sm text-white/50">
-            {diary
-              ? new Date(diary.date).toLocaleDateString("ru-RU", {
+            {latestDiary
+              ? new Date(latestDiary.date).toLocaleDateString("ru-RU", {
                   day: "numeric",
                   month: "long",
                 })
@@ -93,31 +74,6 @@ export default function DiaryCard({ diary }: Props) {
           <div className="pointer-events-none absolute bottom-0 left-1/2 h-[80px] w-[80px] -translate-x-1/2 rounded-full bg-[#1E40AF]/10 blur-2xl" />
         </div>
       </div>
-
-      <AnimatePresence initial={false}>
-        {isFormOpen && (
-          <motion.div
-            key="diary-form"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
-            className="mt-4 overflow-hidden"
-          >
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              rows={7}
-              placeholder="Что сегодня произошло? Чему вы научились? За что благодарны?"
-              className="mb-4 w-full rounded-xl border border-[var(--app-border)] p-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
-            />
-
-            <Button loading={mutation.isPending} onClick={handleSave}>
-              💾 Сохранить
-            </Button>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
