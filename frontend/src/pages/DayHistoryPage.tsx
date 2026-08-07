@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
@@ -26,11 +27,21 @@ export default function DayHistoryPage() {
   const { date = "" } = useParams();
   const query = useDayByDate(date);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isDiaryOpen, setIsDiaryOpen] = useState(false);
   const [text, setText] = useState("");
   const diaryMutation = useDiary();
 
   useBackButton();
+
+  const onDiarySave = async () => {
+    if (!text.trim()) return;
+
+    await diaryMutation.mutateAsync(text);
+    setText("");
+    setIsDiaryOpen(false);
+    void queryClient.invalidateQueries({ queryKey: ["day", date] });
+  };
 
   return (
     <div className="pb-32">
@@ -134,12 +145,7 @@ export default function DayHistoryPage() {
 
                       <Button
                         loading={diaryMutation.isPending}
-                        onClick={async () => {
-                          if (!text.trim()) return;
-                          await diaryMutation.mutateAsync(text);
-                          setText("");
-                          setIsDiaryOpen(false);
-                        }}
+                        onClick={onDiarySave}
                       >
                         Сохранить запись
                       </Button>
@@ -151,10 +157,10 @@ export default function DayHistoryPage() {
               <button
                 type="button"
                 onClick={() => setIsDiaryOpen(true)}
-                className="fixed left-1/2 bottom-6 z-50 -translate-x-1/2 rounded-full bg-white px-6 py-4 text-base font-semibold text-slate-900 shadow-[0_12px_30px_rgba(0,0,0,0.18)] transition hover:shadow-[0_16px_35px_rgba(0,0,0,0.22)]"
+                className="fixed left-1/2 bottom-6 z-50 -translate-x-1/2 flex items-center gap-3 rounded-full bg-emerald-600 px-6 py-4 text-base font-semibold text-white shadow-[0_14px_40px_rgba(16,185,129,0.25)] transition hover:shadow-[0_16px_45px_rgba(16,185,129,0.30)]"
               >
                 <span className="text-2xl">➕</span>
-                <span className="ml-3">Новая запись</span>
+                <span>Новая запись</span>
               </button>
             </>
           );
