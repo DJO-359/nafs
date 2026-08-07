@@ -1,5 +1,6 @@
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
+import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import EmptyState from "../components/ui/EmptyState";
 import QueryState from "../components/ui/QueryState";
@@ -21,6 +22,7 @@ function formatDay(date: string): string {
 export default function DayHistoryPage() {
   const { date = "" } = useParams();
   const query = useDayByDate(date);
+  const navigate = useNavigate();
 
   useBackButton();
 
@@ -68,7 +70,18 @@ export default function DayHistoryPage() {
               <h2 className="mb-2 font-semibold">📖 Дневник</h2>
 
               {day.diary === null ? (
-                <EmptyState icon="📖" title="За этот день пока нет записей." />
+                <div className="space-y-4">
+                  <EmptyState
+                    icon="📖"
+                    title="За этот день пока нет записей."
+                  />
+                  <Button
+                    type="button"
+                    onClick={() => navigate("/", { replace: false })}
+                  >
+                    Написать запись
+                  </Button>
+                </div>
               ) : (
                 (() => {
                   const entry = day.diary as unknown as DiaryEntry;
