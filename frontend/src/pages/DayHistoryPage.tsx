@@ -25,6 +25,7 @@ export default function DayHistoryPage() {
   const navigate = useNavigate();
 
   useBackButton();
+  console.log("DayHistoryPage mounted");
 
   return (
     <div className="space-y-4">
