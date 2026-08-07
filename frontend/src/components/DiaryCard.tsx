@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { useNavigate } from "react-router-dom";
 import Button from "./ui/Button";
 import { useDiary } from "../hooks/useDiary";
 
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export default function DiaryCard({ diary }: Props) {
+  const navigate = useNavigate();
   const [text, setText] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const mutation = useDiary();
@@ -34,11 +36,8 @@ export default function DiaryCard({ diary }: Props) {
   }
 
   const handleCardClick = () => {
-    if (diary) {
-      openEditForm();
-    } else {
-      openCreateForm();
-    }
+    // Navigate to full day view; Day page shows all entries and edit UI
+    navigate(`/day/${diary?.date ?? new Date().toISOString().slice(0, 10)}`);
   };
 
   return (

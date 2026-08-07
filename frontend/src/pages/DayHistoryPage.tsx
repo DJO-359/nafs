@@ -65,10 +65,19 @@ export default function DayHistoryPage() {
             <Card>
               <h2 className="mb-2 font-semibold">📖 Дневник</h2>
 
-              {day.diary ? (
-                <p className="whitespace-pre-wrap">{day.diary.content}</p>
-              ) : (
+              {day.diary.length === 0 ? (
                 <div className="text-[var(--app-hint)]">Записи нет</div>
+              ) : (
+                <div className="space-y-3">
+                  {day.diary.map((entry) => (
+                    <div key={entry.id}>
+                      <div className="mb-1 text-sm text-[var(--app-hint)]">
+                        {formatDay(entry.date)}
+                      </div>
+                      <p className="whitespace-pre-wrap">{entry.content}</p>
+                    </div>
+                  ))}
+                </div>
               )}
             </Card>
           </>

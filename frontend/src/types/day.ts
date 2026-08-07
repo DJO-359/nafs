@@ -29,7 +29,7 @@ export interface Day {
   date: string;
   intention: Intention | null;
   reminders: GroupedReminders;
-  diary: DiaryEntry | null;
+  diary: DiaryEntry[];
 }
 
 /** Ответ GET /day/:date — конкретный день в истории. */
@@ -37,5 +37,5 @@ export interface DayByDate {
   date: string;
   intention: Intention | null;
   reminders: Reminder[];
-  diary: DiaryEntry | null;
+  diary: DiaryEntry[];
 }

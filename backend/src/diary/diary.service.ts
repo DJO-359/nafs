@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Op, UniqueConstraintError } from 'sequelize';
+import { Op } from 'sequelize';
 
 import { DiaryEntry } from './models/diary-entry.model';
 import { todayInZone } from '../common/utils/timezone.util';
@@ -18,34 +18,11 @@ export class DiaryService {
    */
   async create(userId: string, timezone: string, content: string) {
     const today = todayInZone(timezone);
-
-    const existing = await this.getByDate(userId, today);
-
-    if (existing) {
-      existing.content = content;
-      await existing.save();
-      return existing;
-    }
-
-    try {
-      return await this.diaryModel.create({
-        userId,
-        content,
-        date: today,
-      } as Partial<DiaryEntry> as DiaryEntry);
-    } catch (error) {
-      if (error instanceof UniqueConstraintError) {
-        const concurrent = await this.getByDate(userId, today);
-
-        if (concurrent) {
-          concurrent.content = content;
-          await concurrent.save();
-          return concurrent;
-        }
-      }
-
-      throw error;
-    }
+    return this.diaryModel.create({
+      userId,
+      content,
+      date: today,
+    } as Partial<DiaryEntry> as DiaryEntry);
   }
 
   findAll(userId: string) {
@@ -72,35 +49,12 @@ export class DiaryService {
 
   async update(userId: string, id: string, content: string) {
     const entry = await this.findOne(userId, id);
-
-    entry.content = content;
-    await entry.save();
-
-    return entry;
-  }
-
-  async remove(userId: string, id: string) {
-    const entry = await this.findOne(userId, id);
-
-    await entry.destroy();
-
-    return { deleted: true };
-  }
-
-  getLastEntry(userId: string) {
-    return this.diaryModel.findOne({
-      where: { userId },
-      order: [['date', 'DESC']],
-    });
-  }
-
-  getTodayEntry(userId: string, timezone: string) {
-    return this.getByDate(userId, todayInZone(timezone));
-  }
-
-  getByDate(userId: string, date: string) {
-    return this.diaryModel.findOne({
-      where: { userId, date },
+    return this.diaryModel.create({
+      userId,
+      content,
+      date: today,
+    } as Partial<DiaryEntry> as DiaryEntry);
+      order: [['createdAt', 'DESC']],
     });
   }
 

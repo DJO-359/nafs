@@ -15,11 +15,11 @@ import { User } from '../../users/models/user.model';
   tableName: 'diary_entries',
   timestamps: true,
   indexes: [
-    // Одна запись дневника на день пользователя
+    // Несколько записей дневника на один день пользователя
     {
-      unique: true,
+      unique: false,
       fields: ['userId', 'date'],
-      name: 'diary_entries_user_date_uk',
+      name: 'diary_entries_user_date_idx',
     },
   ],
 })
