@@ -47,7 +47,7 @@ export default function DiaryCard({ diary }: Props) {
         <button
           type="button"
           onClick={handleCardClick}
-          className="absolute inset-0 z-10 cursor-pointer"
+          className="absolute inset-0 z-30 cursor-pointer pointer-events-auto"
           aria-label={
             diary ? "Редактировать дневник" : "Добавить запись в дневник"
           }
@@ -88,10 +88,10 @@ export default function DiaryCard({ diary }: Props) {
         </div>
 
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[35%] overflow-hidden">
-          <div className="absolute -bottom-10 -right-10 h-[180px] w-[180px] rounded-full bg-[#3B82F6]/18 blur-3xl transform scale-125" />
-          <div className="absolute -bottom-4 right-10 h-[140px] w-[140px] rounded-full bg-[#1E40AF]/25 blur-3xl transform scale-110" />
-          <div className="absolute -bottom-16 left-10 h-[160px] w-[160px] rounded-full bg-white/10 blur-3xl transform scale-125" />
-          <div className="absolute bottom-0 left-1/2 h-[80px] w-[80px] -translate-x-1/2 rounded-full bg-[#1E40AF]/10 blur-2xl" />
+          <div className="pointer-events-none absolute -bottom-10 -right-10 h-[180px] w-[180px] rounded-full bg-[#3B82F6]/18 blur-3xl transform scale-125" />
+          <div className="pointer-events-none absolute -bottom-4 right-10 h-[140px] w-[140px] rounded-full bg-[#1E40AF]/25 blur-3xl transform scale-110" />
+          <div className="pointer-events-none absolute -bottom-16 left-10 h-[160px] w-[160px] rounded-full bg-white/10 blur-3xl transform scale-125" />
+          <div className="pointer-events-none absolute bottom-0 left-1/2 h-[80px] w-[80px] -translate-x-1/2 rounded-full bg-[#1E40AF]/10 blur-2xl" />
         </div>
       </div>
 
