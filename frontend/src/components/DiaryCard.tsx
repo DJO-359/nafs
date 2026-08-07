@@ -7,7 +7,7 @@ interface Props {
 
 export default function DiaryCard({ diary }: Props) {
   const navigate = useNavigate();
-  const latestDiary = diary?.length ? diary[diary.length - 1] : null;
+  const latestDiary = diary?.length ? diary[0] : null;
 
   function formatLocalDate(date: Date) {
     const year = date.getFullYear();
@@ -53,7 +53,7 @@ export default function DiaryCard({ diary }: Props) {
 
           <div className="relative z-20 mt-4 flex-1">
             <p className="line-clamp-2 max-w-[90%] text-[18px] font-medium leading-7 text-white">
-              {latestDiary?.content ?? "Сегодня ещё нет записи"}
+              {latestDiary?.content ?? "Сегодня ещё нет записей"}
             </p>
           </div>
 

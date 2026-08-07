@@ -23,22 +23,58 @@ function formatDay(date: string): string {
   });
 }
 
+function formatEntryTime(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleTimeString("ru-RU", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default function DayHistoryPage() {
   const { date = "" } = useParams();
   const query = useDayByDate(date);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isDiaryOpen, setIsDiaryOpen] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<DiaryEntry | null>(null);
   const [text, setText] = useState("");
   const diaryMutation = useDiary();
 
   useBackButton();
 
+  const openNewEntry = () => {
+    setEditingEntry(null);
+    setText("");
+    setIsDiaryOpen(true);
+  };
+
+  const openEntry = (entry: DiaryEntry) => {
+    setEditingEntry(entry);
+    setText(entry.content);
+    setIsDiaryOpen(true);
+  };
+
+  const closeEntry = () => {
+    setText("");
+    setEditingEntry(null);
+    setIsDiaryOpen(false);
+  };
+
   const onDiarySave = async () => {
     if (!text.trim()) return;
 
-    await diaryMutation.mutateAsync(text);
+    await diaryMutation.mutateAsync({
+      text: text.trim(),
+      id: editingEntry?.id,
+    });
     setText("");
+    setEditingEntry(null);
     setIsDiaryOpen(false);
     void queryClient.invalidateQueries({ queryKey: ["day", date] });
   };
@@ -47,7 +83,7 @@ export default function DayHistoryPage() {
     <div className="pb-40">
       <QueryState query={query}>
         {(day) => {
-          const diaryEntry = day.diary as unknown as DiaryEntry | null;
+          const diaryEntries = Array.isArray(day.diary) ? day.diary : [];
 
           return (
             <>
@@ -69,24 +105,31 @@ export default function DayHistoryPage() {
               </div>
 
               <Card className="rounded-[28px] p-6">
-                {diaryEntry === null ? (
+                {diaryEntries.length === 0 ? (
                   <div className="space-y-6">
                     <EmptyState
                       icon="📖"
-                      title="За сегодняшний день ещё нет записи."
+                      title="За сегодняшний день ещё нет записей."
                       description="Запишите несколько мыслей, событий или благодарностей."
                     />
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    <div className="rounded-[28px] border border-[var(--app-border)] bg-[var(--app-surface)] p-6 shadow-[0_16px_40px_rgba(0,0,0,0.16)]">
-                      <div className="mb-3 text-sm text-[var(--app-hint)]">
-                        {formatDay(diaryEntry.date)}
-                      </div>
-                      <p className="whitespace-pre-wrap text-white text-base">
-                        {diaryEntry.content}
-                      </p>
-                    </div>
+                  <div className="space-y-3">
+                    {diaryEntries.map((entry) => (
+                      <button
+                        key={entry.id}
+                        type="button"
+                        onClick={() => openEntry(entry)}
+                        className="w-full rounded-[24px] border border-[var(--app-border)] bg-[var(--app-surface)] p-4 text-left shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition hover:border-emerald-500"
+                      >
+                        <div className="mb-2 text-xs uppercase tracking-[0.16em] text-[var(--app-hint)]">
+                          {formatEntryTime(entry.createdAt)}
+                        </div>
+                        <p className="whitespace-pre-wrap text-sm text-white">
+                          {entry.content}
+                        </p>
+                      </button>
+                    ))}
                   </div>
                 )}
               </Card>
@@ -100,7 +143,7 @@ export default function DayHistoryPage() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      onClick={() => setIsDiaryOpen(false)}
+                      onClick={closeEntry}
                     />
 
                     <motion.div
@@ -125,13 +168,15 @@ export default function DayHistoryPage() {
                             Дневник
                           </p>
                           <h2 className="text-xl font-semibold">
-                            Новая запись
+                            {editingEntry
+                              ? "Редактировать запись"
+                              : "Новая запись"}
                           </h2>
                         </div>
 
                         <button
                           type="button"
-                          onClick={() => setIsDiaryOpen(false)}
+                          onClick={closeEntry}
                           className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl text-slate-700 transition hover:bg-slate-100"
                           aria-label="Закрыть"
                         >
@@ -151,7 +196,9 @@ export default function DayHistoryPage() {
                         loading={diaryMutation.isPending}
                         onClick={onDiarySave}
                       >
-                        Сохранить запись
+                        {editingEntry
+                          ? "Сохранить изменения"
+                          : "Сохранить запись"}
                       </Button>
                     </motion.div>
                   </>
@@ -161,7 +208,7 @@ export default function DayHistoryPage() {
               {!isDiaryOpen && (
                 <button
                   type="button"
-                  onClick={() => setIsDiaryOpen(true)}
+                  onClick={openNewEntry}
                   className="fixed left-1/2 bottom-28 z-[60] -translate-x-1/2 flex items-center gap-3 rounded-full bg-emerald-600 px-6 py-4 text-base font-semibold text-white shadow-[0_14px_40px_rgba(16,185,129,0.25)] transition hover:shadow-[0_16px_45px_rgba(16,185,129,0.30)]"
                 >
                   <span className="text-2xl">➕</span>

@@ -9,8 +9,11 @@ export interface Intention {
 
 export interface DiaryEntry {
   id: string;
+  userId?: string;
   content: string;
   date: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ReminderGroup {

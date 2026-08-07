@@ -31,7 +31,7 @@ export class DiaryService {
   findAll(userId: string) {
     return this.diaryModel.findAll({
       where: { userId },
-      order: [['date', 'DESC']],
+      order: [['createdAt', 'DESC']],
     });
   }
 
@@ -61,14 +61,15 @@ export class DiaryService {
   }
 
   /**
-   * Получить запись за конкретную дату.
+   * Получить записи за конкретную дату.
    */
   async getByDate(userId: string, date: string) {
-    return this.diaryModel.findOne({
+    return this.diaryModel.findAll({
       where: {
         userId,
         date,
       },
+      order: [['createdAt', 'DESC']],
     });
   }
 
@@ -76,12 +77,15 @@ export class DiaryService {
    * Последняя запись пользователя.
    */
   async getLastEntry(userId: string) {
-    return this.diaryModel.findOne({
+    const [entry] = await this.diaryModel.findAll({
       where: {
         userId,
       },
-      order: [['date', 'DESC']],
+      order: [['createdAt', 'DESC']],
+      limit: 1,
     });
+
+    return entry ?? null;
   }
 
   /**
