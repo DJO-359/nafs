@@ -58,3 +58,6 @@ body {
 .safe-top {
   padding-top: env(safe-area-inset-top);
 }
+.bott {
+  padding-bottom: 10px;
+}
