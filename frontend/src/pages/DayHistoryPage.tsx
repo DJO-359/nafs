@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { AnimatePresence, motion } from "motion/react";
 
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
@@ -6,6 +8,7 @@ import EmptyState from "../components/ui/EmptyState";
 import QueryState from "../components/ui/QueryState";
 import { useDayByDate } from "../hooks/useDayByDate";
 import { useBackButton } from "../hooks/useBackButton";
+import { useDiary } from "../hooks/useDiary";
 import type { DiaryEntry } from "../types/day";
 
 function formatDay(date: string): string {
@@ -23,85 +26,139 @@ export default function DayHistoryPage() {
   const { date = "" } = useParams();
   const query = useDayByDate(date);
   const navigate = useNavigate();
+  const [isDiaryOpen, setIsDiaryOpen] = useState(false);
+  const [text, setText] = useState("");
+  const diaryMutation = useDiary();
 
   useBackButton();
-  console.log("DayHistoryPage mounted");
 
   return (
-    <div className="space-y-4">
+    <div className="pb-32">
       <QueryState query={query}>
-        {(day) => (
-          <>
-            <h1 className="text-2xl font-bold">📅 {formatDay(day.date)}</h1>
+        {(day) => {
+          const diaryEntry = day.diary as unknown as DiaryEntry | null;
 
-            <Card>
-              <h2 className="mb-2 font-semibold">🧭 Намерение</h2>
-
-              {day.intention ? (
-                <>
-                  <div>{day.intention.text}</div>
-                  <div className="mt-2 text-sm text-emerald-600">
-                    {day.intention.completed
-                      ? "✅ Выполнено"
-                      : "⏳ Не выполнено"}
-                  </div>
-                </>
-              ) : (
-                <div className="text-[var(--app-hint)]">Нет намерения</div>
-              )}
-            </Card>
-
-            <Card>
-              <h2 className="mb-2 font-semibold">⏰ Напоминания</h2>
-
-              {day.reminders.length === 0 ? (
-                <div className="text-[var(--app-hint)]">Нет напоминаний</div>
-              ) : (
-                <ul className="space-y-2">
-                  {day.reminders.map((item) => (
-                    <li key={item.id}>
-                      {item.completed ? "✅" : "⭕"} {item.title}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Card>
-
-            <Card>
-              <h2 className="mb-2 font-semibold">📖 Дневник</h2>
-
-              {day.diary === null ? (
-                <div className="space-y-4">
-                  <EmptyState
-                    icon="📖"
-                    title="За этот день пока нет записей."
-                  />
-                  <Button
-                    type="button"
-                    onClick={() => navigate("/", { replace: false })}
-                  >
-                    Написать запись
-                  </Button>
+          return (
+            <>
+              <div className="mb-6 flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => navigate(-1)}
+                  className="text-xl font-medium text-white transition hover:text-slate-300"
+                  aria-label="Назад"
+                >
+                  ←
+                </button>
+                <div>
+                  <h1 className="text-3xl font-semibold">Дневник</h1>
+                  <p className="text-sm text-[var(--app-hint)]">
+                    {formatDay(day.date)}
+                  </p>
                 </div>
-              ) : (
-                (() => {
-                  const entry = day.diary as unknown as DiaryEntry;
+              </div>
 
-                  return (
-                    <div className="space-y-3 rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-4">
-                      <div className="mb-2 text-sm text-[var(--app-hint)]">
-                        {formatDay(entry.date)}
+              <Card className="rounded-[28px] p-6">
+                {diaryEntry === null ? (
+                  <div className="space-y-6">
+                    <EmptyState
+                      icon="📖"
+                      title="За сегодняшний день ещё нет записи."
+                      description="Запишите несколько мыслей, событий или благодарностей."
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="rounded-[28px] border border-[var(--app-border)] bg-[var(--app-surface)] p-6 shadow-[0_16px_40px_rgba(0,0,0,0.16)]">
+                      <div className="mb-3 text-sm text-[var(--app-hint)]">
+                        {formatDay(diaryEntry.date)}
                       </div>
-                      <p className="whitespace-pre-wrap text-white">
-                        {entry.content}
+                      <p className="whitespace-pre-wrap text-white text-base">
+                        {diaryEntry.content}
                       </p>
                     </div>
-                  );
-                })()
-              )}
-            </Card>
-          </>
-        )}
+                  </div>
+                )}
+              </Card>
+
+              <AnimatePresence>
+                {isDiaryOpen && (
+                  <>
+                    <motion.div
+                      key="diary-backdrop"
+                      className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      onClick={() => setIsDiaryOpen(false)}
+                    />
+
+                    <motion.div
+                      key="diary-sheet"
+                      className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-t-[28px] bg-[var(--app-surface)] p-5 shadow-2xl"
+                      initial={{ y: "100%" }}
+                      animate={{ y: 0 }}
+                      exit={{ y: "100%" }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 260,
+                        damping: 28,
+                      }}
+                    >
+                      <div className="mb-4 flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm uppercase tracking-[0.16em] text-[var(--app-hint)]">
+                            Дневник
+                          </p>
+                          <h2 className="text-xl font-semibold">
+                            Новая запись
+                          </h2>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setIsDiaryOpen(false)}
+                          className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl text-slate-700 transition hover:bg-slate-100"
+                          aria-label="Закрыть"
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      <textarea
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                        rows={8}
+                        placeholder="Что сегодня произошло? Чему вы научились? За что благодарны?"
+                        className="mb-4 w-full rounded-3xl border border-[var(--app-border)] bg-[var(--app-bg)] p-4 text-sm text-white outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                      />
+
+                      <Button
+                        loading={diaryMutation.isPending}
+                        onClick={async () => {
+                          if (!text.trim()) return;
+                          await diaryMutation.mutateAsync(text);
+                          setText("");
+                          setIsDiaryOpen(false);
+                        }}
+                      >
+                        Сохранить запись
+                      </Button>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+
+              <button
+                type="button"
+                onClick={() => setIsDiaryOpen(true)}
+                className="fixed left-1/2 bottom-6 z-50 -translate-x-1/2 rounded-full bg-white px-6 py-4 text-base font-semibold text-slate-900 shadow-[0_12px_30px_rgba(0,0,0,0.18)] transition hover:shadow-[0_16px_35px_rgba(0,0,0,0.22)]"
+              >
+                <span className="text-2xl">➕</span>
+                <span className="ml-3">Новая запись</span>
+              </button>
+            </>
+          );
+        }}
       </QueryState>
     </div>
   );
