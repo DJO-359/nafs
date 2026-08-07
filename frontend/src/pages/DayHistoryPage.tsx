@@ -96,7 +96,7 @@ export default function DayHistoryPage() {
                   <>
                     <motion.div
                       key="diary-backdrop"
-                      className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+                      className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
@@ -105,7 +105,11 @@ export default function DayHistoryPage() {
 
                     <motion.div
                       key="diary-sheet"
-                      className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-t-[28px] bg-[var(--app-surface)] p-5 shadow-2xl"
+                      className="fixed inset-x-0 z-[70] mx-auto max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-t-[28px] bg-[var(--app-surface)] p-5 shadow-2xl"
+                      style={{
+                        bottom:
+                          "calc(env(safe-area-inset-bottom, 0px) + 1rem + 72px + 16px)",
+                      }}
                       initial={{ y: "100%" }}
                       animate={{ y: 0 }}
                       exit={{ y: "100%" }}
@@ -154,14 +158,16 @@ export default function DayHistoryPage() {
                 )}
               </AnimatePresence>
 
-              <button
-                type="button"
-                onClick={() => setIsDiaryOpen(true)}
-                className="fixed left-1/2 bottom-28 z-[60] -translate-x-1/2 flex items-center gap-3 rounded-full bg-emerald-600 px-6 py-4 text-base font-semibold text-white shadow-[0_14px_40px_rgba(16,185,129,0.25)] transition hover:shadow-[0_16px_45px_rgba(16,185,129,0.30)]"
-              >
-                <span className="text-2xl">➕</span>
-                <span>Новая запись</span>
-              </button>
+              {!isDiaryOpen && (
+                <button
+                  type="button"
+                  onClick={() => setIsDiaryOpen(true)}
+                  className="fixed left-1/2 bottom-28 z-[60] -translate-x-1/2 flex items-center gap-3 rounded-full bg-emerald-600 px-6 py-4 text-base font-semibold text-white shadow-[0_14px_40px_rgba(16,185,129,0.25)] transition hover:shadow-[0_16px_45px_rgba(16,185,129,0.30)]"
+                >
+                  <span className="text-2xl">➕</span>
+                  <span>Новая запись</span>
+                </button>
+              )}
             </>
           );
         }}
