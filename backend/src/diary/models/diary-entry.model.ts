@@ -8,6 +8,11 @@ import {
   CreatedAt,
   UpdatedAt,
 } from 'sequelize-typescript';
+import {
+  InferAttributes,
+  InferCreationAttributes,
+  CreationOptional,
+} from 'sequelize';
 
 import { User } from '../../users/models/user.model';
 
@@ -15,7 +20,6 @@ import { User } from '../../users/models/user.model';
   tableName: 'diary_entries',
   timestamps: true,
   indexes: [
-    // Несколько записей дневника на один день пользователя
     {
       unique: false,
       fields: ['userId', 'date'],
@@ -23,13 +27,16 @@ import { User } from '../../users/models/user.model';
     },
   ],
 })
-export class DiaryEntry extends Model<DiaryEntry> {
+export class DiaryEntry extends Model<
+  InferAttributes<DiaryEntry>,
+  InferCreationAttributes<DiaryEntry>
+> {
   @Column({
     type: DataType.UUID,
     defaultValue: DataType.UUIDV4,
     primaryKey: true,
   })
-  declare id: string;
+  declare id: CreationOptional<string>;
 
   @ForeignKey(() => User)
   @Column({
@@ -39,7 +46,7 @@ export class DiaryEntry extends Model<DiaryEntry> {
   declare userId: string;
 
   @BelongsTo(() => User, { onDelete: 'CASCADE' })
-  declare user: User;
+  declare user: CreationOptional<User>;
 
   @Column({
     type: DataType.TEXT,
@@ -48,9 +55,7 @@ export class DiaryEntry extends Model<DiaryEntry> {
   declare content: string;
 
   /**
-   * День записи в часовом поясе пользователя (YYYY-MM-DD).
-   * Раньше «день» выводился из createdAt, поэтому запись задним числом была
-   * невозможна, а у пользователя в UTC+3 вечерняя запись попадала во вчера.
+   * День записи в часовом поясе пользователя (YYYY-MM-DD)
    */
   @Column({
     type: DataType.DATEONLY,
@@ -59,8 +64,8 @@ export class DiaryEntry extends Model<DiaryEntry> {
   declare date: string;
 
   @CreatedAt
-  declare createdAt: Date;
+  declare createdAt: CreationOptional<Date>;
 
   @UpdatedAt
-  declare updatedAt: Date;
+  declare updatedAt: CreationOptional<Date>;
 }

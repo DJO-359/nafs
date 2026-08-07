@@ -13,8 +13,7 @@ export class DiaryService {
   ) {}
 
   /**
-   * Создаёт запись за сегодняшний день.
-   * День определяется колонкой date в часовом поясе пользователя.
+   * Создает новую запись дневника.
    */
   async create(userId: string, timezone: string, content: string) {
     const today = todayInZone(timezone);
@@ -23,9 +22,12 @@ export class DiaryService {
       userId,
       content,
       date: today,
-    } as Partial<DiaryEntry>);
+    });
   }
 
+  /**
+   * Все записи пользователя.
+   */
   findAll(userId: string) {
     return this.diaryModel.findAll({
       where: { userId },
@@ -34,11 +36,21 @@ export class DiaryService {
   }
 
   /**
-   * Возвращает запись только владельца.
+   * История дневника.
+   */
+  getHistory(userId: string) {
+    return this.findAll(userId);
+  }
+
+  /**
+   * Получить запись по ID.
    */
   async findOne(userId: string, id: string) {
     const entry = await this.diaryModel.findOne({
-      where: { id, userId },
+      where: {
+        id,
+        userId,
+      },
     });
 
     if (!entry) {
@@ -49,7 +61,31 @@ export class DiaryService {
   }
 
   /**
-   * Обновляет существующую запись.
+   * Получить запись за конкретный день.
+   */
+  async getByDate(userId: string, date: string) {
+    return this.diaryModel.findOne({
+      where: {
+        userId,
+        date,
+      },
+    });
+  }
+
+  /**
+   * Последняя запись пользователя.
+   */
+  async getLastEntry(userId: string) {
+    return this.diaryModel.findOne({
+      where: {
+        userId,
+      },
+      order: [['date', 'DESC']],
+    });
+  }
+
+  /**
+   * Обновление записи.
    */
   async update(userId: string, id: string, content: string) {
     const entry = await this.findOne(userId, id);
@@ -62,16 +98,12 @@ export class DiaryService {
   }
 
   /**
-   * Удаляет запись.
+   * Удаление записи.
    */
   async remove(userId: string, id: string) {
     const entry = await this.findOne(userId, id);
 
     await entry.destroy();
-  }
-
-  getHistory(userId: string) {
-    return this.findAll(userId);
   }
 
   /**
@@ -90,14 +122,19 @@ export class DiaryService {
     });
   }
 
+  /**
+   * Количество записей.
+   */
   count(userId: string): Promise<number> {
     return this.diaryModel.count({
-      where: { userId },
+      where: {
+        userId,
+      },
     });
   }
 
   /**
-   * Даты активности до указанного дня включительно.
+   * Даты активности пользователя.
    */
   async getActiveDates(userId: string, until: string): Promise<string[]> {
     const rows = await this.diaryModel.findAll({
@@ -111,6 +148,6 @@ export class DiaryService {
       raw: true,
     });
 
-    return rows.map((row: { date: string }) => row.date);
+    return (rows as { date: string }[]).map((row) => row.date);
   }
 }
