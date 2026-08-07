@@ -1,9 +1,11 @@
 import { useParams } from "react-router-dom";
 
 import Card from "../components/ui/Card";
+import EmptyState from "../components/ui/EmptyState";
 import QueryState from "../components/ui/QueryState";
 import { useDayByDate } from "../hooks/useDayByDate";
 import { useBackButton } from "../hooks/useBackButton";
+import type { DiaryEntry } from "../types/day";
 
 function formatDay(date: string): string {
   const [year, month, day] = date.split("-").map(Number);
@@ -65,19 +67,23 @@ export default function DayHistoryPage() {
             <Card>
               <h2 className="mb-2 font-semibold">📖 Дневник</h2>
 
-              {day.diary.length === 0 ? (
-                <div className="text-[var(--app-hint)]">Записи нет</div>
+              {day.diary === null ? (
+                <EmptyState icon="📖" title="За этот день пока нет записей." />
               ) : (
-                <div className="space-y-3">
-                  {day.diary.map((entry) => (
-                    <div key={entry.id}>
-                      <div className="mb-1 text-sm text-[var(--app-hint)]">
+                (() => {
+                  const entry = day.diary as unknown as DiaryEntry;
+
+                  return (
+                    <div className="space-y-3 rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-4">
+                      <div className="mb-2 text-sm text-[var(--app-hint)]">
                         {formatDay(entry.date)}
                       </div>
-                      <p className="whitespace-pre-wrap">{entry.content}</p>
+                      <p className="whitespace-pre-wrap text-white">
+                        {entry.content}
+                      </p>
                     </div>
-                  ))}
-                </div>
+                  );
+                })()
               )}
             </Card>
           </>
