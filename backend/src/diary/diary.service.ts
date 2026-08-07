@@ -22,7 +22,7 @@ export class DiaryService {
       userId,
       content,
       date: today,
-    });
+    } as DiaryEntry);
   }
 
   /**
@@ -61,7 +61,7 @@ export class DiaryService {
   }
 
   /**
-   * Получить запись за конкретный день.
+   * Получить запись за конкретную дату.
    */
   async getByDate(userId: string, date: string) {
     return this.diaryModel.findOne({
@@ -85,7 +85,7 @@ export class DiaryService {
   }
 
   /**
-   * Обновление записи.
+   * Обновить запись.
    */
   async update(userId: string, id: string, content: string) {
     const entry = await this.findOne(userId, id);
@@ -98,7 +98,7 @@ export class DiaryService {
   }
 
   /**
-   * Удаление записи.
+   * Удалить запись.
    */
   async remove(userId: string, id: string) {
     const entry = await this.findOne(userId, id);
@@ -123,7 +123,7 @@ export class DiaryService {
   }
 
   /**
-   * Количество записей.
+   * Количество записей пользователя.
    */
   count(userId: string): Promise<number> {
     return this.diaryModel.count({

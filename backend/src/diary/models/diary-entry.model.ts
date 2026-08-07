@@ -8,11 +8,6 @@ import {
   CreatedAt,
   UpdatedAt,
 } from 'sequelize-typescript';
-import {
-  InferAttributes,
-  InferCreationAttributes,
-  CreationOptional,
-} from 'sequelize';
 
 import { User } from '../../users/models/user.model';
 
@@ -27,16 +22,13 @@ import { User } from '../../users/models/user.model';
     },
   ],
 })
-export class DiaryEntry extends Model<
-  InferAttributes<DiaryEntry>,
-  InferCreationAttributes<DiaryEntry>
-> {
+export class DiaryEntry extends Model<DiaryEntry> {
   @Column({
     type: DataType.UUID,
     defaultValue: DataType.UUIDV4,
     primaryKey: true,
   })
-  declare id: CreationOptional<string>;
+  declare id: string;
 
   @ForeignKey(() => User)
   @Column({
@@ -46,7 +38,7 @@ export class DiaryEntry extends Model<
   declare userId: string;
 
   @BelongsTo(() => User, { onDelete: 'CASCADE' })
-  declare user: CreationOptional<User>;
+  declare user: User;
 
   @Column({
     type: DataType.TEXT,
@@ -55,7 +47,7 @@ export class DiaryEntry extends Model<
   declare content: string;
 
   /**
-   * День записи в часовом поясе пользователя (YYYY-MM-DD)
+   * День записи в часовом поясе пользователя (YYYY-MM-DD).
    */
   @Column({
     type: DataType.DATEONLY,
@@ -64,8 +56,8 @@ export class DiaryEntry extends Model<
   declare date: string;
 
   @CreatedAt
-  declare createdAt: CreationOptional<Date>;
+  declare createdAt: Date;
 
   @UpdatedAt
-  declare updatedAt: CreationOptional<Date>;
+  declare updatedAt: Date;
 }
