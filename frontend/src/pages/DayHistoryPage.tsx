@@ -44,7 +44,7 @@ export default function DayHistoryPage() {
   };
 
   return (
-    <div className="pb-32">
+    <div className="pb-40">
       <QueryState query={query}>
         {(day) => {
           const diaryEntry = day.diary as unknown as DiaryEntry | null;
@@ -157,7 +157,7 @@ export default function DayHistoryPage() {
               <button
                 type="button"
                 onClick={() => setIsDiaryOpen(true)}
-                className="fixed left-1/2 bottom-6 z-50 -translate-x-1/2 flex items-center gap-3 rounded-full bg-emerald-600 px-6 py-4 text-base font-semibold text-white shadow-[0_14px_40px_rgba(16,185,129,0.25)] transition hover:shadow-[0_16px_45px_rgba(16,185,129,0.30)]"
+                className="fixed left-1/2 bottom-28 z-[60] -translate-x-1/2 flex items-center gap-3 rounded-full bg-emerald-600 px-6 py-4 text-base font-semibold text-white shadow-[0_14px_40px_rgba(16,185,129,0.25)] transition hover:shadow-[0_16px_45px_rgba(16,185,129,0.30)]"
               >
                 <span className="text-2xl">➕</span>
                 <span>Новая запись</span>
