@@ -107,7 +107,7 @@ export default function DayPage() {
                 <button
                   type="button"
                   onClick={() => setIsRemindersOpen(true)}
-                  className="absolute right-6 top-6 flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-white transition duration-200 hover:bg-white/15 active:scale-95"
+                  className="absolute right-6 top-6 z-30 flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl bg-white/10 text-white transition duration-200 ease-out hover:scale-105 hover:bg-white/15 active:scale-95 pointer-events-auto"
                   aria-label="Открыть напоминания"
                 >
                   <span className="text-xl">🔔</span>
