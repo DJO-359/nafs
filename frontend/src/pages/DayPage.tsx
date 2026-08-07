@@ -220,6 +220,8 @@ export default function DayPage() {
               )}
             </AnimatePresence>
 
+            <DiaryCard diary={day.diary} />
+
             <div
               className="mb-4 overflow-hidden rounded-[20px] p-5 shadow-[0_16px_40px_rgba(0,0,0,0.20)]"
               style={{
@@ -260,8 +262,6 @@ export default function DayPage() {
 
             <div className="space-y-4">
               <HabitsCard ref={habitsRef} />
-
-              <DiaryCard diary={day.diary} />
 
               <ProgressCard reminders={day.reminders} />
             </div>
