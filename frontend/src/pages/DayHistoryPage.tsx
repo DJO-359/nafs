@@ -33,7 +33,7 @@ export default function DayHistoryPage() {
   useBackButton();
 
   return (
-    <div className="pb-32">
+    <div className="bott">
       <QueryState query={query}>
         {(day) => {
           const diaryEntry = day.diary as unknown as DiaryEntry | null;
