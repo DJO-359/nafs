@@ -177,7 +177,7 @@ export default function DayHistoryPage() {
                           <p className="text-sm uppercase tracking-[0.16em] text-[var(--app-hint)]">
                             Дневник
                           </p>
-                          <h2 className="text-xl font-semibold">
+                          <h2 className="text-xl font-semibold text-[var(--app-text)]">
                             {editingEntry
                               ? "Редактировать запись"
                               : "Новая запись"}
@@ -187,7 +187,7 @@ export default function DayHistoryPage() {
                         <button
                           type="button"
                           onClick={closeEntry}
-                          className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl text-slate-700 transition hover:bg-slate-100"
+                          className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl text-[var(--app-text)] transition hover:bg-[var(--app-surface)]"
                           aria-label="Закрыть"
                         >
                           ✕
@@ -199,7 +199,7 @@ export default function DayHistoryPage() {
                         onChange={(e) => setText(e.target.value)}
                         rows={8}
                         placeholder="Что сегодня произошло? Чему вы научились? За что благодарны?"
-                        className="mb-4 w-full rounded-3xl border border-[var(--app-border)] bg-[var(--app-bg)] p-4 text-sm text-white outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                        className="mb-4 w-full rounded-3xl border border-[var(--app-border)] bg-[var(--app-bg)] p-4 text-sm text-[var(--app-text)] placeholder:text-[var(--app-hint)] outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                       />
 
                       <Button
