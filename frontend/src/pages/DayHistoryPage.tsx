@@ -3,7 +3,6 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import EmptyState from "../components/ui/EmptyState";
 import Modal from "../components/ui/Modal";
@@ -388,14 +387,29 @@ export default function DayHistoryPage() {
                               </h2>
                             </div>
 
-                            <button
-                              type="button"
-                              onClick={closeEntry}
-                              className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl text-[var(--app-text)] transition hover:bg-[var(--app-surface)]"
-                              aria-label="Закрыть"
-                            >
-                              ✕
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={onDiarySave}
+                                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500 text-xl font-semibold text-white transition hover:bg-emerald-600"
+                                aria-label={
+                                  editingEntry
+                                    ? "Сохранить изменения"
+                                    : "Сохранить запись"
+                                }
+                              >
+                                ✓
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={closeEntry}
+                                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl text-[var(--app-text)] transition hover:bg-[var(--app-surface)]"
+                                aria-label="Закрыть"
+                              >
+                                ✕
+                              </button>
+                            </div>
                           </div>
                         </div>
 
@@ -436,15 +450,6 @@ export default function DayHistoryPage() {
                               ))}
                             </div>
                           </div>
-
-                          <Button
-                            loading={diaryMutation.isPending}
-                            onClick={onDiarySave}
-                          >
-                            {editingEntry
-                              ? "Сохранить изменения"
-                              : "Сохранить запись"}
-                          </Button>
                         </div>
                       </div>
                     </motion.div>
