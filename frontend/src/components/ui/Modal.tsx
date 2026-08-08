@@ -6,6 +6,7 @@ interface Props {
   children: ReactNode;
   onClose: () => void;
   footer?: ReactNode;
+  headerAction?: ReactNode;
 }
 
 export default function Modal({
@@ -14,6 +15,7 @@ export default function Modal({
   children,
   onClose,
   footer,
+  headerAction,
 }: Props) {
   if (!open) return null;
 
@@ -26,8 +28,9 @@ export default function Modal({
         className="w-full max-w-md rounded-2xl bg-[var(--app-surface)] shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="border-b p-5">
+        <div className="flex items-center justify-between border-b p-5">
           <h2 className="text-xl font-semibold">{title}</h2>
+          {headerAction}
         </div>
 
         <div className="p-5">{children}</div>

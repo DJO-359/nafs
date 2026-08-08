@@ -264,34 +264,18 @@ export default function DayHistoryPage() {
                 title="📅 Календарь записей"
                 onClose={closeCalendar}
                 footer={null}
+                headerAction={
+                  <button
+                    type="button"
+                    onClick={() => navigate("/")}
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl text-[var(--app-text)] transition hover:bg-[var(--app-surface)]"
+                    aria-label="Закрыть календарь и перейти на сегодняшний день"
+                  >
+                    ✕
+                  </button>
+                }
               >
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm uppercase tracking-[0.16em] text-[var(--app-hint)]">
-                        Календарь записей
-                      </p>
-                      <h2 className="text-lg font-semibold text-[var(--app-text)]">
-                        {new Date(
-                          calendarYear,
-                          calendarMonth - 1,
-                        ).toLocaleDateString("ru-RU", {
-                          month: "long",
-                          year: "numeric",
-                        })}
-                      </h2>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={closeCalendar}
-                      className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl text-[var(--app-text)] transition hover:bg-[var(--app-surface)]"
-                      aria-label="Закрыть календарь записей"
-                    >
-                      ✕
-                    </button>
-                  </div>
-
                   <div className="flex items-center justify-between">
                     <button
                       type="button"
