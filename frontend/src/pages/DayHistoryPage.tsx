@@ -67,27 +67,27 @@ export default function DayHistoryPage() {
   console.log("[DayHistory] query.data:", query.data);
   const [editingEntry, setEditingEntry] = useState<DiaryEntry | null>(null);
   const [text, setText] = useState("");
-  const [color, setColor] = useState("#10b981");
+  const [color, setColor] = useState("#ffffff");
   const diaryMutation = useDiary();
 
   const openNewEntry = () => {
     setEditingEntry(null);
     setText("");
-    setColor("#10b981");
+    setColor("#ffffff");
     setIsDiaryOpen(true);
   };
 
   const openEntry = (entry: DiaryEntry) => {
     setEditingEntry(entry);
     setText(entry.content);
-    setColor(entry.color ?? "#10b981");
+    setColor(entry.color ?? "#ffffff");
     setIsDiaryOpen(true);
   };
 
   const closeEntry = () => {
     setText("");
     setEditingEntry(null);
-    setColor("#10b981");
+    setColor("#ffffff");
     setIsDiaryOpen(false);
   };
 
@@ -164,7 +164,7 @@ export default function DayHistoryPage() {
     });
     setText("");
     setEditingEntry(null);
-    setColor("#10b981");
+    setColor("#ffffff");
     setIsDiaryOpen(false);
     void queryClient.invalidateQueries({ queryKey: ["day", date] });
   };
@@ -401,6 +401,7 @@ export default function DayHistoryPage() {
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {[
+                            "#ffffff",
                             "#10b981",
                             "#3b82f6",
                             "#8b5cf6",

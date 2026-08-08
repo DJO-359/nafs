@@ -49,7 +49,7 @@ export class DiaryEntry extends Model<DiaryEntry> {
   @Column({
     type: DataType.STRING,
     allowNull: false,
-    defaultValue: '#10b981',
+    defaultValue: '#ffffff',
   })
   declare color: string;
 

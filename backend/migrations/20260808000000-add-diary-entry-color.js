@@ -3,9 +3,9 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.addColumn('diary_entries', 'color', {
-      type: Sequelize.STRING,
+      type: Sequelize.STRING(7),
       allowNull: false,
-      defaultValue: '#10b981',
+      defaultValue: '#ffffff',
     });
   },
 
