@@ -142,14 +142,16 @@ export default function DayHistoryPage() {
           return (
             <>
               <div className="mb-6 flex items-center gap-4">
-                <button
-                  type="button"
-                  onClick={() => navigate(-1)}
-                  className="text-xl font-medium text-white transition hover:text-slate-300"
-                  aria-label="Назад"
-                >
-                  ←
-                </button>
+                {!isToday && (
+                  <button
+                    type="button"
+                    onClick={() => navigate("/")}
+                    className="text-xl font-medium text-[var(--app-text)] transition hover:text-[var(--app-hint)]"
+                    aria-label="Назад к сегодняшнему дневнику"
+                  >
+                    ←
+                  </button>
+                )}
                 <div>
                   <div className="flex items-start justify-between gap-3">
                     <div>
