@@ -72,7 +72,15 @@ export default function CalendarPage() {
           {(data) => (
             <CalendarGrid
               days={data.days}
-              onSelect={(date) => navigate(`/day/${date}`)}
+              onSelect={(date) =>
+                navigate(`/day/${date}`, {
+                  state: {
+                    fromCalendar: true,
+                    calendarYear: year,
+                    calendarMonth: month,
+                  },
+                })
+              }
             />
           )}
         </QueryState>

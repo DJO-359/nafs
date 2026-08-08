@@ -8,8 +8,13 @@ import { bindBackButton } from "../lib/telegram";
  * Без неё с /calendar, /history и /day/:date уйти назад было нечем:
  * привычного системного жеста в Mini App нет.
  */
-export function useBackButton(target = "/") {
+export function useBackButton(target: string | (() => void) = "/") {
   const navigate = useNavigate();
 
-  useEffect(() => bindBackButton(() => navigate(target)), [navigate, target]);
+  useEffect(() => {
+    const handler =
+      typeof target === "function" ? target : () => navigate(target);
+
+    return bindBackButton(handler);
+  }, [navigate, target]);
 }

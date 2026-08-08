@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useCallback, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -14,6 +14,12 @@ import { useDayByDate } from "../hooks/useDayByDate";
 import { useBackButton } from "../hooks/useBackButton";
 import { useDiary } from "../hooks/useDiary";
 import type { DiaryEntry } from "../types/day";
+
+type CalendarNavigationState = {
+  fromCalendar?: boolean;
+  calendarYear?: number;
+  calendarMonth?: number;
+};
 
 function formatDay(date: string): string {
   const [year, month, day] = date.split("-").map(Number);
@@ -49,6 +55,8 @@ function formatEntryTime(value: string): string {
 
 export default function DayHistoryPage() {
   const { date = "" } = useParams();
+  const location = useLocation();
+  const state = location.state as CalendarNavigationState | null;
   const query = useDayByDate(date);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -60,8 +68,6 @@ export default function DayHistoryPage() {
   const [editingEntry, setEditingEntry] = useState<DiaryEntry | null>(null);
   const [text, setText] = useState("");
   const diaryMutation = useDiary();
-
-  useBackButton();
 
   const openNewEntry = () => {
     setEditingEntry(null);
@@ -82,17 +88,28 @@ export default function DayHistoryPage() {
   };
 
   const calendarToday = todayString();
-  const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
-  const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth() + 1);
+  const [calendarYear, setCalendarYear] = useState(
+    state?.calendarYear ?? new Date().getFullYear(),
+  );
+  const [calendarMonth, setCalendarMonth] = useState(
+    state?.calendarMonth ?? new Date().getMonth() + 1,
+  );
   const calendarQuery = useCalendar(calendarYear, calendarMonth);
 
   const isToday = date === "" || date === calendarToday;
+  const isFromCalendar = state?.fromCalendar === true;
 
   const closeCalendar = () => setIsCalendarOpen(false);
 
   const handleCalendarSelect = (selectedDate: string) => {
     setIsCalendarOpen(false);
-    navigate(`/day/${selectedDate}`);
+    navigate(`/day/${selectedDate}`, {
+      state: {
+        fromCalendar: true,
+        calendarYear,
+        calendarMonth,
+      },
+    });
   };
 
   const shiftCalendarMonth = (delta: number) => {
@@ -112,6 +129,17 @@ export default function DayHistoryPage() {
 
     setCalendarMonth(next);
   };
+
+  const handleBack = useCallback(() => {
+    if (isFromCalendar) {
+      setIsCalendarOpen(true);
+      return;
+    }
+
+    navigate(-1);
+  }, [isFromCalendar, navigate]);
+
+  useBackButton(handleBack);
 
   const onDiarySave = async () => {
     if (!text.trim()) return;
@@ -145,9 +173,9 @@ export default function DayHistoryPage() {
                 {!isToday && (
                   <button
                     type="button"
-                    onClick={() => navigate("/")}
+                    onClick={handleBack}
                     className="text-xl font-medium text-[var(--app-text)] transition hover:text-[var(--app-hint)]"
-                    aria-label="Назад к сегодняшнему дневнику"
+                    aria-label="Назад"
                   >
                     ←
                   </button>
