@@ -140,7 +140,7 @@ export default function DayHistoryPage() {
   }, [isFromCalendar, navigate]);
 
   const handleClose = () => {
-    navigate("/");
+    navigate(`/day/${todayString()}`);
   };
 
   useBackButton(handleBack);
@@ -267,9 +267,9 @@ export default function DayHistoryPage() {
                 headerAction={
                   <button
                     type="button"
-                    onClick={() => navigate("/")}
+                    onClick={() => navigate(`/day/${todayString()}`)}
                     className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl text-[var(--app-text)] transition hover:bg-[var(--app-surface)]"
-                    aria-label="Закрыть календарь и перейти на сегодняшний день"
+                    aria-label="Закрыть календарь и перейти на сегодняшний дневник"
                   >
                     ✕
                   </button>
