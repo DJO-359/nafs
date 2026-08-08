@@ -6,7 +6,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import EmptyState from "../components/ui/EmptyState";
+import Modal from "../components/ui/Modal";
 import QueryState from "../components/ui/QueryState";
+import CalendarGrid from "../components/CalendarGrid";
+import { useCalendar } from "../hooks/useCalendar";
 import { useDayByDate } from "../hooks/useDayByDate";
 import { useBackButton } from "../hooks/useBackButton";
 import { useDiary } from "../hooks/useDiary";
@@ -42,6 +45,7 @@ export default function DayHistoryPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isDiaryOpen, setIsDiaryOpen] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   console.log("[DayHistory] route date:", date);
   console.log("[DayHistory] query.data:", query.data);
@@ -67,6 +71,36 @@ export default function DayHistoryPage() {
     setText("");
     setEditingEntry(null);
     setIsDiaryOpen(false);
+  };
+
+  const today = new Date();
+  const [calendarYear, setCalendarYear] = useState(today.getFullYear());
+  const [calendarMonth, setCalendarMonth] = useState(today.getMonth() + 1);
+  const calendarQuery = useCalendar(calendarYear, calendarMonth);
+
+  const closeCalendar = () => setIsCalendarOpen(false);
+
+  const handleCalendarSelect = (selectedDate: string) => {
+    setIsCalendarOpen(false);
+    navigate(`/day/${selectedDate}`);
+  };
+
+  const shiftCalendarMonth = (delta: number) => {
+    const next = calendarMonth + delta;
+
+    if (next < 1) {
+      setCalendarMonth(12);
+      setCalendarYear((value) => value - 1);
+      return;
+    }
+
+    if (next > 12) {
+      setCalendarMonth(1);
+      setCalendarYear((value) => value + 1);
+      return;
+    }
+
+    setCalendarMonth(next);
   };
 
   const onDiarySave = async () => {
@@ -107,10 +141,23 @@ export default function DayHistoryPage() {
                   ←
                 </button>
                 <div>
-                  <h1 className="text-3xl font-semibold">Дневник</h1>
-                  <p className="text-sm text-[var(--app-hint)]">
-                    {formatDay(day.date)}
-                  </p>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h1 className="text-3xl font-semibold">Дневник</h1>
+                      <p className="text-sm text-[var(--app-hint)]">
+                        {formatDay(day.date)}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsCalendarOpen(true)}
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl transition hover:bg-[var(--app-surface)]"
+                      aria-label="Открыть календарь записей"
+                    >
+                      📅
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -143,6 +190,82 @@ export default function DayHistoryPage() {
                   </div>
                 )}
               </Card>
+
+              <Modal
+                open={isCalendarOpen}
+                title="📅 Календарь записей"
+                onClose={closeCalendar}
+                footer={null}
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm uppercase tracking-[0.16em] text-[var(--app-hint)]">
+                        Календарь записей
+                      </p>
+                      <h2 className="text-lg font-semibold text-[var(--app-text)]">
+                        {new Date(
+                          calendarYear,
+                          calendarMonth - 1,
+                        ).toLocaleDateString("ru-RU", {
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </h2>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={closeCalendar}
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl text-[var(--app-text)] transition hover:bg-[var(--app-surface)]"
+                      aria-label="Закрыть календарь записей"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => shiftCalendarMonth(-1)}
+                      className="rounded-lg border border-[var(--app-border)] px-3 py-2"
+                      aria-label="Предыдущий месяц"
+                    >
+                      ◀
+                    </button>
+
+                    <div className="text-sm font-semibold text-[var(--app-text)]">
+                      {new Date(
+                        calendarYear,
+                        calendarMonth - 1,
+                      ).toLocaleDateString("ru-RU", {
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => shiftCalendarMonth(1)}
+                      className="rounded-lg border border-[var(--app-border)] px-3 py-2"
+                      aria-label="Следующий месяц"
+                    >
+                      ▶
+                    </button>
+                  </div>
+
+                  <Card>
+                    <QueryState query={calendarQuery}>
+                      {(data) => (
+                        <CalendarGrid
+                          days={data.days}
+                          onSelect={handleCalendarSelect}
+                        />
+                      )}
+                    </QueryState>
+                  </Card>
+                </div>
+              </Modal>
 
               <AnimatePresence>
                 {isDiaryOpen && (

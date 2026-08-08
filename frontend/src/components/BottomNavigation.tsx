@@ -5,7 +5,6 @@ import { haptic } from "../lib/telegram";
 const ITEMS = [
   { to: "/", label: "Сегодня", icon: "🏠" },
   { to: "/habits", label: "Привычки", icon: "🔁" },
-  { to: "/calendar", label: "Календарь", icon: "📅" },
   { to: "/stats", label: "Статистика", icon: "📊" },
   { to: "/history", label: "История", icon: "📖" },
 ];
