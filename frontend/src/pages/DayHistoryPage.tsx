@@ -101,6 +101,11 @@ export default function DayHistoryPage() {
 
   const closeCalendar = () => setIsCalendarOpen(false);
 
+  const handleTodayClose = () => {
+    setIsCalendarOpen(false);
+    navigate(`/day/${todayString()}`);
+  };
+
   const handleCalendarSelect = (selectedDate: string) => {
     setIsCalendarOpen(false);
     navigate(`/day/${selectedDate}`, {
@@ -267,7 +272,7 @@ export default function DayHistoryPage() {
                 headerAction={
                   <button
                     type="button"
-                    onClick={() => navigate(`/day/${todayString()}`)}
+                    onClick={handleTodayClose}
                     className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl text-[var(--app-text)] transition hover:bg-[var(--app-surface)]"
                     aria-label="Закрыть календарь и перейти на сегодняшний дневник"
                   >
