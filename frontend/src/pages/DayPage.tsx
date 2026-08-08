@@ -104,7 +104,7 @@ export default function DayPage() {
                 backgroundRepeat: "no-repeat",
               }}
             >
-              <div className="relative h-full w-full px-2 py-2 sm:px-4 sm:py-4">
+              <div className="relative h-full w-full px-6 pt-6 sm:px-8 sm:pt-8">
                 <button
                   type="button"
                   onClick={() => setIsRemindersOpen(true)}
