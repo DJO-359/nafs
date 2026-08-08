@@ -48,6 +48,14 @@ export default function QueryState<T>({
 
   const data = query.data as T;
 
+  if (data === undefined) {
+    return (
+      <div className="flex items-center justify-center py-10 text-[var(--app-hint)]">
+        Загрузка…
+      </div>
+    );
+  }
+
   if (isEmpty?.(data)) {
     return <EmptyState icon="🗂" title={emptyTitle ?? "Пока пусто"} />;
   }

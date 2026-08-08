@@ -109,7 +109,6 @@ export default function DayHistoryPage() {
                 <div>
                   <h1 className="text-3xl font-semibold">Дневник</h1>
                   <p className="text-sm text-[var(--app-hint)]">
-                    {console.log("DAY DATE BEFORE FORMAT:", day?.date)}
                     {formatDay(day.date)}
                   </p>
                 </div>
