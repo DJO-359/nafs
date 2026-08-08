@@ -419,7 +419,7 @@ export default function DayHistoryPage() {
                             onChange={(e) => setText(e.target.value)}
                             rows={8}
                             placeholder="Что сегодня произошло? Чему вы научились? За что благодарны?"
-                            className="mb-4 w-full rounded-3xl border border-[var(--app-border)] bg-[var(--app-bg)] p-4 text-sm text-[var(--app-text)] placeholder:text-[var(--app-hint)] outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                            className="w-full rounded-3xl border border-[var(--app-border)] bg-[var(--app-bg)] p-4 text-sm text-[var(--app-text)] placeholder:text-[var(--app-hint)] outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                             style={{ borderColor: color }}
                           />
 
