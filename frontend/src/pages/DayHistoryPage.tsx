@@ -67,23 +67,27 @@ export default function DayHistoryPage() {
   console.log("[DayHistory] query.data:", query.data);
   const [editingEntry, setEditingEntry] = useState<DiaryEntry | null>(null);
   const [text, setText] = useState("");
+  const [color, setColor] = useState("#10b981");
   const diaryMutation = useDiary();
 
   const openNewEntry = () => {
     setEditingEntry(null);
     setText("");
+    setColor("#10b981");
     setIsDiaryOpen(true);
   };
 
   const openEntry = (entry: DiaryEntry) => {
     setEditingEntry(entry);
     setText(entry.content);
+    setColor(entry.color ?? "#10b981");
     setIsDiaryOpen(true);
   };
 
   const closeEntry = () => {
     setText("");
     setEditingEntry(null);
+    setColor("#10b981");
     setIsDiaryOpen(false);
   };
 
@@ -156,9 +160,11 @@ export default function DayHistoryPage() {
     await diaryMutation.mutateAsync({
       text: text.trim(),
       id: editingEntry?.id,
+      color,
     });
     setText("");
     setEditingEntry(null);
+    setColor("#10b981");
     setIsDiaryOpen(false);
     void queryClient.invalidateQueries({ queryKey: ["day", date] });
   };
@@ -252,8 +258,14 @@ export default function DayHistoryPage() {
                         onClick={() => openEntry(entry)}
                         className="w-full rounded-[24px] border border-[var(--app-border)] bg-[var(--app-surface)] p-4 text-left shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition hover:border-emerald-500"
                       >
-                        <div className="mb-2 text-xs uppercase tracking-[0.16em] text-[var(--app-hint)]">
-                          {formatEntryTime(entry.createdAt)}
+                        <div className="mb-3 flex items-center gap-3">
+                          <span
+                            className="inline-block h-3 w-3 rounded-full"
+                            style={{ backgroundColor: entry.color }}
+                          />
+                          <div className="text-xs uppercase tracking-[0.16em] text-[var(--app-hint)]">
+                            {formatEntryTime(entry.createdAt)}
+                          </div>
                         </div>
                         <p className="whitespace-pre-wrap text-sm text-[var(--app-text)]">
                           {entry.content}
@@ -380,7 +392,37 @@ export default function DayHistoryPage() {
                         rows={8}
                         placeholder="Что сегодня произошло? Чему вы научились? За что благодарны?"
                         className="mb-4 w-full rounded-3xl border border-[var(--app-border)] bg-[var(--app-bg)] p-4 text-sm text-[var(--app-text)] placeholder:text-[var(--app-hint)] outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                        style={{ borderColor: color }}
                       />
+
+                      <div className="mb-4">
+                        <div className="mb-2 text-sm text-[var(--app-hint)]">
+                          Цвет записи
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            "#10b981",
+                            "#3b82f6",
+                            "#8b5cf6",
+                            "#f59e0b",
+                            "#ef4444",
+                            "#14b8a6",
+                          ].map((item) => (
+                            <button
+                              key={item}
+                              type="button"
+                              onClick={() => setColor(item)}
+                              className={`h-10 w-10 rounded-full border transition focus:outline-none ${
+                                color === item
+                                  ? "border-white ring-2 ring-offset-2 ring-offset-[var(--app-surface)]"
+                                  : "border-[var(--app-border)]"
+                              }`}
+                              style={{ backgroundColor: item }}
+                              aria-label={`Выбрать цвет ${item}`}
+                            />
+                          ))}
+                        </div>
+                      </div>
 
                       <Button
                         loading={diaryMutation.isPending}

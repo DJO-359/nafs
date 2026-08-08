@@ -33,8 +33,14 @@ export default function HistoryPage() {
           <div className="space-y-4">
             {entries.map((entry) => (
               <Card key={entry.id}>
-                <div className="mb-2 text-sm text-[var(--app-hint)]">
-                  {formatDay(entry.date)}
+                <div className="mb-3 flex items-center gap-3">
+                  <span
+                    className="inline-block h-3 w-3 rounded-full"
+                    style={{ backgroundColor: entry.color }}
+                  />
+                  <div className="text-sm text-[var(--app-hint)]">
+                    {formatDay(entry.date)}
+                  </div>
                 </div>
 
                 <p className="whitespace-pre-wrap">{entry.content}</p>

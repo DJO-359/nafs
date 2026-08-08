@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+} from 'class-validator';
 
 /**
  * Не PartialType: у записи дневника единственное содержательное поле,
@@ -9,4 +15,11 @@ export class UpdateDiaryDto {
   @IsNotEmpty()
   @MaxLength(10000)
   content!: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^#([0-9A-Fa-f]{6})$/, {
+    message: 'Цвет должен быть в формате #RRGGBB',
+  })
+  color?: string;
 }

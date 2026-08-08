@@ -15,13 +15,19 @@ export class DiaryService {
   /**
    * Создает новую запись дневника.
    */
-  async create(userId: string, timezone: string, content: string) {
+  async create(
+    userId: string,
+    timezone: string,
+    content: string,
+    color?: string,
+  ) {
     const today = todayInZone(timezone);
 
     return this.diaryModel.create({
       userId,
       content,
       date: today,
+      ...(color ? { color } : {}),
     } as DiaryEntry);
   }
 
@@ -91,11 +97,12 @@ export class DiaryService {
   /**
    * Обновить запись.
    */
-  async update(userId: string, id: string, content: string) {
+  async update(userId: string, id: string, content: string, color?: string) {
     const entry = await this.findOne(userId, id);
 
     await entry.update({
       content,
+      ...(color ? { color } : {}),
     });
 
     return entry;

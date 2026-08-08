@@ -46,6 +46,13 @@ export class DiaryEntry extends Model<DiaryEntry> {
   })
   declare content: string;
 
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+    defaultValue: '#10b981',
+  })
+  declare color: string;
+
   /**
    * День записи в часовом поясе пользователя (YYYY-MM-DD).
    */

@@ -12,6 +12,7 @@ export interface DiaryEntry {
   userId?: string;
   content: string;
   date: string;
+  color: string;
   createdAt: string;
   updatedAt: string;
 }

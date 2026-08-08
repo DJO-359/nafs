@@ -27,6 +27,7 @@ export class DiaryController {
       req.user.id,
       req.user.timezone,
       dto.content,
+      dto.color,
     );
   }
 
@@ -46,7 +47,7 @@ export class DiaryController {
     @Param('id') id: string,
     @Body() dto: UpdateDiaryDto,
   ) {
-    return this.diaryService.update(req.user.id, id, dto.content);
+    return this.diaryService.update(req.user.id, id, dto.content, dto.color);
   }
 
   @Delete(':id')

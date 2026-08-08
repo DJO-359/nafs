@@ -10,18 +10,19 @@ import { useInvalidateDayData } from "./useInvalidateDayData";
 interface DiaryPayload {
   text: string;
   id?: string;
+  color?: string;
 }
 
 export function useDiary() {
   const invalidate = useInvalidateDayData();
 
   return useMutation<DiaryEntry, unknown, DiaryPayload>({
-    mutationFn: async ({ text, id }) => {
+    mutationFn: async ({ text, id, color }) => {
       if (id) {
-        return updateDiary(id, text);
+        return updateDiary(id, text, color);
       }
 
-      return saveDiary(text);
+      return saveDiary(text, color);
     },
     onSuccess() {
       toast.success("📖 Дневник сохранён");
