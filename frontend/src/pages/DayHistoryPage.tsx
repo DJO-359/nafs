@@ -26,6 +26,14 @@ function formatDay(date: string): string {
   });
 }
 
+function todayString(): string {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
 function formatEntryTime(value: string): string {
   const date = new Date(value);
 
@@ -73,10 +81,12 @@ export default function DayHistoryPage() {
     setIsDiaryOpen(false);
   };
 
-  const today = new Date();
-  const [calendarYear, setCalendarYear] = useState(today.getFullYear());
-  const [calendarMonth, setCalendarMonth] = useState(today.getMonth() + 1);
+  const calendarToday = todayString();
+  const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
+  const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth() + 1);
   const calendarQuery = useCalendar(calendarYear, calendarMonth);
+
+  const isToday = date === "" || date === calendarToday;
 
   const closeCalendar = () => setIsCalendarOpen(false);
 
@@ -149,14 +159,27 @@ export default function DayHistoryPage() {
                       </p>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => setIsCalendarOpen(true)}
-                      className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl transition hover:bg-[var(--app-surface)]"
-                      aria-label="Открыть календарь записей"
-                    >
-                      📅
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsCalendarOpen(true)}
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl transition hover:bg-[var(--app-surface)]"
+                        aria-label="Открыть календарь записей"
+                      >
+                        📅
+                      </button>
+
+                      {isToday && (
+                        <button
+                          type="button"
+                          onClick={openNewEntry}
+                          className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-500 text-xl text-white transition hover:bg-blue-600"
+                          aria-label="Добавить новую запись"
+                        >
+                          ✏️
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -337,17 +360,6 @@ export default function DayHistoryPage() {
                   </>
                 )}
               </AnimatePresence>
-
-              {!isDiaryOpen && (
-                <button
-                  type="button"
-                  onClick={openNewEntry}
-                  className="fixed left-1/2 bottom-28 z-[60] -translate-x-1/2 flex items-center gap-3 rounded-full bg-emerald-600 px-6 py-4 text-base font-semibold text-white shadow-[0_14px_40px_rgba(16,185,129,0.25)] transition hover:shadow-[0_16px_45px_rgba(16,185,129,0.30)]"
-                >
-                  <span className="text-2xl">➕</span>
-                  <span>Новая запись</span>
-                </button>
-              )}
             </>
           );
         }}
