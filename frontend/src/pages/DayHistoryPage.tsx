@@ -135,7 +135,7 @@ export default function DayHistoryPage() {
                         <div className="mb-2 text-xs uppercase tracking-[0.16em] text-[var(--app-hint)]">
                           {formatEntryTime(entry.createdAt)}
                         </div>
-                        <p className="whitespace-pre-wrap text-sm text-white">
+                        <p className="whitespace-pre-wrap text-sm text-[var(--app-text)]">
                           {entry.content}
                         </p>
                       </button>
