@@ -13,6 +13,22 @@ function formatDay(date: string): string {
   });
 }
 
+function getPastelNoteBackground(color: string): string {
+  const normalized = color?.toLowerCase();
+
+  const pastelMap: Record<string, string> = {
+    "#ffffff": "#ffffff",
+    "#10b981": "#e8f7f0",
+    "#14b8a6": "#dbf1ec",
+    "#3b82f6": "#deecff",
+    "#8b5cf6": "#eee3ff",
+    "#f59e0b": "#fff3d1",
+    "#ef4444": "#ffe4e4",
+  };
+
+  return pastelMap[normalized] ?? "#ffffff";
+}
+
 export default function HistoryPage() {
   const query = useDiaryHistory();
 
@@ -32,15 +48,15 @@ export default function HistoryPage() {
         {(entries) => (
           <div className="space-y-4">
             {entries.map((entry) => (
-              <Card key={entry.id}>
-                <div className="mb-3 flex items-center gap-3">
-                  <span
-                    className="inline-block h-3 w-3 rounded-full"
-                    style={{ backgroundColor: entry.color }}
-                  />
-                  <div className="text-sm text-[var(--app-hint)]">
-                    {formatDay(entry.date)}
-                  </div>
+              <Card
+                key={entry.id}
+                className="border border-[var(--app-border)]"
+                style={{
+                  backgroundColor: getPastelNoteBackground(entry.color),
+                }}
+              >
+                <div className="mb-3 text-sm text-[var(--app-hint)]">
+                  {formatDay(entry.date)}
                 </div>
 
                 <p className="whitespace-pre-wrap">{entry.content}</p>

@@ -53,6 +53,22 @@ function formatEntryTime(value: string): string {
   });
 }
 
+function getPastelNoteBackground(color: string): string {
+  const normalized = color?.toLowerCase();
+
+  const pastelMap: Record<string, string> = {
+    "#ffffff": "#ffffff",
+    "#10b981": "#e8f7f0",
+    "#14b8a6": "#dbf1ec",
+    "#3b82f6": "#deecff",
+    "#8b5cf6": "#eee3ff",
+    "#f59e0b": "#fff3d1",
+    "#ef4444": "#ffe4e4",
+  };
+
+  return pastelMap[normalized] ?? "#ffffff";
+}
+
 export default function DayHistoryPage() {
   const { date = "" } = useParams();
   const location = useLocation();
@@ -256,16 +272,13 @@ export default function DayHistoryPage() {
                         key={entry.id}
                         type="button"
                         onClick={() => openEntry(entry)}
-                        className="w-full rounded-[24px] border border-[var(--app-border)] bg-[var(--app-surface)] p-4 text-left shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition hover:border-emerald-500"
+                        className="w-full rounded-[24px] border border-[var(--app-border)] p-4 text-left shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition hover:border-emerald-500"
+                        style={{
+                          backgroundColor: getPastelNoteBackground(entry.color),
+                        }}
                       >
-                        <div className="mb-3 flex items-center gap-3">
-                          <span
-                            className="inline-block h-3 w-3 rounded-full"
-                            style={{ backgroundColor: entry.color }}
-                          />
-                          <div className="text-xs uppercase tracking-[0.16em] text-[var(--app-hint)]">
-                            {formatEntryTime(entry.createdAt)}
-                          </div>
+                        <div className="mb-3 text-xs uppercase tracking-[0.16em] text-[var(--app-hint)]">
+                          {formatEntryTime(entry.createdAt)}
                         </div>
                         <p className="whitespace-pre-wrap text-sm text-[var(--app-text)]">
                           {entry.content}
