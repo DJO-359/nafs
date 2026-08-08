@@ -48,6 +48,16 @@ export default function IntentionModal({
       open={open}
       title="🎯 Намерение дня"
       onClose={onClose}
+      headerAction={
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-primary)] text-white transition hover:bg-emerald-600"
+          aria-label="Закрыть"
+        >
+          ✕
+        </button>
+      }
       footer={
         <Button onClick={handleSave} loading={loading}>
           Сохранить
@@ -65,7 +75,9 @@ export default function IntentionModal({
         </div>
 
         <div>
-          <label className="mb-2 block text-sm text-[var(--app-hint)]">Повтор</label>
+          <label className="mb-2 block text-sm text-[var(--app-hint)]">
+            Повтор
+          </label>
           <select
             value={repeat}
             onChange={(e) => setRepeat(e.target.value as typeof repeat)}
