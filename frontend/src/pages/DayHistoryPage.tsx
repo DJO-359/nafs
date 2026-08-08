@@ -410,7 +410,7 @@ export default function DayHistoryPage() {
                           />
 
                           <div className="mb-4">
-                            <div className="mb-2 text-sm text-[var(--app-hint)]"></div>
+                            {/* <div className="mb-2 text-sm text-[var(--app-hint)]"></div> */}
                             <div className="flex flex-wrap gap-2">
                               {[
                                 "#ffffff",
