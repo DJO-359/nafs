@@ -59,7 +59,9 @@ export default function HistoryPage() {
                   {formatDay(entry.date)}
                 </div>
 
-                <p className="whitespace-pre-wrap">{entry.content}</p>
+                <p className="whitespace-pre-wrap text-black">
+                  {entry.content}
+                </p>
               </Card>
             ))}
           </div>
