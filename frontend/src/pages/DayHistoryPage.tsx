@@ -139,6 +139,10 @@ export default function DayHistoryPage() {
     navigate(-1);
   }, [isFromCalendar, navigate]);
 
+  const handleClose = () => {
+    navigate("/");
+  };
+
   useBackButton(handleBack);
 
   const onDiarySave = async () => {
@@ -207,6 +211,17 @@ export default function DayHistoryPage() {
                           aria-label="Добавить новую запись"
                         >
                           ✏️
+                        </button>
+                      )}
+
+                      {!isToday && (
+                        <button
+                          type="button"
+                          onClick={handleClose}
+                          className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl transition hover:bg-[var(--app-surface)]"
+                          aria-label="Закрыть историю дневника"
+                        >
+                          ✕
                         </button>
                       )}
                     </div>
