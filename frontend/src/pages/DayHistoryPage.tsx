@@ -43,7 +43,8 @@ export default function DayHistoryPage() {
   const queryClient = useQueryClient();
   const [isDiaryOpen, setIsDiaryOpen] = useState(false);
 
-  console.log("DAY HISTORY PARAM DATE:", date);
+  console.log("[DayHistory] route date:", date);
+  console.log("[DayHistory] query.data:", query.data);
   const [editingEntry, setEditingEntry] = useState<DiaryEntry | null>(null);
   const [text, setText] = useState("");
   const diaryMutation = useDiary();
@@ -85,7 +86,13 @@ export default function DayHistoryPage() {
     <div className="pb-40">
       <QueryState query={query}>
         {(day) => {
-          console.log("DAY HISTORY DATA:", day);
+          console.log("[DayHistory] day:", day);
+          console.log("[DayHistory] day?.date:", day?.date);
+          console.log("[DayHistory] BEFORE formatDay:", {
+            day,
+            dayDate: day?.date,
+            routeDate: date,
+          });
           const diaryEntries = Array.isArray(day.diary) ? day.diary : [];
 
           return (
