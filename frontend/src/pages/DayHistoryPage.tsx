@@ -140,7 +140,7 @@ export default function DayHistoryPage() {
   }, [isFromCalendar, navigate]);
 
   const handleClose = () => {
-    navigate(`/day/${todayString()}`);
+    navigate("/");
   };
 
   useBackButton(handleBack);
