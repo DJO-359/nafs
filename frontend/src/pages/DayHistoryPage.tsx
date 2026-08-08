@@ -410,9 +410,7 @@ export default function DayHistoryPage() {
                           />
 
                           <div className="mb-4">
-                            <div className="mb-2 text-sm text-[var(--app-hint)]">
-                              Цвет записи
-                            </div>
+                            <div className="mb-2 text-sm text-[var(--app-hint)]"></div>
                             <div className="flex flex-wrap gap-2">
                               {[
                                 "#ffffff",
@@ -421,7 +419,7 @@ export default function DayHistoryPage() {
                                 "#8b5cf6",
                                 "#f59e0b",
                                 "#ef4444",
-                                "#14b8a6",
+                                // "#14b8a6",
                               ].map((item) => (
                                 <button
                                   key={item}
