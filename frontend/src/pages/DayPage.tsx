@@ -168,16 +168,16 @@ export default function DayPage() {
               </div>
             </header>
 
-            <AnimatePresence>
-              {isRemindersOpen &&
-                createPortal(
+            {createPortal(
+              <AnimatePresence>
+                {isRemindersOpen && (
                   <>
                     <motion.div
                       key="reminder-backdrop"
                       className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
+                      exit={{ opacity: 0, pointerEvents: "none" }}
                       onClick={() => setIsRemindersOpen(false)}
                     />
 
@@ -186,7 +186,7 @@ export default function DayPage() {
                       className="fixed inset-x-0 bottom-0 z-[100] mx-auto max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-t-[28px] bg-[var(--app-surface)] p-5 shadow-2xl"
                       initial={{ y: "100%" }}
                       animate={{ y: 0 }}
-                      exit={{ y: "100%" }}
+                      exit={{ y: "100%", pointerEvents: "none" }}
                       transition={{
                         type: "spring",
                         stiffness: 260,
@@ -222,10 +222,11 @@ export default function DayPage() {
                         />
                       </div>
                     </motion.div>
-                  </>,
-                  document.body,
+                  </>
                 )}
-            </AnimatePresence>
+              </AnimatePresence>,
+              document.body,
+            )}
 
             <DiaryCard diary={day.diary} />
 
