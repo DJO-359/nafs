@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+import { createPortal } from "react-dom";
 import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import ReminderList from "../components/ReminderList";
@@ -168,56 +169,62 @@ export default function DayPage() {
             </header>
 
             <AnimatePresence>
-              {isRemindersOpen && (
-                <>
-                  <motion.div
-                    key="reminder-backdrop"
-                    className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    onClick={() => setIsRemindersOpen(false)}
-                  />
+              {isRemindersOpen &&
+                createPortal(
+                  <>
+                    <motion.div
+                      key="reminder-backdrop"
+                      className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      onClick={() => setIsRemindersOpen(false)}
+                    />
 
-                  <motion.div
-                    key="reminder-sheet"
-                    className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-t-[28px] bg-[var(--app-surface)] p-5 shadow-2xl"
-                    initial={{ y: "100%" }}
-                    animate={{ y: 0 }}
-                    exit={{ y: "100%" }}
-                    transition={{ type: "spring", stiffness: 260, damping: 28 }}
-                  >
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm uppercase tracking-[0.16em] text-[var(--app-hint)]">
-                          Напоминания
-                        </p>
-                        <h2 className="text-xl font-semibold">
-                          Быстрый доступ
-                        </h2>
+                    <motion.div
+                      key="reminder-sheet"
+                      className="fixed inset-x-0 bottom-0 z-[100] mx-auto max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-t-[28px] bg-[var(--app-surface)] p-5 shadow-2xl"
+                      initial={{ y: "100%" }}
+                      animate={{ y: 0 }}
+                      exit={{ y: "100%" }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 260,
+                        damping: 28,
+                      }}
+                    >
+                      <div className="mb-4 flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm uppercase tracking-[0.16em] text-[var(--app-hint)]">
+                            Напоминания
+                          </p>
+                          <h2 className="text-xl font-semibold">
+                            Быстрый доступ
+                          </h2>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setIsRemindersOpen(false)}
+                          className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl text-slate-700 transition hover:bg-slate-100"
+                          aria-label="Закрыть напоминания"
+                        >
+                          ✕
+                        </button>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setIsRemindersOpen(false)}
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl text-slate-700 transition hover:bg-slate-100"
-                        aria-label="Закрыть напоминания"
-                      >
-                        ✕
-                      </button>
-                    </div>
-
-                    <div className="max-h-[calc(90vh-108px)] overflow-y-auto pr-1">
-                      <ReminderList
-                        reminders={day.reminders}
-                        onCreate={async (dto: CreateReminderDto) => {
-                          await reminderMutation.mutateAsync(dto);
-                        }}
-                      />
-                    </div>
-                  </motion.div>
-                </>
-              )}
+                      <div className="max-h-[calc(90vh-108px)] overflow-y-auto pr-1">
+                        <ReminderList
+                          reminders={day.reminders}
+                          onCreate={async (dto: CreateReminderDto) => {
+                            await reminderMutation.mutateAsync(dto);
+                          }}
+                        />
+                      </div>
+                    </motion.div>
+                  </>,
+                  document.body,
+                )}
             </AnimatePresence>
 
             <DiaryCard diary={day.diary} />
