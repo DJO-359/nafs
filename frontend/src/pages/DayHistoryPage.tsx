@@ -363,11 +363,8 @@ export default function DayHistoryPage() {
 
                     <motion.div
                       key="diary-sheet"
-                      className="fixed inset-x-0 z-[70] mx-auto max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-t-[28px] bg-[var(--app-surface)] p-5 shadow-2xl"
-                      style={{
-                        bottom:
-                          "calc(env(safe-area-inset-bottom, 0px) + 1rem + 72px + 16px)",
-                      }}
+                      className="fixed inset-x-0 bottom-0 z-[70] mx-auto w-full max-w-3xl overflow-hidden rounded-t-[28px] bg-[var(--app-surface)] shadow-2xl"
+                      style={{ maxHeight: "100dvh" }}
                       initial={{ y: "100%" }}
                       animate={{ y: 0 }}
                       exit={{ y: "100%" }}
@@ -377,75 +374,81 @@ export default function DayHistoryPage() {
                         damping: 28,
                       }}
                     >
-                      <div className="mb-4 flex items-center justify-between gap-3">
-                        <div>
-                          <p className="text-sm uppercase tracking-[0.16em] text-[var(--app-hint)]">
-                            Дневник
-                          </p>
-                          <h2 className="text-xl font-semibold text-[var(--app-text)]">
-                            {editingEntry
-                              ? "Редактировать запись"
-                              : "Новая запись"}
-                          </h2>
-                        </div>
+                      <div className="flex h-full flex-col overflow-hidden">
+                        <div className="p-5">
+                          <div className="mb-4 flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-sm uppercase tracking-[0.16em] text-[var(--app-hint)]">
+                                Дневник
+                              </p>
+                              <h2 className="text-xl font-semibold text-[var(--app-text)]">
+                                {editingEntry
+                                  ? "Редактировать запись"
+                                  : "Новая запись"}
+                              </h2>
+                            </div>
 
-                        <button
-                          type="button"
-                          onClick={closeEntry}
-                          className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl text-[var(--app-text)] transition hover:bg-[var(--app-surface)]"
-                          aria-label="Закрыть"
-                        >
-                          ✕
-                        </button>
-                      </div>
-
-                      <textarea
-                        value={text}
-                        onChange={(e) => setText(e.target.value)}
-                        rows={8}
-                        placeholder="Что сегодня произошло? Чему вы научились? За что благодарны?"
-                        className="mb-4 w-full rounded-3xl border border-[var(--app-border)] bg-[var(--app-bg)] p-4 text-sm text-[var(--app-text)] placeholder:text-[var(--app-hint)] outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
-                        style={{ borderColor: color }}
-                      />
-
-                      <div className="mb-4">
-                        <div className="mb-2 text-sm text-[var(--app-hint)]">
-                          Цвет записи
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {[
-                            "#ffffff",
-                            "#10b981",
-                            "#3b82f6",
-                            "#8b5cf6",
-                            "#f59e0b",
-                            "#ef4444",
-                            "#14b8a6",
-                          ].map((item) => (
                             <button
-                              key={item}
                               type="button"
-                              onClick={() => setColor(item)}
-                              className={`h-10 w-10 rounded-full border transition focus:outline-none ${
-                                color === item
-                                  ? "border-white ring-2 ring-offset-2 ring-offset-[var(--app-surface)]"
-                                  : "border-[var(--app-border)]"
-                              }`}
-                              style={{ backgroundColor: item }}
-                              aria-label={`Выбрать цвет ${item}`}
-                            />
-                          ))}
+                              onClick={closeEntry}
+                              className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl text-[var(--app-text)] transition hover:bg-[var(--app-surface)]"
+                              aria-label="Закрыть"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="min-h-0 overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+                          <textarea
+                            value={text}
+                            onChange={(e) => setText(e.target.value)}
+                            rows={8}
+                            placeholder="Что сегодня произошло? Чему вы научились? За что благодарны?"
+                            className="mb-4 w-full rounded-3xl border border-[var(--app-border)] bg-[var(--app-bg)] p-4 text-sm text-[var(--app-text)] placeholder:text-[var(--app-hint)] outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                            style={{ borderColor: color }}
+                          />
+
+                          <div className="mb-4">
+                            <div className="mb-2 text-sm text-[var(--app-hint)]">
+                              Цвет записи
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {[
+                                "#ffffff",
+                                "#10b981",
+                                "#3b82f6",
+                                "#8b5cf6",
+                                "#f59e0b",
+                                "#ef4444",
+                                "#14b8a6",
+                              ].map((item) => (
+                                <button
+                                  key={item}
+                                  type="button"
+                                  onClick={() => setColor(item)}
+                                  className={`h-10 w-10 rounded-full border transition focus:outline-none ${
+                                    color === item
+                                      ? "border-white ring-2 ring-offset-2 ring-offset-[var(--app-surface)]"
+                                      : "border-[var(--app-border)]"
+                                  }`}
+                                  style={{ backgroundColor: item }}
+                                  aria-label={`Выбрать цвет ${item}`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+
+                          <Button
+                            loading={diaryMutation.isPending}
+                            onClick={onDiarySave}
+                          >
+                            {editingEntry
+                              ? "Сохранить изменения"
+                              : "Сохранить запись"}
+                          </Button>
                         </div>
                       </div>
-
-                      <Button
-                        loading={diaryMutation.isPending}
-                        onClick={onDiarySave}
-                      >
-                        {editingEntry
-                          ? "Сохранить изменения"
-                          : "Сохранить запись"}
-                      </Button>
                     </motion.div>
                   </>
                 )}
