@@ -41,6 +41,16 @@ function todayString(): string {
   return `${now.getFullYear()}-${month}-${day}`;
 }
 
+function adjustDate(date: string, delta: number): string {
+  const [year, month, day] = date.split("-").map(Number);
+  const dt = new Date(year, month - 1, day);
+  dt.setDate(dt.getDate() + delta);
+
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(
+    dt.getDate(),
+  ).padStart(2, "0")}`;
+}
+
 function formatEntryTime(value: string): string {
   const date = new Date(value);
 
@@ -348,6 +358,29 @@ export default function DayHistoryPage() {
                   </div>
                 )}
               </Card>
+
+              <div className="mt-4 flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate(`/day/${adjustDate(date || todayString(), -1)}`)
+                  }
+                  className="inline-flex items-center gap-2 rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-3 text-sm text-[var(--app-text)] transition hover:border-emerald-500 hover:bg-[var(--app-bg)]"
+                >
+                  ← Предыдущий день
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate(`/day/${adjustDate(date || todayString(), 1)}`)
+                  }
+                  disabled={date === todayString() || date === ""}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-3 text-sm text-[var(--app-text)] transition hover:border-emerald-500 hover:bg-[var(--app-bg)] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Следующий день →
+                </button>
+              </div>
 
               <Modal
                 open={isCalendarOpen}
