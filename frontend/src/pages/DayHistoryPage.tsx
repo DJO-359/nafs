@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import Card from "../components/ui/Card";
+import ConfirmModal from "../components/ui/ConfirmModal";
 import EmptyState from "../components/ui/EmptyState";
 import Modal from "../components/ui/Modal";
 import QueryState from "../components/ui/QueryState";
@@ -11,6 +12,7 @@ import CalendarGrid from "../components/CalendarGrid";
 import { useCalendar } from "../hooks/useCalendar";
 import { useDayByDate } from "../hooks/useDayByDate";
 import { useBackButton } from "../hooks/useBackButton";
+import { useDeleteDiary } from "../hooks/useDeleteDiary";
 import { useDiary } from "../hooks/useDiary";
 import type { DiaryEntry } from "../types/day";
 
@@ -77,6 +79,9 @@ export default function DayHistoryPage() {
   const queryClient = useQueryClient();
   const [isDiaryOpen, setIsDiaryOpen] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [swipedEntryId, setSwipedEntryId] = useState<string | null>(null);
+  const [confirmDeleteEntry, setConfirmDeleteEntry] =
+    useState<DiaryEntry | null>(null);
 
   console.log("[DayHistory] route date:", date);
   console.log("[DayHistory] query.data:", query.data);
@@ -84,6 +89,7 @@ export default function DayHistoryPage() {
   const [text, setText] = useState("");
   const [color, setColor] = useState("#ffffff");
   const diaryMutation = useDiary();
+  const deleteDiaryMutation = useDeleteDiary();
 
   const openNewEntry = () => {
     setEditingEntry(null);
@@ -184,6 +190,26 @@ export default function DayHistoryPage() {
     void queryClient.invalidateQueries({ queryKey: ["day", date] });
   };
 
+  const handleDeleteConfirm = async () => {
+    if (!confirmDeleteEntry) return;
+
+    deleteDiaryMutation.mutate(confirmDeleteEntry.id, {
+      onSuccess: () => {
+        setConfirmDeleteEntry(null);
+        setSwipedEntryId(null);
+        queryClient.setQueryData(["day", date], (oldData) => {
+          if (!oldData || typeof oldData !== "object") return oldData;
+          return {
+            ...oldData,
+            diary: ((oldData as any).diary ?? []).filter(
+              (item: DiaryEntry) => item.id !== confirmDeleteEntry.id,
+            ),
+          };
+        });
+      },
+    });
+  };
+
   return (
     <div className="pb-40">
       <QueryState query={query}>
@@ -267,22 +293,57 @@ export default function DayHistoryPage() {
                 ) : (
                   <div className="space-y-3">
                     {diaryEntries.map((entry) => (
-                      <button
+                      <div
                         key={entry.id}
-                        type="button"
-                        onClick={() => openEntry(entry)}
-                        className="w-full rounded-[24px] border border-[var(--app-border)] p-4 text-left shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition hover:border-emerald-500"
-                        style={{
-                          backgroundColor: getPastelNoteBackground(entry.color),
-                        }}
+                        className="relative overflow-hidden rounded-[24px]"
                       >
-                        <div className="mb-3 text-xs uppercase tracking-[0.16em] text-[var(--app-hint)]">
-                          {formatEntryTime(entry.createdAt)}
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeleteEntry(entry)}
+                            className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white shadow transition hover:bg-red-700"
+                            aria-label="Удалить запись"
+                          >
+                            🗑
+                          </button>
                         </div>
-                        <p className="whitespace-pre-wrap text-sm text-black">
-                          {entry.content}
-                        </p>
-                      </button>
+
+                        <motion.button
+                          type="button"
+                          onClick={() => openEntry(entry)}
+                          className="relative w-full rounded-[24px] border border-[var(--app-border)] p-4 text-left shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition hover:border-emerald-500"
+                          style={{
+                            backgroundColor: getPastelNoteBackground(
+                              entry.color,
+                            ),
+                          }}
+                          drag="x"
+                          dragDirectionLock
+                          dragConstraints={{ left: -100, right: 0 }}
+                          dragElastic={0.1}
+                          onDragStart={() => setSwipedEntryId(entry.id)}
+                          onDragEnd={(_, info) => {
+                            if (info.offset.x < -60) {
+                              setSwipedEntryId(entry.id);
+                              return;
+                            }
+                            setSwipedEntryId(null);
+                          }}
+                          animate={{ x: swipedEntryId === entry.id ? -100 : 0 }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 300,
+                            damping: 35,
+                          }}
+                        >
+                          <div className="mb-3 text-xs uppercase tracking-[0.16em] text-[var(--app-hint)]">
+                            {formatEntryTime(entry.createdAt)}
+                          </div>
+                          <p className="whitespace-pre-wrap text-sm text-black">
+                            {entry.content}
+                          </p>
+                        </motion.button>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -456,6 +517,18 @@ export default function DayHistoryPage() {
                   </>
                 )}
               </AnimatePresence>
+
+              <ConfirmModal
+                open={Boolean(confirmDeleteEntry)}
+                title="Удалить запись"
+                description="Вы уверены, что хотите удалить?"
+                confirmText="Удалить"
+                onClose={() => {
+                  setConfirmDeleteEntry(null);
+                  setSwipedEntryId(null);
+                }}
+                onConfirm={handleDeleteConfirm}
+              />
             </>
           );
         }}

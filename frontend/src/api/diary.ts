@@ -28,3 +28,8 @@ export async function getDiaryHistory(): Promise<DiaryEntry[]> {
   const { data } = await api.get<DiaryEntry[]>("/diary/history");
   return data;
 }
+
+export async function deleteDiary(id: string): Promise<{ deleted: boolean }> {
+  const { data } = await api.delete<{ deleted: boolean }>(`/diary/${id}`);
+  return data;
+}
