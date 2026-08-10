@@ -10,11 +10,9 @@ import EmptyState from "../components/ui/EmptyState";
 import Modal from "../components/ui/Modal";
 import QueryState from "../components/ui/QueryState";
 import CalendarGrid from "../components/CalendarGrid";
-import DiaryColorPickerModal from "../components/DiaryColorPickerModal";
 import DiaryEntryActionsMenu from "../components/DiaryEntryActionsMenu";
 import PinEmojiPickerModal from "../components/PinEmojiPickerModal";
 import { updateDiary } from "../api/diary";
-import { DIARY_COLORS } from "../constants/diary";
 import { useCalendar } from "../hooks/useCalendar";
 import { useDayByDate } from "../hooks/useDayByDate";
 import { useBackButton } from "../hooks/useBackButton";
@@ -112,9 +110,6 @@ export default function DayHistoryPage() {
   const [confirmDeleteEntry, setConfirmDeleteEntry] =
     useState<DiaryEntry | null>(null);
   const [pinPickerEntry, setPinPickerEntry] = useState<DiaryEntry | null>(null);
-  const [colorPickerEntry, setColorPickerEntry] = useState<DiaryEntry | null>(
-    null,
-  );
 
   console.log("[DayHistory] route date:", date);
   console.log("[DayHistory] query.data:", query.data);
@@ -142,7 +137,9 @@ export default function DayHistoryPage() {
         color: patch.color ?? entry.color,
         isPinned: patch.isPinned ?? entry.isPinned,
         pinEmoji:
-          patch.pinEmoji !== undefined ? patch.pinEmoji : (entry.pinEmoji ?? null),
+          patch.pinEmoji !== undefined
+            ? patch.pinEmoji
+            : (entry.pinEmoji ?? null),
       }),
     onSuccess(updatedEntry) {
       queryClient.setQueryData(["day", date], (oldData) => {
@@ -317,16 +314,6 @@ export default function DayHistoryPage() {
       },
     });
     setPinPickerEntry(null);
-  };
-
-  const handleColorSelect = async (nextColor: string) => {
-    if (!colorPickerEntry) return;
-
-    await updateEntryMutation.mutateAsync({
-      entry: colorPickerEntry,
-      patch: { color: nextColor },
-    });
-    setColorPickerEntry(null);
   };
 
   const handleShareEntry = async (entry: DiaryEntry) => {
@@ -539,7 +526,7 @@ export default function DayHistoryPage() {
                             <DiaryEntryActionsMenu
                               isPinned={Boolean(entry.isPinned)}
                               onPin={() => handlePinAction(entry)}
-                              onChangeColor={() => setColorPickerEntry(entry)}
+                              onChangeColor={() => undefined}
                               onShare={() => void handleShareEntry(entry)}
                               onDelete={() => setConfirmDeleteEntry(entry)}
                             />
@@ -722,6 +709,14 @@ export default function DayHistoryPage() {
                   </>
                 )}
               </AnimatePresence>
+
+              <PinEmojiPickerModal
+                open={Boolean(pinPickerEntry)}
+                isPinned={Boolean(pinPickerEntry?.isPinned)}
+                onClose={() => setPinPickerEntry(null)}
+                onSelect={handlePinEmojiSelect}
+                onUnpin={handleUnpin}
+              />
 
               <ConfirmModal
                 open={Boolean(confirmDeleteEntry)}
