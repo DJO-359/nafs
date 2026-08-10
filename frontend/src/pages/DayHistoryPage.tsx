@@ -1,7 +1,8 @@
 import { useCallback, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import Card from "../components/ui/Card";
 import ConfirmModal from "../components/ui/ConfirmModal";
@@ -9,11 +10,19 @@ import EmptyState from "../components/ui/EmptyState";
 import Modal from "../components/ui/Modal";
 import QueryState from "../components/ui/QueryState";
 import CalendarGrid from "../components/CalendarGrid";
+import DiaryColorPickerModal from "../components/DiaryColorPickerModal";
+import DiaryEntryActionsMenu from "../components/DiaryEntryActionsMenu";
+import PinEmojiPickerModal from "../components/PinEmojiPickerModal";
+import { updateDiary } from "../api/diary";
+import { DIARY_COLORS } from "../constants/diary";
 import { useCalendar } from "../hooks/useCalendar";
 import { useDayByDate } from "../hooks/useDayByDate";
 import { useBackButton } from "../hooks/useBackButton";
 import { useDeleteDiary } from "../hooks/useDeleteDiary";
 import { useDiary } from "../hooks/useDiary";
+import { useInvalidateDayData } from "../hooks/useInvalidateDayData";
+import { describeError } from "../lib/errors";
+import { haptic } from "../lib/telegram";
 import type { DiaryEntry } from "../types/day";
 
 type CalendarNavigationState = {
@@ -102,6 +111,10 @@ export default function DayHistoryPage() {
   const [swipedEntryId, setSwipedEntryId] = useState<string | null>(null);
   const [confirmDeleteEntry, setConfirmDeleteEntry] =
     useState<DiaryEntry | null>(null);
+  const [pinPickerEntry, setPinPickerEntry] = useState<DiaryEntry | null>(null);
+  const [colorPickerEntry, setColorPickerEntry] = useState<DiaryEntry | null>(
+    null,
+  );
 
   console.log("[DayHistory] route date:", date);
   console.log("[DayHistory] query.data:", query.data);
@@ -110,6 +123,46 @@ export default function DayHistoryPage() {
   const [color, setColor] = useState("#ffffff");
   const diaryMutation = useDiary();
   const deleteDiaryMutation = useDeleteDiary();
+  const invalidateDayData = useInvalidateDayData();
+
+  const updateEntryMutation = useMutation({
+    mutationFn: ({
+      entry,
+      patch,
+    }: {
+      entry: DiaryEntry;
+      patch: {
+        color?: string;
+        isPinned?: boolean;
+        pinEmoji?: string | null;
+      };
+    }) =>
+      updateDiary(entry.id, {
+        content: entry.content,
+        color: patch.color ?? entry.color,
+        isPinned: patch.isPinned ?? entry.isPinned,
+        pinEmoji:
+          patch.pinEmoji !== undefined ? patch.pinEmoji : (entry.pinEmoji ?? null),
+      }),
+    onSuccess(updatedEntry) {
+      queryClient.setQueryData(["day", date], (oldData) => {
+        if (!oldData || typeof oldData !== "object") return oldData;
+
+        return {
+          ...oldData,
+          diary: ((oldData as { diary?: DiaryEntry[] }).diary ?? []).map(
+            (item) => (item.id === updatedEntry.id ? updatedEntry : item),
+          ),
+        };
+      });
+      invalidateDayData();
+      haptic("success");
+    },
+    onError(error) {
+      toast.error(`Не удалось обновить запись: ${describeError(error)}`);
+      haptic("error");
+    },
+  });
 
   const openNewEntry = () => {
     setEditingEntry(null);
@@ -226,8 +279,76 @@ export default function DayHistoryPage() {
             ),
           };
         });
+        invalidateDayData();
       },
     });
+  };
+
+  const handlePinAction = (entry: DiaryEntry) => {
+    if (entry.isPinned) {
+      setPinPickerEntry(entry);
+      return;
+    }
+
+    setPinPickerEntry(entry);
+  };
+
+  const handlePinEmojiSelect = async (emoji: string | null) => {
+    if (!pinPickerEntry) return;
+
+    await updateEntryMutation.mutateAsync({
+      entry: pinPickerEntry,
+      patch: {
+        isPinned: true,
+        pinEmoji: emoji,
+      },
+    });
+    setPinPickerEntry(null);
+  };
+
+  const handleUnpin = async () => {
+    if (!pinPickerEntry) return;
+
+    await updateEntryMutation.mutateAsync({
+      entry: pinPickerEntry,
+      patch: {
+        isPinned: false,
+        pinEmoji: null,
+      },
+    });
+    setPinPickerEntry(null);
+  };
+
+  const handleColorSelect = async (nextColor: string) => {
+    if (!colorPickerEntry) return;
+
+    await updateEntryMutation.mutateAsync({
+      entry: colorPickerEntry,
+      patch: { color: nextColor },
+    });
+    setColorPickerEntry(null);
+  };
+
+  const handleShareEntry = async (entry: DiaryEntry) => {
+    const shareText = entry.content.trim();
+
+    if (!shareText) return;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ text: shareText });
+        return;
+      }
+
+      await navigator.clipboard.writeText(shareText);
+      toast.success("Текст скопирован");
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+
+      toast.error(`Не удалось поделиться: ${describeError(error)}`);
+    }
   };
 
   return (
@@ -400,8 +521,28 @@ export default function DayHistoryPage() {
                             damping: 35,
                           }}
                         >
-                          <div className="mb-3 text-xs uppercase tracking-[0.16em] text-[var(--app-hint)]">
-                            {formatEntryTime(entry.createdAt)}
+                          <div className="mb-3 flex items-start justify-between gap-2">
+                            <div className="flex min-w-0 items-center gap-2">
+                              {entry.isPinned && entry.pinEmoji && (
+                                <span
+                                  className="text-base leading-none"
+                                  aria-label="Закреплённая запись"
+                                >
+                                  {entry.pinEmoji}
+                                </span>
+                              )}
+                              <div className="text-xs uppercase tracking-[0.16em] text-[var(--app-hint)]">
+                                {formatEntryTime(entry.createdAt)}
+                              </div>
+                            </div>
+
+                            <DiaryEntryActionsMenu
+                              isPinned={Boolean(entry.isPinned)}
+                              onPin={() => handlePinAction(entry)}
+                              onChangeColor={() => setColorPickerEntry(entry)}
+                              onShare={() => void handleShareEntry(entry)}
+                              onDelete={() => setConfirmDeleteEntry(entry)}
+                            />
                           </div>
                           <p className="whitespace-pre-wrap text-sm text-black">
                             {entry.content}

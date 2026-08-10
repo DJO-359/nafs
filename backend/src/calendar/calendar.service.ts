@@ -44,6 +44,19 @@ export class CalendarService {
     ]);
 
     const diaryDates = new Set(diaryEntries.map((entry) => entry.date));
+    const pinEmojisByDate = new Map<string, string[]>();
+
+    for (const entry of diaryEntries) {
+      if (!entry.isPinned || !entry.pinEmoji) continue;
+
+      const existing = pinEmojisByDate.get(entry.date) ?? [];
+
+      if (!existing.includes(entry.pinEmoji)) {
+        existing.push(entry.pinEmoji);
+      }
+
+      pinEmojisByDate.set(entry.date, existing);
+    }
     const intentionByDate = new Map(
       intentions.map((intention) => [intention.date, intention]),
     );
@@ -64,7 +77,8 @@ export class CalendarService {
       remindersByDate.set(key, bucket);
     }
 
-    const days: { date: string; status: DayStatus }[] = [];
+    const days: { date: string; status: DayStatus; pinEmojis: string[] }[] =
+      [];
 
     for (let day = 1; day <= total; day++) {
       const date = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -83,7 +97,11 @@ export class CalendarService {
         if (reminderStats.completed === reminderStats.total) score += 1;
       }
 
-      days.push({ date, status: CalendarService.toStatus(score) });
+      days.push({
+        date,
+        status: CalendarService.toStatus(score),
+        pinEmojis: (pinEmojisByDate.get(date) ?? []).slice(0, 2),
+      });
     }
 
     return {

@@ -1,9 +1,11 @@
 import {
+  IsBoolean,
   IsNotEmpty,
   IsOptional,
   IsString,
   Matches,
   MaxLength,
+  ValidateIf,
 } from 'class-validator';
 
 /**
@@ -24,12 +26,14 @@ export class UpdateDiaryDto {
   color?: string;
 
   @IsOptional()
+  @IsBoolean()
   isPinned?: boolean;
 
   @IsOptional()
+  @ValidateIf((_, value) => value !== null)
   @IsString()
-  @Matches(/^.$|^.{0}$/u, {
+  @Matches(/^.$/u, {
     message: 'Emoji должен быть одним символом',
   })
-  pinEmoji?: string;
+  pinEmoji?: string | null;
 }

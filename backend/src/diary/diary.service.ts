@@ -97,12 +97,23 @@ export class DiaryService {
   /**
    * Обновить запись.
    */
-  async update(userId: string, id: string, content: string, color?: string) {
+  async update(
+    userId: string,
+    id: string,
+    data: {
+      content: string;
+      color?: string;
+      isPinned?: boolean;
+      pinEmoji?: string | null;
+    },
+  ) {
     const entry = await this.findOne(userId, id);
 
     await entry.update({
-      content,
-      ...(color ? { color } : {}),
+      content: data.content,
+      ...(data.color !== undefined ? { color: data.color } : {}),
+      ...(data.isPinned !== undefined ? { isPinned: data.isPinned } : {}),
+      ...(data.pinEmoji !== undefined ? { pinEmoji: data.pinEmoji } : {}),
     });
 
     return entry;

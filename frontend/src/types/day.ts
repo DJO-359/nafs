@@ -13,6 +13,8 @@ export interface DiaryEntry {
   content: string;
   date: string;
   color: string;
+  isPinned?: boolean;
+  pinEmoji?: string | null;
   createdAt: string;
   updatedAt: string;
 }

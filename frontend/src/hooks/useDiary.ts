@@ -19,7 +19,7 @@ export function useDiary() {
   return useMutation<DiaryEntry, unknown, DiaryPayload>({
     mutationFn: async ({ text, id, color }) => {
       if (id) {
-        return updateDiary(id, text, color);
+        return updateDiary(id, { content: text, color });
       }
 
       return saveDiary(text, color);

@@ -47,7 +47,12 @@ export class DiaryController {
     @Param('id') id: string,
     @Body() dto: UpdateDiaryDto,
   ) {
-    return this.diaryService.update(req.user.id, id, dto.content, dto.color);
+    return this.diaryService.update(req.user.id, id, {
+      content: dto.content,
+      color: dto.color,
+      isPinned: dto.isPinned,
+      pinEmoji: dto.pinEmoji,
+    });
   }
 
   @Delete(':id')

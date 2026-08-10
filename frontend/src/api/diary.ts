@@ -1,6 +1,13 @@
 import { api } from "./axios";
 import type { DiaryEntry } from "../types/day";
 
+export interface UpdateDiaryPayload {
+  content: string;
+  color?: string;
+  isPinned?: boolean;
+  pinEmoji?: string | null;
+}
+
 export async function saveDiary(
   text: string,
   color?: string,
@@ -14,13 +21,9 @@ export async function saveDiary(
 
 export async function updateDiary(
   id: string,
-  text: string,
-  color?: string,
+  payload: UpdateDiaryPayload,
 ): Promise<DiaryEntry> {
-  const { data } = await api.patch<DiaryEntry>(`/diary/${id}`, {
-    content: text,
-    color,
-  });
+  const { data } = await api.patch<DiaryEntry>(`/diary/${id}`, payload);
   return data;
 }
 

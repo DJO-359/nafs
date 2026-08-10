@@ -3,6 +3,7 @@ import { api } from "./axios";
 export interface CalendarDay {
   date: string;
   status: "empty" | "partial" | "success";
+  pinEmojis?: string[];
 }
 
 export interface CalendarResponse {
