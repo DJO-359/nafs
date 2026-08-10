@@ -33,6 +33,16 @@ function formatDay(date: string): string {
   });
 }
 
+function formatDayLabel(date: string): string {
+  const [year, month, day] = date.split("-").map(Number);
+
+  return new Date(year, month - 1, day).toLocaleDateString("ru-RU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 function todayString(): string {
   const now = new Date();
   const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -235,7 +245,7 @@ export default function DayHistoryPage() {
 
           return (
             <>
-              <div className="mb-6 flex items-center gap-4">
+              <div className="mb-6 flex items-start justify-between gap-4">
                 {!isToday && (
                   <button
                     type="button"
@@ -246,7 +256,8 @@ export default function DayHistoryPage() {
                     ←
                   </button>
                 )}
-                <div>
+
+                <div className="flex-1">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h1 className="text-3xl font-semibold">Дневник</h1>
@@ -287,6 +298,49 @@ export default function DayHistoryPage() {
                         </button>
                       )}
                     </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <div className="mx-auto flex w-max items-center gap-4 rounded-3xl border border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-3">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate(
+                            `/day/${adjustDate(date || todayString(), -1)}`,
+                          )
+                        }
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--app-border)] bg-[var(--app-bg)] text-lg text-[var(--app-text)] transition hover:bg-[var(--app-surface)]"
+                        aria-label="Предыдущий день"
+                      >
+                        ←
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsCalendarOpen(true)}
+                        className="rounded-full px-4 py-2 text-sm font-medium text-[var(--app-text)] transition hover:bg-[var(--app-bg)]"
+                        aria-label="Выбрать дату"
+                      >
+                        {formatDayLabel(date || todayString())}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate(
+                            `/day/${adjustDate(date || todayString(), 1)}`,
+                          )
+                        }
+                        disabled={date === todayString() || date === ""}
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--app-border)] bg-[var(--app-bg)] text-lg transition hover:bg-[var(--app-surface)] disabled:cursor-not-allowed disabled:opacity-50"
+                        aria-label="Следующий день"
+                      >
+                        →
+                      </button>
+                    </div>
+                    <p className="mt-2 text-center text-xs text-[var(--app-hint)]">
+                      Нажмите на дату, чтобы выбрать другой день
+                    </p>
                   </div>
                 </div>
               </div>
@@ -358,29 +412,6 @@ export default function DayHistoryPage() {
                   </div>
                 )}
               </Card>
-
-              <div className="mt-4 flex items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={() =>
-                    navigate(`/day/${adjustDate(date || todayString(), -1)}`)
-                  }
-                  className="inline-flex items-center gap-2 rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-3 text-sm text-[var(--app-text)] transition hover:border-emerald-500 hover:bg-[var(--app-bg)]"
-                >
-                  ← Предыдущий день
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    navigate(`/day/${adjustDate(date || todayString(), 1)}`)
-                  }
-                  disabled={date === todayString() || date === ""}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-3 text-sm text-[var(--app-text)] transition hover:border-emerald-500 hover:bg-[var(--app-bg)] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Следующий день →
-                </button>
-              </div>
 
               <Modal
                 open={isCalendarOpen}
