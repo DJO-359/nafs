@@ -53,6 +53,19 @@ export class DiaryEntry extends Model<DiaryEntry> {
   })
   declare color: string;
 
+  @Column({
+    type: DataType.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  })
+  declare isPinned: boolean;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+  })
+  declare pinEmoji: string | null;
+
   /**
    * День записи в часовом поясе пользователя (YYYY-MM-DD).
    */

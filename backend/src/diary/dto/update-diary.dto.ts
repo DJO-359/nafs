@@ -22,4 +22,14 @@ export class UpdateDiaryDto {
     message: 'Цвет должен быть в формате #RRGGBB',
   })
   color?: string;
+
+  @IsOptional()
+  isPinned?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^.$|^.{0}$/u, {
+    message: 'Emoji должен быть одним символом',
+  })
+  pinEmoji?: string;
 }
