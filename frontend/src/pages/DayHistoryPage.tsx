@@ -283,7 +283,7 @@ export default function DayHistoryPage() {
 
   const handlePinAction = (entry: DiaryEntry) => {
     if (entry.isPinned) {
-      setPinPickerEntry(entry);
+      void handleUnpinEntry(entry);
       return;
     }
 
@@ -303,17 +303,24 @@ export default function DayHistoryPage() {
     setPinPickerEntry(null);
   };
 
-  const handleUnpin = async () => {
-    if (!pinPickerEntry) return;
-
+  const handleUnpinEntry = async (entry: DiaryEntry) => {
     await updateEntryMutation.mutateAsync({
-      entry: pinPickerEntry,
+      entry,
       patch: {
         isPinned: false,
         pinEmoji: null,
       },
     });
-    setPinPickerEntry(null);
+
+    if (pinPickerEntry?.id === entry.id) {
+      setPinPickerEntry(null);
+    }
+  };
+
+  const handleUnpin = async () => {
+    if (!pinPickerEntry) return;
+
+    await handleUnpinEntry(pinPickerEntry);
   };
 
   const handleShareEntry = async (entry: DiaryEntry) => {
