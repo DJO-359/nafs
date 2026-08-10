@@ -47,44 +47,36 @@ export default function CalendarGrid({ days, onSelect }: Props) {
 
         {days.map((day) => {
           const isToday = day.date === today;
-
-          const color =
-            day.status === "success"
-              ? "bg-emerald-500 text-white"
-              : day.status === "partial"
-                ? "bg-yellow-300 text-black"
-                : "bg-[var(--app-bg)] text-[var(--app-hint)]";
+          const hasEntries = day.status !== "empty";
+          const visiblePinEmojis = (day.pinEmojis ?? []).filter(Boolean);
 
           return (
             <button
               key={day.date}
               type="button"
               onClick={() => onSelect(day.date)}
-              className={`aspect-square rounded-xl transition hover:scale-105 ${color} ${
+              className={`flex min-h-[72px] flex-col items-center justify-start rounded-xl border border-transparent px-1 py-1 transition hover:scale-[1.02] ${
                 isToday ? "ring-2 ring-blue-500" : ""
               }`}
             >
-              {parseDay(day.date).getDate()}
+              <span className="text-sm font-medium text-[var(--app-text)]">
+                {parseDay(day.date).getDate()}
+              </span>
+
+              {hasEntries && (
+                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              )}
+
+              {visiblePinEmojis.length > 0 && (
+                <div className="mt-1 flex max-w-full flex-wrap items-center justify-center gap-1 text-[10px] leading-none text-[var(--app-text)]">
+                  {visiblePinEmojis.map((emoji, index) => (
+                    <span key={`${day.date}-${emoji}-${index}`}>{emoji}</span>
+                  ))}
+                </div>
+              )}
             </button>
           );
         })}
-      </div>
-
-      <div className="mt-5 space-y-2 text-sm">
-        <div className="flex items-center gap-2">
-          <div className="h-4 w-4 rounded bg-emerald-500" />
-          День заполнен
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="h-4 w-4 rounded bg-yellow-300" />
-          Частично заполнен
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="h-4 w-4 rounded bg-[var(--app-bg)] ring-1 ring-[var(--app-border)]" />
-          Нет записей
-        </div>
       </div>
     </>
   );
