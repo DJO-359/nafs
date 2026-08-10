@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
 
@@ -20,6 +20,8 @@ const TOMORROW_SNOOZE_HOUR = 9;
 
 @Injectable()
 export class RemindersService {
+  private readonly logger = new Logger(RemindersService.name);
+
   constructor(
     @InjectModel(Reminder)
     private readonly reminderModel: typeof Reminder,
@@ -106,15 +108,30 @@ export class RemindersService {
 
   getByDate(userId: string, timezone: string, date: string) {
     const { start, end } = dayRangeInZone(date, timezone);
+    this.logger.log('[RemindersService.getByDate] before Sequelize findAll');
 
-    return this.reminderModel.findAll({
-      where: {
-        userId,
-        // Полуинтервал вместо <= 23:59:59.999, чтобы не терять последнюю мс
-        remindAt: { [Op.gte]: start, [Op.lt]: end },
-      },
-      order: [['remindAt', 'ASC']],
-    });
+    return this.reminderModel
+      .findAll({
+        where: {
+          userId,
+          // Полуинтервал вместо <= 23:59:59.999, чтобы не терять последнюю мс
+          remindAt: { [Op.gte]: start, [Op.lt]: end },
+        },
+        order: [['remindAt', 'ASC']],
+      })
+      .then((result) => {
+        this.logger.log(
+          '[RemindersService.getByDate] Sequelize findAll succeeded',
+        );
+        return result;
+      })
+      .catch((error) => {
+        this.logger.error(
+          '[RemindersService.getByDate] Sequelize findAll failed',
+          this.formatError(error),
+        );
+        throw error;
+      });
   }
 
   /**
@@ -129,13 +146,29 @@ export class RemindersService {
       timezone,
     );
 
-    const reminders = await this.reminderModel.findAll({
-      where: {
-        userId,
-        remindAt: { [Op.gte]: todayRange.start },
-      },
-      order: [['remindAt', 'ASC']],
-    });
+    this.logger.log(
+      '[RemindersService.getUpcomingReminders] before Sequelize findAll',
+    );
+
+    const reminders = await this.reminderModel
+      .findAll({
+        where: {
+          userId,
+          remindAt: { [Op.gte]: todayRange.start },
+        },
+        order: [['remindAt', 'ASC']],
+      })
+      .catch((error) => {
+        this.logger.error(
+          '[RemindersService.getUpcomingReminders] Sequelize findAll failed',
+          this.formatError(error),
+        );
+        throw error;
+      });
+
+    this.logger.log(
+      '[RemindersService.getUpcomingReminders] Sequelize findAll succeeded',
+    );
 
     const todayItems: Reminder[] = [];
     const tomorrowItems: Reminder[] = [];
@@ -209,13 +242,29 @@ export class RemindersService {
 
   /** Напоминания за период — для календаря вместо выгрузки всей истории. */
   getBetween(userId: string, from: Date, to: Date) {
-    return this.reminderModel.findAll({
-      where: {
-        userId,
-        remindAt: { [Op.gte]: from, [Op.lt]: to },
-      },
-      order: [['remindAt', 'ASC']],
-    });
+    this.logger.log('[RemindersService.getBetween] before Sequelize findAll');
+
+    return this.reminderModel
+      .findAll({
+        where: {
+          userId,
+          remindAt: { [Op.gte]: from, [Op.lt]: to },
+        },
+        order: [['remindAt', 'ASC']],
+      })
+      .then((result) => {
+        this.logger.log(
+          '[RemindersService.getBetween] Sequelize findAll succeeded',
+        );
+        return result;
+      })
+      .catch((error) => {
+        this.logger.error(
+          '[RemindersService.getBetween] Sequelize findAll failed',
+          this.formatError(error),
+        );
+        throw error;
+      });
   }
 
   async getStats(
@@ -245,5 +294,23 @@ export class RemindersService {
       .map((row) => row.lastTriggeredAt)
       .filter((value): value is Date => Boolean(value))
       .map((value) => formatDayInZone(new Date(value), timezone));
+  }
+
+  private formatError(error: unknown): string {
+    const candidate = error as {
+      message?: string;
+      name?: string;
+      original?: { message?: string; code?: string };
+      parent?: { message?: string; code?: string };
+    };
+
+    return JSON.stringify({
+      message: candidate?.message,
+      name: candidate?.name,
+      originalMessage: candidate?.original?.message,
+      parentMessage: candidate?.parent?.message,
+      originalCode: candidate?.original?.code,
+      parentCode: candidate?.parent?.code,
+    });
   }
 }

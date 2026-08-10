@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op, UniqueConstraintError } from 'sequelize';
 
@@ -7,6 +7,8 @@ import { todayInZone } from '../common/utils/timezone.util';
 
 @Injectable()
 export class IntentionService {
+  private readonly logger = new Logger(IntentionService.name);
+
   constructor(
     @InjectModel(Intention)
     private readonly intentionModel: typeof Intention,
@@ -78,9 +80,25 @@ export class IntentionService {
   }
 
   getByDate(userId: string, date: string) {
-    return this.intentionModel.findOne({
-      where: { userId, date },
-    });
+    this.logger.log('[IntentionService.getByDate] before Sequelize findOne');
+
+    return this.intentionModel
+      .findOne({
+        where: { userId, date },
+      })
+      .then((result) => {
+        this.logger.log(
+          '[IntentionService.getByDate] Sequelize findOne succeeded',
+        );
+        return result;
+      })
+      .catch((error) => {
+        this.logger.error(
+          '[IntentionService.getByDate] Sequelize findOne failed',
+          this.formatError(error),
+        );
+        throw error;
+      });
   }
 
   /** Намерения за период — для календаря вместо выгрузки всей истории. */
@@ -108,12 +126,45 @@ export class IntentionService {
 
   /** Даты активности до указанного дня включительно — для расчёта серии. */
   async getActiveDates(userId: string, until: string): Promise<string[]> {
-    const rows = await this.intentionModel.findAll({
-      where: { userId, date: { [Op.lte]: until } },
-      attributes: ['date'],
-      raw: true,
-    });
+    this.logger.log(
+      '[IntentionService.getActiveDates] before Sequelize findAll',
+    );
 
-    return rows.map((row) => row.date);
+    try {
+      const rows = await this.intentionModel.findAll({
+        where: { userId, date: { [Op.lte]: until } },
+        attributes: ['date'],
+        raw: true,
+      });
+
+      this.logger.log(
+        '[IntentionService.getActiveDates] Sequelize findAll succeeded',
+      );
+      return rows.map((row) => row.date);
+    } catch (error) {
+      this.logger.error(
+        '[IntentionService.getActiveDates] Sequelize findAll failed',
+        this.formatError(error),
+      );
+      throw error;
+    }
+  }
+
+  private formatError(error: unknown): string {
+    const candidate = error as {
+      message?: string;
+      name?: string;
+      original?: { message?: string; code?: string };
+      parent?: { message?: string; code?: string };
+    };
+
+    return JSON.stringify({
+      message: candidate?.message,
+      name: candidate?.name,
+      originalMessage: candidate?.original?.message,
+      parentMessage: candidate?.parent?.message,
+      originalCode: candidate?.original?.code,
+      parentCode: candidate?.parent?.code,
+    });
   }
 }

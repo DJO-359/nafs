@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
 
@@ -7,6 +7,8 @@ import { todayInZone } from '../common/utils/timezone.util';
 
 @Injectable()
 export class DiaryService {
+  private readonly logger = new Logger(DiaryService.name);
+
   constructor(
     @InjectModel(DiaryEntry)
     private readonly diaryModel: typeof DiaryEntry,
@@ -70,13 +72,27 @@ export class DiaryService {
    * Получить записи за конкретную дату.
    */
   async getByDate(userId: string, date: string) {
-    return this.diaryModel.findAll({
-      where: {
-        userId,
-        date,
-      },
-      order: [['createdAt', 'DESC']],
-    });
+    this.logger.log('[DiaryService.getByDate] before Sequelize findAll');
+
+    return this.diaryModel
+      .findAll({
+        where: {
+          userId,
+          date,
+        },
+        order: [['createdAt', 'DESC']],
+      })
+      .then((result) => {
+        this.logger.log('[DiaryService.getByDate] Sequelize findAll succeeded');
+        return result;
+      })
+      .catch((error) => {
+        this.logger.error(
+          '[DiaryService.getByDate] Sequelize findAll failed',
+          this.formatError(error),
+        );
+        throw error;
+      });
   }
 
   /**
@@ -159,17 +175,48 @@ export class DiaryService {
    * Даты активности пользователя.
    */
   async getActiveDates(userId: string, until: string): Promise<string[]> {
-    const rows = await this.diaryModel.findAll({
-      where: {
-        userId,
-        date: {
-          [Op.lte]: until,
-        },
-      },
-      attributes: ['date'],
-      raw: true,
-    });
+    this.logger.log('[DiaryService.getActiveDates] before Sequelize findAll');
 
-    return (rows as { date: string }[]).map((row) => row.date);
+    try {
+      const rows = await this.diaryModel.findAll({
+        where: {
+          userId,
+          date: {
+            [Op.lte]: until,
+          },
+        },
+        attributes: ['date'],
+        raw: true,
+      });
+
+      this.logger.log(
+        '[DiaryService.getActiveDates] Sequelize findAll succeeded',
+      );
+      return (rows as { date: string }[]).map((row) => row.date);
+    } catch (error) {
+      this.logger.error(
+        '[DiaryService.getActiveDates] Sequelize findAll failed',
+        this.formatError(error),
+      );
+      throw error;
+    }
+  }
+
+  private formatError(error: unknown): string {
+    const candidate = error as {
+      message?: string;
+      name?: string;
+      original?: { message?: string; code?: string };
+      parent?: { message?: string; code?: string };
+    };
+
+    return JSON.stringify({
+      message: candidate?.message,
+      name: candidate?.name,
+      originalMessage: candidate?.original?.message,
+      parentMessage: candidate?.parent?.message,
+      originalCode: candidate?.original?.code,
+      parentCode: candidate?.parent?.code,
+    });
   }
 }
