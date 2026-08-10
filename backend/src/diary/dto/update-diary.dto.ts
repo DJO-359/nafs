@@ -5,8 +5,9 @@ import {
   IsString,
   Matches,
   MaxLength,
-  ValidateIf,
 } from 'class-validator';
+
+import { IsPinEmoji } from '../validators/is-pin-emoji';
 
 /**
  * Не PartialType: у записи дневника единственное содержательное поле,
@@ -30,10 +31,7 @@ export class UpdateDiaryDto {
   isPinned?: boolean;
 
   @IsOptional()
-  @ValidateIf((_, value) => value !== null)
-  @IsString()
-  @Matches(/^.$/u, {
-    message: 'Emoji должен быть одним символом',
-  })
+  @IsString({ each: false })
+  @IsPinEmoji({ message: 'Emoji должен быть одним из допустимых значков' })
   pinEmoji?: string | null;
 }

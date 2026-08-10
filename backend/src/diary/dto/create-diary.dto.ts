@@ -6,6 +6,8 @@ import {
   MaxLength,
 } from 'class-validator';
 
+import { IsPinEmoji } from '../validators/is-pin-emoji';
+
 /**
  * Раньше контроллер принимал инлайн-тип { content: string }, который
  * глобальный ValidationPipe пропускал без проверок: content=null давал 500
@@ -29,8 +31,6 @@ export class CreateDiaryDto {
 
   @IsOptional()
   @IsString()
-  @Matches(/^.$|^.{0}$/u, {
-    message: 'Emoji должен быть одним символом',
-  })
-  pinEmoji?: string;
+  @IsPinEmoji({ message: 'Emoji должен быть одним из допустимых значков' })
+  pinEmoji?: string | null;
 }
