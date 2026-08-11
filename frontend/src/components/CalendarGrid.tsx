@@ -48,7 +48,9 @@ export default function CalendarGrid({ days, onSelect }: Props) {
         {days.map((day) => {
           const isToday = day.date === today;
           const hasEntries = day.status !== "empty";
-          const visiblePinEmojis = (day.pinEmojis ?? []).filter(Boolean);
+          const visiblePinEmojis = (day.pinEmojis ?? [])
+            .filter(Boolean)
+            .slice(0, 1);
           const hasPinEmoji = visiblePinEmojis.length > 0;
 
           return (
@@ -69,10 +71,8 @@ export default function CalendarGrid({ days, onSelect }: Props) {
               )}
 
               {hasPinEmoji && (
-                <div className="mt-1 flex max-w-full flex-wrap items-center justify-center gap-1 text-[12px] leading-none text-[var(--app-text)]">
-                  {visiblePinEmojis.map((emoji, index) => (
-                    <span key={`${day.date}-${emoji}-${index}`}>{emoji}</span>
-                  ))}
+                <div className="mt-1 flex max-w-full items-center justify-center text-[12px] leading-none text-[var(--app-text)]">
+                  <span>{visiblePinEmojis[0]}</span>
                 </div>
               )}
             </button>

@@ -51,4 +51,46 @@ describe('DiaryService', () => {
     );
     expect(diaryModel.findOne).not.toHaveBeenCalled();
   });
+
+  it('unpins the previous entry when pinning a new one on the same date', async () => {
+    const previousEntry = {
+      id: 'entry-1',
+      userId: 'user-1',
+      date: '2026-08-07',
+      isPinned: true,
+      pinEmoji: '⭐',
+      update: jest.fn().mockResolvedValue(undefined),
+    };
+    const nextEntry = {
+      id: 'entry-2',
+      userId: 'user-1',
+      date: '2026-08-07',
+      isPinned: false,
+      pinEmoji: null,
+      update: jest.fn().mockResolvedValue({
+        id: 'entry-2',
+        isPinned: true,
+        pinEmoji: '❤️',
+      }),
+    };
+
+    diaryModel.findOne.mockResolvedValue(nextEntry);
+    diaryModel.findAll.mockResolvedValue([previousEntry]);
+
+    await service.update('user-1', 'entry-2', {
+      content: 'updated',
+      isPinned: true,
+      pinEmoji: '❤️',
+    });
+
+    expect(previousEntry.update).toHaveBeenCalledWith({
+      isPinned: false,
+      pinEmoji: null,
+    });
+    expect(nextEntry.update).toHaveBeenCalledWith({
+      content: 'updated',
+      isPinned: true,
+      pinEmoji: '❤️',
+    });
+  });
 });

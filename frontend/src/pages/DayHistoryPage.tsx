@@ -148,7 +148,25 @@ export default function DayHistoryPage() {
         return {
           ...oldData,
           diary: ((oldData as { diary?: DiaryEntry[] }).diary ?? []).map(
-            (item) => (item.id === updatedEntry.id ? updatedEntry : item),
+            (item) => {
+              if (item.id === updatedEntry.id) {
+                return updatedEntry;
+              }
+
+              if (
+                updatedEntry.isPinned &&
+                updatedEntry.date === item.date &&
+                item.id !== updatedEntry.id
+              ) {
+                return {
+                  ...item,
+                  isPinned: false,
+                  pinEmoji: null,
+                };
+              }
+
+              return item;
+            },
           ),
         };
       });
@@ -490,7 +508,7 @@ export default function DayHistoryPage() {
                         <motion.button
                           type="button"
                           onClick={() => openEntry(entry)}
-                          className="relative w-full rounded-[24px] border border-[var(--app-border)] p-4 text-left shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition hover:border-emerald-500"
+                          className="relative w-full rounded-[24px] border border-[var(--app-border)] p-4 pt-5 text-left shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition hover:border-emerald-500"
                           style={{
                             backgroundColor: getPastelNoteBackground(
                               entry.color,
@@ -515,16 +533,21 @@ export default function DayHistoryPage() {
                             damping: 35,
                           }}
                         >
+                          {entry.isPinned && (
+                            <div className="pointer-events-none absolute right-3 top-0 z-10 -translate-y-1/2">
+                              <div className="flex items-center gap-1 rounded-bl-xl rounded-tr-xl bg-emerald-600 px-2.5 py-1.5 text-[11px] font-semibold text-white shadow-lg shadow-emerald-500/30 ring-2 ring-white/80">
+                                <span
+                                  aria-label="Закреплённая запись"
+                                  className="text-base leading-none"
+                                >
+                                  {entry.pinEmoji ?? "📌"}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
                           <div className="mb-3 flex items-start justify-between gap-2">
                             <div className="flex min-w-0 items-center gap-2">
-                              {entry.isPinned && entry.pinEmoji && (
-                                <span
-                                  className="text-base leading-none"
-                                  aria-label="Закреплённая запись"
-                                >
-                                  {entry.pinEmoji}
-                                </span>
-                              )}
                               <div className="text-xs uppercase tracking-[0.16em] text-[var(--app-hint)]">
                                 {formatEntryTime(entry.createdAt)}
                               </div>
