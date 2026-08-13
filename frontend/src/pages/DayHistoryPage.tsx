@@ -370,9 +370,14 @@ export default function DayHistoryPage() {
             (typeof DOMException !== "undefined" &&
               error instanceof DOMException &&
               error.name === "AbortError") ||
-            (error &&
-              (error.name === "AbortError" || error.name === "NotAllowedError"))
+            (error as any)?.name === "AbortError"
           ) {
+            return;
+          }
+
+          // For NotAllowedError (permission denied, no HTTPS, etc), also return silently
+          // to avoid breaking the interface while maintaining Web Share API preference
+          if ((error as any)?.name === "NotAllowedError") {
             return;
           }
 
