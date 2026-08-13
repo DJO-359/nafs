@@ -8,6 +8,7 @@ import HistoryPage from "../pages/HistoryPage";
 import StatsPage from "../pages/StatsPage";
 import CalendarPage from "../pages/CalendarPage";
 import HabitsPage from "../pages/HabitsPage";
+import TasbihPage from "../pages/TasbihPage";
 
 export const router = createBrowserRouter([
   {
@@ -22,6 +23,7 @@ export const router = createBrowserRouter([
       { path: "/day/:date", element: <DayHistoryPage /> },
       { path: "/calendar", element: <CalendarPage /> },
       { path: "/habits", element: <HabitsPage /> },
+      { path: "/tasbih", element: <TasbihPage /> },
       { path: "*", element: <RouteError notFound /> },
     ],
   },

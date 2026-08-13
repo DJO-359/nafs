@@ -14,6 +14,7 @@ import { Reminder } from '../../reminders/models/reminder.model';
 import { DiaryEntry } from '../../diary/models/diary-entry.model';
 import { Intention } from '../../intention/models/intention.model';
 import { Habit } from '../../habits/models/habit.model';
+import { TasbihCounter } from '../../tasbih/models/tasbih-counter.model';
 import { DEFAULT_TIMEZONE } from '../../common/utils/timezone.util';
 
 export enum AuthProvider {
@@ -143,4 +144,7 @@ export class User extends Model<User> {
 
   @HasMany(() => Habit, { onDelete: 'CASCADE', hooks: true })
   declare habits: Habit[];
+
+  @HasMany(() => TasbihCounter, { onDelete: 'CASCADE', hooks: true })
+  declare tasbihCounters: TasbihCounter[];
 }

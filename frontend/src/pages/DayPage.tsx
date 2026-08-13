@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import ReminderList from "../components/ReminderList";
 import DiaryCard from "../components/DiaryCard";
+import TasbihCard from "../components/TasbihCard";
 import ProgressCard from "../components/ProgressCard";
 import HabitsCard, {
   type HabitsCardHandle,
@@ -229,6 +230,8 @@ export default function DayPage() {
             )}
 
             <DiaryCard diary={day.diary} />
+
+            <TasbihCard />
 
             <div
               className="mb-4 overflow-hidden rounded-[20px] p-5 shadow-[0_16px_40px_rgba(0,0,0,0.20)]"

@@ -17,6 +17,7 @@ import { IntentionModule } from './intention/intention.module';
 import { DayModule } from './day/day.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { HabitsModule } from './habits/habits.module';
+import { TasbihModule } from './tasbih/tasbih.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { HabitsModule } from './habits/habits.module';
     IntentionModule,
     DayModule,
     HabitsModule,
+    TasbihModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

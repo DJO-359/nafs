@@ -8,6 +8,7 @@ import { Reminder } from '../reminders/models/reminder.model';
 import { DiaryEntry } from '../diary/models/diary-entry.model';
 import { Habit } from '../habits/models/habit.model';
 import { HabitCompletion } from '../habits/models/habit-completion.model';
+import { TasbihCounter } from '../tasbih/models/tasbih-counter.model';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { HabitCompletion } from '../habits/models/habit-completion.model';
             DiaryEntry,
             Habit,
             HabitCompletion,
+            TasbihCounter,
           ],
           autoLoadModels: true,
           /**
