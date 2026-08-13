@@ -148,25 +148,7 @@ export default function DayHistoryPage() {
         return {
           ...oldData,
           diary: ((oldData as { diary?: DiaryEntry[] }).diary ?? []).map(
-            (item) => {
-              if (item.id === updatedEntry.id) {
-                return updatedEntry;
-              }
-
-              if (
-                updatedEntry.isPinned &&
-                updatedEntry.date === item.date &&
-                item.id !== updatedEntry.id
-              ) {
-                return {
-                  ...item,
-                  isPinned: false,
-                  pinEmoji: null,
-                };
-              }
-
-              return item;
-            },
+            (item) => (item.id === updatedEntry.id ? updatedEntry : item),
           ),
         };
       });

@@ -125,10 +125,6 @@ export class DiaryService {
   ) {
     const entry = await this.findOne(userId, id);
 
-    if (data.isPinned === true) {
-      await this.unpinOtherEntriesForDate(userId, entry.date, entry.id);
-    }
-
     await entry.update({
       content: data.content,
       ...(data.color !== undefined ? { color: data.color } : {}),
@@ -137,32 +133,6 @@ export class DiaryService {
     });
 
     return entry;
-  }
-
-  private async unpinOtherEntriesForDate(
-    userId: string,
-    date: string,
-    currentEntryId: string,
-  ) {
-    const siblings = await this.diaryModel.findAll({
-      where: {
-        userId,
-        date,
-        isPinned: true,
-        id: {
-          [Op.ne]: currentEntryId,
-        },
-      },
-    });
-
-    await Promise.all(
-      siblings.map((sibling) =>
-        sibling.update({
-          isPinned: false,
-          pinEmoji: null,
-        }),
-      ),
-    );
   }
 
   /**

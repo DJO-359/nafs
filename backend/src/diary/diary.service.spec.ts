@@ -52,7 +52,7 @@ describe('DiaryService', () => {
     expect(diaryModel.findOne).not.toHaveBeenCalled();
   });
 
-  it('unpins the previous entry when pinning a new one on the same date', async () => {
+  it('updates only the target entry when pinning a new one on the same date', async () => {
     const previousEntry = {
       id: 'entry-1',
       userId: 'user-1',
@@ -83,10 +83,7 @@ describe('DiaryService', () => {
       pinEmoji: '❤️',
     });
 
-    expect(previousEntry.update).toHaveBeenCalledWith({
-      isPinned: false,
-      pinEmoji: null,
-    });
+    expect(previousEntry.update).not.toHaveBeenCalled();
     expect(nextEntry.update).toHaveBeenCalledWith({
       content: 'updated',
       isPinned: true,

@@ -44,12 +44,14 @@ export class CalendarService {
     ]);
 
     const diaryDates = new Set(diaryEntries.map((entry) => entry.date));
-    const pinEmojisByDate = new Map<string, string>();
+    const pinEmojisByDate = new Map<string, string[]>();
 
     for (const entry of diaryEntries) {
       if (!entry.isPinned || !entry.pinEmoji) continue;
 
-      pinEmojisByDate.set(entry.date, entry.pinEmoji);
+      const list = pinEmojisByDate.get(entry.date) ?? [];
+      if (!list.includes(entry.pinEmoji)) list.push(entry.pinEmoji);
+      pinEmojisByDate.set(entry.date, list);
     }
     const intentionByDate = new Map(
       intentions.map((intention) => [intention.date, intention]),
@@ -90,12 +92,12 @@ export class CalendarService {
         if (reminderStats.completed === reminderStats.total) score += 1;
       }
 
-      const pinnedEmoji = pinEmojisByDate.get(date);
+      const pinnedEmojis = pinEmojisByDate.get(date) ?? [];
 
       days.push({
         date,
         status: CalendarService.toStatus(score),
-        pinEmojis: pinnedEmoji ? [pinnedEmoji] : [],
+        pinEmojis: pinnedEmojis,
       });
     }
 
