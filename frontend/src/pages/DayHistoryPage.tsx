@@ -350,15 +350,24 @@ export default function DayHistoryPage() {
     if (!shareText) return;
 
     try {
-      if (navigator.share) {
-        await navigator.share({ text: shareText });
+      if (typeof navigator.share === "function") {
+        // Use Web Share API on supported mobile browsers to open native share sheet
+        await navigator.share({ title: "Запись из дневника", text: shareText });
         return;
       }
 
+      // Fallback: copy to clipboard when Web Share API is not available
       await navigator.clipboard.writeText(shareText);
       toast.success("Текст скопирован");
     } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
+      // User cancelled native share — ignore silently
+      if (
+        (typeof DOMException !== "undefined" &&
+          error instanceof DOMException &&
+          error.name === "AbortError") ||
+        (error &&
+          (error.name === "AbortError" || error.name === "NotAllowedError"))
+      ) {
         return;
       }
 
