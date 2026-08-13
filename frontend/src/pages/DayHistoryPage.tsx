@@ -515,14 +515,27 @@ export default function DayHistoryPage() {
                             damping: 35,
                           }}
                         >
-                          {entry.isPinned && (
-                            <div className="pointer-events-none absolute right-3 top-0 z-10 -translate-y-1/2">
-                              <div className="flex items-center gap-1 rounded-bl-xl rounded-tr-xl bg-emerald-600 px-2.5 py-1.5 text-[11px] font-semibold text-white shadow-lg shadow-emerald-500/30 ring-2 ring-white/80">
+                          {entry.isPinned && entry.pinEmoji && (
+                            <div className="pointer-events-none absolute top-0 right-12 z-10 -translate-y-3">
+                              <div className="relative w-12 h-16">
+                                <svg
+                                  viewBox="0 0 48 56"
+                                  className="absolute inset-0 w-12 h-16 text-emerald-600"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  focusable="false"
+                                  aria-hidden="true"
+                                >
+                                  <path
+                                    d="M0 0 H48 V40 L24 48 L0 40 Z"
+                                    fill="currentColor"
+                                  />
+                                </svg>
+
                                 <span
                                   aria-label="Закреплённая запись"
-                                  className="text-base leading-none"
+                                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xl leading-none text-white"
                                 >
-                                  {entry.pinEmoji ?? "📌"}
+                                  {entry.pinEmoji}
                                 </span>
                               </div>
                             </div>
