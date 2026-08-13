@@ -1,4 +1,5 @@
 export const PIN_EMOJI_OPTIONS = [
+  // keep existing backend emojis
   '😊',
   '❤️',
   '⭐',
@@ -11,6 +12,15 @@ export const PIN_EMOJI_OPTIONS = [
   '🙏',
   '💭',
   '✅',
+  // include frontend picker emojis so backend accepts what UI sends
+  '▶️',
+  '🎓',
+  '💼',
+  '📝',
+  '💻',
+  '🧠',
+  '🏋️',
+  '💰',
 ] as const;
 
 export type PinEmojiValue = (typeof PIN_EMOJI_OPTIONS)[number];
