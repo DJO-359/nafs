@@ -108,6 +108,7 @@ export default function DayHistoryPage() {
   const [editingEntry, setEditingEntry] = useState<DiaryEntry | null>(null);
   const [text, setText] = useState("");
   const [color, setColor] = useState("#ffffff");
+  const [isSavingOnClose, setIsSavingOnClose] = useState(false);
   const diaryMutation = useDiary();
   const deleteDiaryMutation = useDeleteDiary();
   const invalidateDayData = useInvalidateDayData();
@@ -173,6 +174,49 @@ export default function DayHistoryPage() {
     setIsDiaryOpen(false);
   };
 
+  // Проверяет, есть ли что сохранять
+  const hasChanges = (): boolean => {
+    // Новая запись: есть текст
+    if (!editingEntry && text.trim()) {
+      return true;
+    }
+    // Редактирование: текст или цвет изменились
+    if (editingEntry) {
+      const textChanged = text !== editingEntry.content;
+      const colorChanged = color !== (editingEntry.color ?? "#ffffff");
+      return textChanged || colorChanged;
+    }
+    return false;
+  };
+
+  // Закрывает модалку с сохранением, если есть изменения
+  const closeEntryWithSave = async () => {
+    if (isSavingOnClose || diaryMutation.isPending) return; // Предотвращаем двойное сохранение
+
+    if (!hasChanges()) {
+      // Нет изменений - просто закрываем
+      closeEntry();
+      return;
+    }
+
+    // Есть изменения - сохраняем перед закрытием
+    setIsSavingOnClose(true);
+    try {
+      await diaryMutation.mutateAsync({
+        text: text.trim(),
+        id: editingEntry?.id,
+        color,
+      });
+      // Успешно сохранено - закрываем
+      closeEntry();
+    } catch {
+      // Ошибка при сохранении - оставляем модалку открытой
+      // Ошибка уже показана через toast в `useDiary` hook
+    } finally {
+      setIsSavingOnClose(false);
+    }
+  };
+
   const calendarToday = todayString();
   const [calendarYear, setCalendarYear] = useState(
     state?.calendarYear ?? new Date().getFullYear(),
@@ -218,13 +262,22 @@ export default function DayHistoryPage() {
     setCalendarMonth(next);
   };
 
-  const handleBack = useCallback(() => {
+  const handleBack = useCallback(async () => {
+    // Если уже сохраняем - не обрабатываем back повторно
+    if (isSavingOnClose) return;
+
+    // Если модалка открыта, закрыть её с сохранением
+    if (isDiaryOpen) {
+      await closeEntryWithSave();
+      return;
+    }
+
     if (isFromCalendar) {
       setIsCalendarOpen(true);
       return;
     }
     navigate(-1);
-  }, [isFromCalendar, navigate]);
+  }, [isFromCalendar, navigate, isDiaryOpen, isSavingOnClose]);
 
   const handleClose = () => {
     navigate("/");
@@ -636,7 +689,7 @@ export default function DayHistoryPage() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      onClick={closeEntry}
+                      onClick={closeEntryWithSave}
                     />
                     <motion.div
                       key="diary-sheet"
@@ -679,7 +732,7 @@ export default function DayHistoryPage() {
                               </button>
                               <button
                                 type="button"
-                                onClick={closeEntry}
+                                onClick={closeEntryWithSave}
                                 className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl text-[var(--app-text)] transition hover:bg-[var(--app-surface)]"
                                 aria-label="Закрыть"
                               >
