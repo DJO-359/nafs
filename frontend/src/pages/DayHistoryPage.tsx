@@ -32,7 +32,6 @@ type CalendarNavigationState = {
 
 function formatDay(date: string): string {
   const [year, month, day] = date.split("-").map(Number);
-
   return new Date(year, month - 1, day).toLocaleDateString("ru-RU", {
     weekday: "long",
     day: "numeric",
@@ -43,7 +42,6 @@ function formatDay(date: string): string {
 
 function formatDayLabel(date: string): string {
   const [year, month, day] = date.split("-").map(Number);
-
   return new Date(year, month - 1, day).toLocaleDateString("ru-RU", {
     day: "numeric",
     month: "long",
@@ -55,7 +53,6 @@ function todayString(): string {
   const now = new Date();
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
-
   return `${now.getFullYear()}-${month}-${day}`;
 }
 
@@ -63,7 +60,6 @@ function adjustDate(date: string, delta: number): string {
   const [year, month, day] = date.split("-").map(Number);
   const dt = new Date(year, month - 1, day);
   dt.setDate(dt.getDate() + delta);
-
   return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(
     dt.getDate(),
   ).padStart(2, "0")}`;
@@ -71,11 +67,7 @@ function adjustDate(date: string, delta: number): string {
 
 function formatEntryTime(value: string): string {
   const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
+  if (Number.isNaN(date.getTime())) return "";
   return date.toLocaleTimeString("ru-RU", {
     hour: "2-digit",
     minute: "2-digit",
@@ -84,7 +76,6 @@ function formatEntryTime(value: string): string {
 
 function getPastelNoteBackground(color: string): string {
   const normalized = color?.toLowerCase();
-
   const pastelMap: Record<string, string> = {
     "#ffffff": "#ffffff",
     "#10b981": "#e8f7f0",
@@ -94,7 +85,6 @@ function getPastelNoteBackground(color: string): string {
     "#f59e0b": "#fff3d1",
     "#ef4444": "#ffe4e4",
   };
-
   return pastelMap[normalized] ?? "#ffffff";
 }
 
@@ -115,8 +105,6 @@ export default function DayHistoryPage() {
     null,
   );
 
-  console.log("[DayHistory] route date:", date);
-  console.log("[DayHistory] query.data:", query.data);
   const [editingEntry, setEditingEntry] = useState<DiaryEntry | null>(null);
   const [text, setText] = useState("");
   const [color, setColor] = useState("#ffffff");
@@ -148,7 +136,6 @@ export default function DayHistoryPage() {
     onSuccess(updatedEntry) {
       queryClient.setQueryData(["day", date], (oldData) => {
         if (!oldData || typeof oldData !== "object") return oldData;
-
         return {
           ...oldData,
           diary: ((oldData as { diary?: DiaryEntry[] }).diary ?? []).map(
@@ -218,19 +205,16 @@ export default function DayHistoryPage() {
 
   const shiftCalendarMonth = (delta: number) => {
     const next = calendarMonth + delta;
-
     if (next < 1) {
       setCalendarMonth(12);
       setCalendarYear((value) => value - 1);
       return;
     }
-
     if (next > 12) {
       setCalendarMonth(1);
       setCalendarYear((value) => value + 1);
       return;
     }
-
     setCalendarMonth(next);
   };
 
@@ -239,7 +223,6 @@ export default function DayHistoryPage() {
       setIsCalendarOpen(true);
       return;
     }
-
     navigate(-1);
   }, [isFromCalendar, navigate]);
 
@@ -251,7 +234,6 @@ export default function DayHistoryPage() {
 
   const onDiarySave = async () => {
     if (!text.trim()) return;
-
     await diaryMutation.mutateAsync({
       text: text.trim(),
       id: editingEntry?.id,
@@ -266,7 +248,6 @@ export default function DayHistoryPage() {
 
   const handleDeleteConfirm = async () => {
     if (!confirmDeleteEntry) return;
-
     deleteDiaryMutation.mutate(confirmDeleteEntry.id, {
       onSuccess: () => {
         setConfirmDeleteEntry(null);
@@ -290,7 +271,6 @@ export default function DayHistoryPage() {
       void handleUnpinEntry(entry);
       return;
     }
-
     setPinPickerEntry(entry);
   };
 
@@ -300,7 +280,6 @@ export default function DayHistoryPage() {
 
   const handlePinEmojiSelect = async (emoji: string | null) => {
     if (!pinPickerEntry) return;
-
     await updateEntryMutation.mutateAsync({
       entry: pinPickerEntry,
       patch: {
@@ -319,7 +298,6 @@ export default function DayHistoryPage() {
         pinEmoji: null,
       },
     });
-
     if (pinPickerEntry?.id === entry.id) {
       setPinPickerEntry(null);
     }
@@ -327,36 +305,21 @@ export default function DayHistoryPage() {
 
   const handleUnpin = async () => {
     if (!pinPickerEntry) return;
-
     await handleUnpinEntry(pinPickerEntry);
   };
 
   const handleColorSelect = async (color: string) => {
     if (!colorPickerEntry) return;
-
     await updateEntryMutation.mutateAsync({
       entry: colorPickerEntry,
-      patch: {
-        color,
-      },
+      patch: { color },
     });
-
     setColorPickerEntry(null);
   };
 
   const handleShareEntry = async (entry: DiaryEntry) => {
     const shareText = entry.content.trim();
-
     if (!shareText) return;
-
-    console.log("[Diary Share] navigator.share:", typeof navigator.share);
-    console.log("[Diary Share] userAgent:", navigator.userAgent);
-    console.log(
-      "[Diary Share] isTelegramWebApp:",
-      !!(window as any).Telegram?.WebApp,
-    );
-    console.log("[Diary Share] shareText:", shareText);
-
     try {
       if (typeof navigator.share === "function") {
         try {
@@ -365,7 +328,6 @@ export default function DayHistoryPage() {
             text: shareText,
           });
         } catch (error) {
-          // If user cancelled native share, ignore silently
           if (
             (typeof DOMException !== "undefined" &&
               error instanceof DOMException &&
@@ -374,22 +336,14 @@ export default function DayHistoryPage() {
           ) {
             return;
           }
-
-          // For NotAllowedError (permission denied, no HTTPS, etc), also return silently
-          // to avoid breaking the interface while maintaining Web Share API preference
           if ((error as any)?.name === "NotAllowedError") {
             return;
           }
-
           console.error("[Diary Share] navigator.share failed:", error);
-          // Do not fallback to clipboard when navigator.share exists but errors; just abort
           return;
         }
-
         return;
       }
-
-      // Fallback: copy to clipboard when Web Share API is not available
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(shareText);
         toast.success("Текст скопирован");
@@ -407,13 +361,6 @@ export default function DayHistoryPage() {
     <div className="pb-40">
       <QueryState query={query}>
         {(day) => {
-          console.log("[DayHistory] day:", day);
-          console.log("[DayHistory] day?.date:", day?.date);
-          console.log("[DayHistory] BEFORE formatDay:", {
-            day,
-            dayDate: day?.date,
-            routeDate: date,
-          });
           const diaryEntries = Array.isArray(day.diary) ? day.diary : [];
 
           return (
@@ -586,7 +533,6 @@ export default function DayHistoryPage() {
                                     fill="currentColor"
                                   />
                                 </svg>
-
                                 <span
                                   aria-label="Закреплённая запись"
                                   className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xl leading-none text-white"
@@ -622,11 +568,13 @@ export default function DayHistoryPage() {
                 )}
               </Card>
 
+              {/* Модалка календаря – скрываем кнопку "Отмена" */}
               <Modal
                 open={isCalendarOpen}
                 title="📅 Календарь записей"
                 onClose={closeCalendar}
                 footer={null}
+                showCancel={false}
                 headerAction={
                   <button
                     type="button"
@@ -648,7 +596,6 @@ export default function DayHistoryPage() {
                     >
                       ◀
                     </button>
-
                     <div className="text-sm font-semibold text-[var(--app-text)]">
                       {new Date(
                         calendarYear,
@@ -658,7 +605,6 @@ export default function DayHistoryPage() {
                         year: "numeric",
                       })}
                     </div>
-
                     <button
                       type="button"
                       onClick={() => shiftCalendarMonth(1)}
@@ -668,7 +614,6 @@ export default function DayHistoryPage() {
                       ▶
                     </button>
                   </div>
-
                   <Card>
                     <QueryState query={calendarQuery}>
                       {(data) => (
@@ -693,7 +638,6 @@ export default function DayHistoryPage() {
                       exit={{ opacity: 0 }}
                       onClick={closeEntry}
                     />
-
                     <motion.div
                       key="diary-sheet"
                       className="fixed inset-x-0 bottom-0 z-[70] mx-auto w-full max-w-3xl overflow-hidden rounded-t-[28px] bg-[var(--app-surface)] shadow-2xl"
@@ -720,7 +664,6 @@ export default function DayHistoryPage() {
                                   : "Новая запись"}
                               </h2>
                             </div>
-
                             <div className="flex items-center gap-2">
                               <button
                                 type="button"
@@ -734,7 +677,6 @@ export default function DayHistoryPage() {
                               >
                                 ✓
                               </button>
-
                               <button
                                 type="button"
                                 onClick={closeEntry}
@@ -746,7 +688,6 @@ export default function DayHistoryPage() {
                             </div>
                           </div>
                         </div>
-
                         <div className="min-h-0 overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
                           <textarea
                             value={text}
@@ -756,9 +697,7 @@ export default function DayHistoryPage() {
                             className="w-full rounded-3xl border border-[var(--app-border)] bg-[var(--app-bg)] p-4 text-sm text-[var(--app-text)] placeholder:text-[var(--app-hint)] outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                             style={{ borderColor: color }}
                           />
-
                           <div className="mb-4">
-                            {/* <div className="mb-2 text-sm text-[var(--app-hint)]"></div> */}
                             <div className="flex flex-wrap gap-2">
                               {[
                                 "#ffffff",
@@ -767,7 +706,6 @@ export default function DayHistoryPage() {
                                 "#8b5cf6",
                                 "#f59e0b",
                                 "#ef4444",
-                                // "#14b8a6",
                               ].map((item) => (
                                 <button
                                   key={item}

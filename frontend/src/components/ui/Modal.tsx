@@ -8,6 +8,7 @@ interface Props {
   onClose: () => void;
   footer?: ReactNode;
   headerAction?: ReactNode;
+  showCancel?: boolean; // новый пропс
 }
 
 export default function Modal({
@@ -17,35 +18,46 @@ export default function Modal({
   onClose,
   footer,
   headerAction,
+  showCancel = true, // по умолчанию показываем
 }: Props) {
   if (!open) return null;
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-3 sm:p-4"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-2xl bg-[var(--app-surface)] shadow-xl"
+        className="flex max-h-[90dvh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-[var(--app-surface)] shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b p-5">
-          <h2 className="text-xl font-semibold">{title}</h2>
+        {/* HEADER */}
+        <div className="flex shrink-0 items-center justify-between border-b p-4 sm:p-5">
+          <h2 className="text-lg font-semibold sm:text-xl">{title}</h2>
           {headerAction}
         </div>
 
-        <div className="p-5">{children}</div>
-
-        <div className="flex justify-end gap-2 border-t p-4">
-          {footer}
-
-          <button
-            onClick={onClose}
-            className="rounded-lg border px-4 py-2 hover:bg-[var(--app-bg)]"
-          >
-            Отмена
-          </button>
+        {/* CONTENT */}
+        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
+          {children}
         </div>
+
+        {/* FOOTER – отображаем, только если есть footer или showCancel === true */}
+        {(footer || showCancel) && (
+          <div className="flex shrink-0 justify-end gap-2 border-t p-3 sm:p-4">
+            {footer}
+
+            {showCancel && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-lg border px-4 py-2 hover:bg-[var(--app-bg)]"
+              >
+                Отмена
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>,
     document.body,
