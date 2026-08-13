@@ -102,8 +102,13 @@ export default function DiaryEntryActionsMenu({
   }, [open]);
 
   const runAction = (action: () => void) => {
-    closeMenu();
-    action();
+    // Call the action first to ensure it's executed within the original user gesture
+    // (some Web APIs require the call to happen directly in a user-initiated event).
+    try {
+      action();
+    } finally {
+      closeMenu();
+    }
   };
 
   return (

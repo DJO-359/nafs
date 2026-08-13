@@ -349,28 +349,51 @@ export default function DayHistoryPage() {
 
     if (!shareText) return;
 
+    console.log("[Diary Share] navigator.share:", typeof navigator.share);
+    console.log("[Diary Share] userAgent:", navigator.userAgent);
+    console.log(
+      "[Diary Share] isTelegramWebApp:",
+      !!(window as any).Telegram?.WebApp,
+    );
+    console.log("[Diary Share] shareText:", shareText);
+
     try {
       if (typeof navigator.share === "function") {
-        // Use Web Share API on supported mobile browsers to open native share sheet
-        await navigator.share({ title: "Запись из дневника", text: shareText });
+        try {
+          await navigator.share({
+            title: "Запись из дневника",
+            text: shareText,
+          });
+        } catch (error) {
+          // If user cancelled native share, ignore silently
+          if (
+            (typeof DOMException !== "undefined" &&
+              error instanceof DOMException &&
+              error.name === "AbortError") ||
+            (error &&
+              (error.name === "AbortError" || error.name === "NotAllowedError"))
+          ) {
+            return;
+          }
+
+          console.error("[Diary Share] navigator.share failed:", error);
+          // Do not fallback to clipboard when navigator.share exists but errors; just abort
+          return;
+        }
+
         return;
       }
 
       // Fallback: copy to clipboard when Web Share API is not available
-      await navigator.clipboard.writeText(shareText);
-      toast.success("Текст скопирован");
-    } catch (error) {
-      // User cancelled native share — ignore silently
-      if (
-        (typeof DOMException !== "undefined" &&
-          error instanceof DOMException &&
-          error.name === "AbortError") ||
-        (error &&
-          (error.name === "AbortError" || error.name === "NotAllowedError"))
-      ) {
-        return;
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareText);
+        toast.success("Текст скопирован");
+      } else {
+        console.warn(
+          "[Diary Share] No Web Share API and no Clipboard API available",
+        );
       }
-
+    } catch (error) {
       toast.error(`Не удалось поделиться: ${describeError(error)}`);
     }
   };
