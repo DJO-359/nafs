@@ -136,7 +136,7 @@ export default function DayPage() {
                   <button
                     type="button"
                     onClick={() => setIsIntentionOpen(true)}
-                    className="mt-5 block max-w-[290px] w-[78%] rounded-[20px] border border-[rgba(255,255,255,0.12)] bg-[rgba(15,20,28,0.10)] px-5 py-5 text-left text-white transition duration-250 ease-in-out hover:-translate-y-0.5 active:scale-[0.98]"
+                    className="mt-5 block max-w-[290px] w-[78%] rounded-[20px] border border-[rgba(255,255,255,0.8)] bg-[rgba(15,20,28,0.10)] px-5 py-5 text-left text-white transition duration-250 ease-in-out hover:-translate-y-0.5 active:scale-[0.98]"
                     style={{
                       backdropFilter: "blur(14px)",
                       boxShadow: "inset 0 1px rgba(255,255,255,.08)",
