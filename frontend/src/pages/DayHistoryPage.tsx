@@ -12,6 +12,7 @@ import QueryState from "../components/ui/QueryState";
 import CalendarGrid from "../components/CalendarGrid";
 import DiaryEntryActionsMenu from "../components/DiaryEntryActionsMenu";
 import PinEmojiPickerModal from "../components/PinEmojiPickerModal";
+import DiaryColorPickerModal from "../components/DiaryColorPickerModal";
 import { updateDiary } from "../api/diary";
 import { useCalendar } from "../hooks/useCalendar";
 import { useDayByDate } from "../hooks/useDayByDate";
@@ -110,6 +111,9 @@ export default function DayHistoryPage() {
   const [confirmDeleteEntry, setConfirmDeleteEntry] =
     useState<DiaryEntry | null>(null);
   const [pinPickerEntry, setPinPickerEntry] = useState<DiaryEntry | null>(null);
+  const [colorPickerEntry, setColorPickerEntry] = useState<DiaryEntry | null>(
+    null,
+  );
 
   console.log("[DayHistory] route date:", date);
   console.log("[DayHistory] query.data:", query.data);
@@ -290,6 +294,10 @@ export default function DayHistoryPage() {
     setPinPickerEntry(entry);
   };
 
+  const handleColorAction = (entry: DiaryEntry) => {
+    setColorPickerEntry(entry);
+  };
+
   const handlePinEmojiSelect = async (emoji: string | null) => {
     if (!pinPickerEntry) return;
 
@@ -321,6 +329,19 @@ export default function DayHistoryPage() {
     if (!pinPickerEntry) return;
 
     await handleUnpinEntry(pinPickerEntry);
+  };
+
+  const handleColorSelect = async (color: string) => {
+    if (!colorPickerEntry) return;
+
+    await updateEntryMutation.mutateAsync({
+      entry: colorPickerEntry,
+      patch: {
+        color,
+      },
+    });
+
+    setColorPickerEntry(null);
   };
 
   const handleShareEntry = async (entry: DiaryEntry) => {
@@ -551,7 +572,7 @@ export default function DayHistoryPage() {
                             <DiaryEntryActionsMenu
                               isPinned={Boolean(entry.isPinned)}
                               onPin={() => handlePinAction(entry)}
-                              onChangeColor={() => undefined}
+                              onChangeColor={() => handleColorAction(entry)}
                               onShare={() => void handleShareEntry(entry)}
                               onDelete={() => setConfirmDeleteEntry(entry)}
                             />
@@ -741,6 +762,13 @@ export default function DayHistoryPage() {
                 onClose={() => setPinPickerEntry(null)}
                 onSelect={handlePinEmojiSelect}
                 onUnpin={handleUnpin}
+              />
+
+              <DiaryColorPickerModal
+                open={Boolean(colorPickerEntry)}
+                selectedColor={colorPickerEntry?.color ?? "#ffffff"}
+                onClose={() => setColorPickerEntry(null)}
+                onSelect={handleColorSelect}
               />
 
               <ConfirmModal
