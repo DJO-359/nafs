@@ -460,16 +460,14 @@ export default function DayHistoryPage() {
                         </button>
                       )}
 
-                      {!isToday && (
-                        <button
-                          type="button"
-                          onClick={handleClose}
-                          className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl transition hover:bg-[var(--app-surface)]"
-                          aria-label="Закрыть историю дневника"
-                        >
-                          ✕
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={handleClose}
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl text-[var(--app-text)] transition hover:bg-[var(--app-surface)]"
+                        aria-label="Выйти из дневника на главный экран"
+                      >
+                        ✕
+                      </button>
                     </div>
                   </div>
 
