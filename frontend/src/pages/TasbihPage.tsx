@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button";
 import ConfirmModal from "../components/ui/ConfirmModal";
 import CreateTasbihModal from "../components/CreateTasbihModal";
 import EditTasbihModal from "../components/EditTasbihModal";
 import TasbihActionsMenu from "../components/TasbihActionsMenu";
+import TasbihSettingsModal from "../components/TasbihSettingsModal";
 import {
   useTasbih,
   useIncrementTasbih,
@@ -12,7 +14,46 @@ import {
   useDeleteTasbih,
 } from "../hooks/useTasbih";
 import { useBackButton } from "../hooks/useBackButton";
+import { haptic } from "../lib/telegram";
 import type { TasbihCounter } from "../api/tasbih.api";
+
+const TASBIH_SETTINGS_KEY = "tasbih_settings";
+const DEFAULT_TASBIH_SETTINGS: TasbihSettings = {
+  vibration: true,
+  sound: true,
+  theme: "light",
+};
+
+type TasbihSettings = {
+  vibration: boolean;
+  sound: boolean;
+  theme: "light" | "dark";
+};
+
+function readTasbihSettings(): TasbihSettings {
+  try {
+    const saved = localStorage.getItem(TASBIH_SETTINGS_KEY);
+    if (!saved) return DEFAULT_TASBIH_SETTINGS;
+
+    const parsed = JSON.parse(saved) as Partial<TasbihSettings>;
+    return {
+      vibration:
+        typeof parsed.vibration === "boolean"
+          ? parsed.vibration
+          : DEFAULT_TASBIH_SETTINGS.vibration,
+      sound:
+        typeof parsed.sound === "boolean"
+          ? parsed.sound
+          : DEFAULT_TASBIH_SETTINGS.sound,
+      theme:
+        parsed.theme === "dark" || parsed.theme === "light"
+          ? parsed.theme
+          : DEFAULT_TASBIH_SETTINGS.theme,
+    };
+  } catch {
+    return DEFAULT_TASBIH_SETTINGS;
+  }
+}
 
 export default function TasbihPage() {
   const navigate = useNavigate();
@@ -23,13 +64,30 @@ export default function TasbihPage() {
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [settings, setSettings] = useState<TasbihSettings>(readTasbihSettings);
   const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
   const SWIPE_THRESHOLD = 40;
 
+  const localThemeStyle: CSSProperties = {
+    ["--app-bg" as string]: settings.theme === "dark" ? "#111827" : "#f5f7fb",
+    ["--app-surface" as string]:
+      settings.theme === "dark" ? "#1f2937" : "#ffffff",
+    ["--app-text" as string]: settings.theme === "dark" ? "#f9fafb" : "#111827",
+    ["--app-hint" as string]: settings.theme === "dark" ? "#9ca3af" : "#6b7280",
+    ["--app-border" as string]:
+      settings.theme === "dark" ? "#374151" : "#e5e7eb",
+  };
+
   useBackButton("/");
+
+  useEffect(() => {
+    localStorage.setItem(TASBIH_SETTINGS_KEY, JSON.stringify(settings));
+  }, [settings]);
 
   // Restore selected index from localStorage
   useEffect(() => {
@@ -69,9 +127,50 @@ export default function TasbihPage() {
     }
   };
 
+  const playTasbihClick = () => {
+    try {
+      const AudioCtor =
+        window.AudioContext ||
+        (window as typeof window & { webkitAudioContext?: typeof AudioContext })
+          .webkitAudioContext;
+      if (!AudioCtor) return;
+
+      const context = audioContextRef.current ?? new AudioCtor();
+      audioContextRef.current = context;
+
+      const oscillator = context.createOscillator();
+      const gainNode = context.createGain();
+      const now = context.currentTime;
+
+      oscillator.type = "triangle";
+      oscillator.frequency.setValueAtTime(820, now);
+      oscillator.frequency.exponentialRampToValueAtTime(420, now + 0.04);
+
+      gainNode.gain.setValueAtTime(0.0001, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.05, now + 0.008);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+
+      oscillator.connect(gainNode);
+      gainNode.connect(context.destination);
+
+      oscillator.start(now);
+      oscillator.stop(now + 0.1);
+    } catch {
+      // Ничего не показываем пользователю: звук — опциональная обратная связь.
+    }
+  };
+
   const handleIncrement = () => {
     if (selectedCounter) {
       incrementMutation.mutate(selectedCounter.id);
+
+      if (settings.vibration) {
+        haptic("selection");
+      }
+
+      if (settings.sound) {
+        playTasbihClick();
+      }
     }
   };
 
@@ -167,13 +266,24 @@ export default function TasbihPage() {
   // Empty state
   if (counters.length === 0) {
     return (
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-screen flex-col" style={localThemeStyle}>
         <header className="flex items-center justify-between px-4 pb-2 pt-4">
-          <h1 className="text-lg font-semibold text-[var(--app-text)]">
-            📿 Азкары
-          </h1>
+          <div className="flex items-center gap-2">
+            <span className="text-xl">📿</span>
+            <h1 className="text-lg font-semibold text-[var(--app-text)]">
+              Асхары
+            </h1>
+          </div>
 
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsSettingsModalOpen(true)}
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--app-surface)] text-xl leading-none text-[var(--app-text)] shadow-sm transition hover:bg-[var(--app-border)]"
+              aria-label="Настройки Асхары"
+            >
+              ⚙
+            </button>
             <button
               type="button"
               onClick={() => setIsCreateModalOpen(true)}
@@ -212,23 +322,56 @@ export default function TasbihPage() {
           open={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
         />
+
+        <TasbihSettingsModal
+          open={isSettingsModalOpen}
+          settings={settings}
+          onClose={() => setIsSettingsModalOpen(false)}
+          onToggleVibration={() =>
+            setSettings((current) => ({
+              ...current,
+              vibration: !current.vibration,
+            }))
+          }
+          onToggleSound={() =>
+            setSettings((current) => ({
+              ...current,
+              sound: !current.sound,
+            }))
+          }
+          onSelectTheme={(theme) =>
+            setSettings((current) => ({
+              ...current,
+              theme,
+            }))
+          }
+          themeStyle={localThemeStyle}
+        />
       </div>
     );
   }
 
   // Main screen
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col" style={localThemeStyle}>
       {/* Header */}
       <header className="flex items-center justify-between px-4 pb-2 pt-4">
         <div className="flex items-center gap-2">
           <span className="text-xl">📿</span>
           <h1 className="text-lg font-semibold text-[var(--app-text)]">
-            Азкары
+            Асхары
           </h1>
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsSettingsModalOpen(true)}
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--app-surface)] text-xl leading-none text-[var(--app-text)] shadow-sm transition hover:bg-[var(--app-border)]"
+            aria-label="Настройки Асхары"
+          >
+            ⚙
+          </button>
           <button
             type="button"
             onClick={() => setIsCreateModalOpen(true)}
@@ -333,6 +476,31 @@ export default function TasbihPage() {
           )}
         </div>
       </main>
+
+      <TasbihSettingsModal
+        open={isSettingsModalOpen}
+        settings={settings}
+        onClose={() => setIsSettingsModalOpen(false)}
+        onToggleVibration={() =>
+          setSettings((current) => ({
+            ...current,
+            vibration: !current.vibration,
+          }))
+        }
+        onToggleSound={() =>
+          setSettings((current) => ({
+            ...current,
+            sound: !current.sound,
+          }))
+        }
+        onSelectTheme={(theme) =>
+          setSettings((current) => ({
+            ...current,
+            theme,
+          }))
+        }
+        themeStyle={localThemeStyle}
+      />
 
       {/* Create Modal */}
       <CreateTasbihModal

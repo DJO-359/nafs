@@ -1,5 +1,5 @@
 import { createPortal } from "react-dom";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 interface Props {
   open: boolean;
@@ -8,7 +8,8 @@ interface Props {
   onClose: () => void;
   footer?: ReactNode;
   headerAction?: ReactNode;
-  showCancel?: boolean; // новый пропс
+  showCancel?: boolean;
+  themeStyle?: CSSProperties;
 }
 
 export default function Modal({
@@ -18,7 +19,8 @@ export default function Modal({
   onClose,
   footer,
   headerAction,
-  showCancel = true, // по умолчанию показываем
+  showCancel = true,
+  themeStyle,
 }: Props) {
   if (!open) return null;
 
@@ -29,6 +31,7 @@ export default function Modal({
     >
       <div
         className="flex max-h-[90dvh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-[var(--app-surface)] shadow-xl"
+        style={themeStyle}
         onClick={(e) => e.stopPropagation()}
       >
         {/* HEADER */}
