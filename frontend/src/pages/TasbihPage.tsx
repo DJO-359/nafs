@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button";
 import ConfirmModal from "../components/ui/ConfirmModal";
@@ -26,6 +26,8 @@ export default function TasbihPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
+  const SWIPE_THRESHOLD = 40;
 
   useBackButton("/");
 
@@ -71,6 +73,38 @@ export default function TasbihPage() {
     if (selectedCounter) {
       incrementMutation.mutate(selectedCounter.id);
     }
+  };
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    swipeStartRef.current = { x: event.clientX, y: event.clientY };
+  };
+
+  const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!swipeStartRef.current) return;
+
+    const deltaX = event.clientX - swipeStartRef.current.x;
+    const deltaY = event.clientY - swipeStartRef.current.y;
+    swipeStartRef.current = null;
+
+    if (
+      Math.abs(deltaX) > Math.abs(deltaY) &&
+      Math.abs(deltaX) >= SWIPE_THRESHOLD
+    ) {
+      if (deltaX < 0) {
+        handleNext();
+      } else {
+        handlePrevious();
+      }
+      return;
+    }
+
+    if (Math.abs(deltaX) < 12 && Math.abs(deltaY) < 12) {
+      handleIncrement();
+    }
+  };
+
+  const handlePointerLeave = () => {
+    swipeStartRef.current = null;
   };
 
   const handleReset = () => {
@@ -212,110 +246,91 @@ export default function TasbihPage() {
       </header>
 
       {/* Main Content - Counter Display */}
-      <div className="flex flex-1 flex-col items-center justify-center space-y-8 px-4">
-        {/* Counter Name with Actions Menu */}
-        <div className="flex w-full items-center justify-center gap-3">
-          <div className="flex-1 text-center">
-            <p className="text-sm text-[var(--app-hint)]">Текущий счётчик</p>
-            <h2 className="mt-2 text-3xl font-bold text-[var(--app-text)] line-clamp-2">
-              {selectedCounter?.name}
-            </h2>
-          </div>
-          <TasbihActionsMenu
-            onEdit={() => setIsEditModalOpen(true)}
-            onReset={handleReset}
-            onDelete={handleDelete}
-          />
-        </div>
-
-        {/* Large Count Display */}
-        <div className="relative">
-          <div className="text-center">
-            <p className="text-7xl font-bold text-emerald-600">
-              {selectedCounter?.count}
-            </p>
-            <p className="mt-2 text-xl text-[var(--app-hint)]">
-              {selectedCounter?.isInfinite
-                ? "/ ∞"
-                : `/ ${selectedCounter?.target}`}
-            </p>
+      <div className="flex flex-1 flex-col items-center justify-center px-4">
+        <div
+          className="flex w-full flex-1 flex-col items-center justify-center space-y-8"
+          style={{ touchAction: "pan-y" }}
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={handlePointerLeave}
+        >
+          {/* Counter Name with Actions Menu */}
+          <div
+            className="flex w-full items-center justify-center gap-3"
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex-1 text-center">
+              <p className="text-sm text-[var(--app-hint)]">Текущий счётчик</p>
+              <h2 className="mt-2 text-3xl font-bold text-[var(--app-text)] line-clamp-2">
+                {selectedCounter?.name}
+              </h2>
+            </div>
+            <TasbihActionsMenu
+              onEdit={() => setIsEditModalOpen(true)}
+              onReset={handleReset}
+              onDelete={handleDelete}
+            />
           </div>
 
-          {/* Progress indicator for non-infinite counters */}
-          {selectedCounter && !selectedCounter.isInfinite && (
-            <div className="mt-4 w-48">
-              <div className="relative h-1 w-full overflow-hidden rounded-full bg-[var(--app-border)]">
-                <div
-                  className="h-full bg-emerald-500 transition-all duration-300"
-                  style={{
-                    width: `${Math.min(
-                      100,
-                      (selectedCounter.count / (selectedCounter.target || 1)) *
-                        100,
-                    )}%`,
-                  }}
-                />
-              </div>
-              <p className="mt-1 text-center text-xs text-[var(--app-hint)]">
-                {selectedCounter.count} / {selectedCounter.target}
+          {/* Large Count Display */}
+          <div className="relative">
+            <div className="text-center">
+              <p className="text-7xl font-bold text-emerald-600">
+                {selectedCounter?.count}
+              </p>
+              <p className="mt-2 text-xl text-[var(--app-hint)]">
+                {selectedCounter?.isInfinite
+                  ? "/ ∞"
+                  : `/ ${selectedCounter?.target}`}
               </p>
             </div>
-          )}
+
+            {/* Progress indicator for non-infinite counters */}
+            {selectedCounter && !selectedCounter.isInfinite && (
+              <div className="mt-4 w-48">
+                <div className="relative h-1 w-full overflow-hidden rounded-full bg-[var(--app-border)]">
+                  <div
+                    className="h-full bg-emerald-500 transition-all duration-300"
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        (selectedCounter.count /
+                          (selectedCounter.target || 1)) *
+                          100,
+                      )}%`,
+                    }}
+                  />
+                </div>
+                <p className="mt-1 text-center text-xs text-[var(--app-hint)]">
+                  {selectedCounter.count} / {selectedCounter.target}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Increment Button */}
-        <button
-          type="button"
-          onClick={handleIncrement}
-          disabled={incrementMutation.isPending}
-          className="flex h-24 w-24 items-center justify-center rounded-full bg-emerald-600 text-5xl font-bold text-white shadow-lg transition hover:bg-emerald-700 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-          aria-label="Увеличить счётчик"
-        >
-          +
-        </button>
-
-        {/* Counter Navigation */}
-        <div className="flex items-center justify-center gap-8 pt-4">
-          <button
-            type="button"
-            onClick={handlePrevious}
-            disabled={selectedIndex === 0}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--app-surface)] text-2xl transition disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[var(--app-border)]"
-            aria-label="Предыдущий счётчик"
-          >
-            ←
-          </button>
-
-          <div className="flex items-center justify-center gap-1">
+        {counters.length > 1 && (
+          <div className="mt-2 flex items-center justify-center gap-2 pb-2">
             {counters.map((_, idx) => (
-              <div
+              <button
                 key={idx}
-                className={`h-2 w-2 rounded-full transition ${
+                type="button"
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setSelectedIndex(idx);
+                }}
+                className={`h-2.5 rounded-full transition ${
                   idx === selectedIndex
-                    ? "bg-emerald-600 w-6"
-                    : "bg-[var(--app-border)]"
+                    ? "w-6 bg-emerald-600"
+                    : "w-2.5 bg-[var(--app-border)]"
                 }`}
+                aria-label={`Переключиться на счётчик ${idx + 1}`}
               />
             ))}
           </div>
-
-          <button
-            type="button"
-            onClick={handleNext}
-            disabled={selectedIndex === counters.length - 1}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--app-surface)] text-2xl transition disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[var(--app-border)]"
-            aria-label="Следующий счётчик"
-          >
-            →
-          </button>
-        </div>
-      </div>
-
-      {/* Footer with Create Button */}
-      <div className="space-y-3 px-4 pb-6">
-        <Button variant="secondary" onClick={() => setIsCreateModalOpen(true)}>
-          + Новый счётчик
-        </Button>
+        )}
       </div>
 
       {/* Create Modal */}
