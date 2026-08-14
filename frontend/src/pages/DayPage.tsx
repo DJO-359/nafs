@@ -115,16 +115,10 @@ export default function DayPage() {
                 </button>
 
                 <div className="relative z-10 flex h-full min-h-[280px] flex-col justify-between text-white">
-                  <div className="max-w-[260px] pt-2 sm:max-w-[300px]">
-                    <h1 className="text-3xl font-semibold leading-tight text-white sm:text-4xl">
-                      Выбери намерение
-                    </h1>
-                  </div>
-
                   <button
                     type="button"
                     onClick={() => setIsIntentionOpen(true)}
-                    className="mt-5 block w-full max-w-[320px] rounded-[20px] border border-white/30 bg-[rgba(255,255,255,0.09)] px-4 py-4 text-left text-white transition duration-250 ease-in-out hover:-translate-y-0.5 hover:bg-[rgba(255,255,255,0.12)] active:scale-[0.98]"
+                    className="mt-2 block w-[76%] max-w-[320px] rounded-[20px] border border-white/30 bg-[rgba(255,255,255,0.09)] px-4 py-3 text-left text-white transition duration-250 ease-in-out hover:-translate-y-0.5 hover:bg-[rgba(255,255,255,0.12)] active:scale-[0.98] sm:mt-3"
                     style={{
                       backdropFilter: "blur(14px)",
                       WebkitBackdropFilter: "blur(14px)",
@@ -139,10 +133,10 @@ export default function DayPage() {
                         &gt;
                       </span>
                     </div>
-                    <p className="mt-3 text-base font-medium leading-snug text-white sm:text-lg">
+                    <p className="mt-2 text-sm font-medium leading-snug text-white sm:text-base">
                       {day.intention?.text
                         ? day.intention.text
-                        : "Выбрать намерение"}
+                        : "Выбери намерение"}
                     </p>
                   </button>
 
