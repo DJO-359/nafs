@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button";
 import ConfirmModal from "../components/ui/ConfirmModal";
 import CreateTasbihModal from "../components/CreateTasbihModal";
@@ -14,6 +15,7 @@ import { useBackButton } from "../hooks/useBackButton";
 import type { TasbihCounter } from "../api/tasbih.api";
 
 export default function TasbihPage() {
+  const navigate = useNavigate();
   const { data: counters = [], isLoading, isError } = useTasbih();
   const incrementMutation = useIncrementTasbih();
   const resetMutation = useResetTasbih();
@@ -131,18 +133,45 @@ export default function TasbihPage() {
   // Empty state
   if (counters.length === 0) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center">
-        <div className="text-center">
-          <p className="text-6xl">📿</p>
-          <h1 className="mt-4 text-2xl font-semibold text-[var(--app-text)]">
-            Асхары
+      <div className="flex min-h-screen flex-col">
+        <header className="flex items-center justify-between px-4 pb-2 pt-4">
+          <h1 className="text-lg font-semibold text-[var(--app-text)]">
+            📿 Асхары
           </h1>
-          <p className="mt-2 text-[var(--app-hint)]">
-            Создайте свой первый счётчик
-          </p>
-          <Button className="mt-6" onClick={() => setIsCreateModalOpen(true)}>
-            + Создать счётчик
-          </Button>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--app-surface)] text-2xl leading-none text-[var(--app-text)] shadow-sm transition hover:bg-[var(--app-border)]"
+              aria-label="Создать счётчик"
+            >
+              +
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--app-surface)] text-xl leading-none text-[var(--app-text)] shadow-sm transition hover:bg-[var(--app-border)]"
+              aria-label="Вернуться на главный экран"
+            >
+              ✕
+            </button>
+          </div>
+        </header>
+
+        <div className="flex flex-1 flex-col items-center justify-center">
+          <div className="text-center">
+            <p className="text-6xl">📿</p>
+            <h2 className="mt-4 text-2xl font-semibold text-[var(--app-text)]">
+              Асхары
+            </h2>
+            <p className="mt-2 text-[var(--app-hint)]">
+              Создайте свой первый счётчик
+            </p>
+            <Button className="mt-6" onClick={() => setIsCreateModalOpen(true)}>
+              + Создать счётчик
+            </Button>
+          </div>
         </div>
 
         <CreateTasbihModal
@@ -157,11 +186,30 @@ export default function TasbihPage() {
   return (
     <div className="flex min-h-screen flex-col justify-between">
       {/* Header */}
-      <div className="mb-4">
-        <h1 className="text-center text-lg font-semibold text-[var(--app-text)]">
+      <header className="mb-4 flex items-center justify-between px-4 pt-1">
+        <h1 className="text-lg font-semibold text-[var(--app-text)]">
           📿 Асхары
         </h1>
-      </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--app-surface)] text-2xl leading-none text-[var(--app-text)] shadow-sm transition hover:bg-[var(--app-border)]"
+            aria-label="Создать счётчик"
+          >
+            +
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--app-surface)] text-xl leading-none text-[var(--app-text)] shadow-sm transition hover:bg-[var(--app-border)]"
+            aria-label="Вернуться на главный экран"
+          >
+            ✕
+          </button>
+        </div>
+      </header>
 
       {/* Main Content - Counter Display */}
       <div className="flex flex-1 flex-col items-center justify-center space-y-8 px-4">
