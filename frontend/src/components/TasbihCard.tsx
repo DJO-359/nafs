@@ -20,9 +20,17 @@ export default function TasbihCard() {
     return `${counter.count} / ${counter.target}`;
   };
 
+  const progressPercent =
+    firstCounter && !firstCounter.isInfinite
+      ? Math.min(
+          100,
+          Math.round((firstCounter.count / (firstCounter.target || 1)) * 100),
+        )
+      : null;
+
   return (
     <div className="relative">
-      <div className="relative h-[260px] w-full overflow-hidden rounded-[28px] bg-[linear-gradient(160deg,#0F2239_0%,#132C49_50%,#0D2036_100%)] shadow-[0_14px_40px_rgba(0,0,0,0.22)] transition duration-250 ease-in-out hover:-translate-y-0.5 active:scale-[0.98]">
+      <div className="relative h-[190px] w-full overflow-hidden rounded-[24px] border border-[#f5b266]/30 bg-[linear-gradient(160deg,#191510_0%,#201d18_35%,#171310_100%)] shadow-[0_10px_26px_rgba(0,0,0,0.18)] transition duration-250 ease-in-out hover:-translate-y-0.5 active:scale-[0.98]">
         <button
           type="button"
           onClick={handleCardClick}
@@ -30,53 +38,68 @@ export default function TasbihCard() {
           aria-label="Открыть счётчики Азкаров"
         />
 
-        <div className="relative z-20 flex h-full flex-col justify-between p-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="flex h-[64px] w-[64px] items-center justify-center rounded-[18px] bg-[linear-gradient(180deg,#10B981_0%,#059669_100%)] shadow-[0_20px_60px_rgba(16,185,129,0.24)]">
-                <span className="text-2xl">📿</span>
+        <div className="relative z-20 flex h-full flex-col justify-between p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-[14px] border border-[#f5b266]/40 bg-[linear-gradient(180deg,#f8d19c_0%,#f5a847_100%)] shadow-[0_10px_24px_rgba(245,168,71,0.22)]">
+                <span className="text-xl">📿</span>
               </div>
               <div>
-                <p className="text-[34px] font-semibold leading-[1.05] text-white">
-                  Азкары
+                <p className="text-[26px] font-semibold leading-none text-white">
+                  Асхары
                 </p>
-                <p className="mt-1 text-[16px] text-white/55">Счётчик</p>
               </div>
             </div>
-            <span className="text-[28px] text-white/45">›</span>
+            <span className="text-[22px] text-[#f7c272]/80">›</span>
           </div>
 
-          <div className="relative z-20 flex-1">
-            {isLoading || isError ? (
-              <p className="text-[18px] font-medium text-white/50">
-                {isError ? "Ошибка загрузки" : "Загрузка..."}
+          <div className="mt-1 flex min-h-0 items-end justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] uppercase tracking-[0.16em] text-[#f7c272]/70">
+                Счётчик
               </p>
-            ) : firstCounter ? (
-              <div>
-                <p className="line-clamp-1 max-w-[90%] text-[18px] font-medium leading-7 text-white">
-                  {firstCounter.name}
+              {isLoading || isError ? (
+                <p className="mt-1 text-[13px] font-medium text-white/60">
+                  {isError ? "Ошибка загрузки" : "Загрузка..."}
                 </p>
-                <p className="mt-2 text-[28px] font-semibold text-white">
-                  {formatProgress(firstCounter)}
+              ) : firstCounter ? (
+                <>
+                  <p className="mt-1 line-clamp-1 text-[14px] font-medium text-white">
+                    {firstCounter.name}
+                  </p>
+                  <p className="mt-1 text-[16px] font-semibold text-white">
+                    {formatProgress(firstCounter)}
+                  </p>
+                </>
+              ) : (
+                <p className="mt-1 text-[13px] font-medium text-white/60">
+                  Нет счётчиков
                 </p>
-              </div>
-            ) : (
-              <p className="text-[18px] font-medium text-white/50">
-                Создайте первый счётчик
-              </p>
-            )}
-          </div>
+              )}
+            </div>
 
-          <div className="relative z-20 text-sm text-white/50">
-            {firstCounter ? "Активный счётчик" : "Нет счётчиков"}
+            {firstCounter &&
+              !firstCounter.isInfinite &&
+              progressPercent !== null && (
+                <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[rgba(255,255,255,0.05)]">
+                  <div
+                    className="absolute inset-0 rounded-full"
+                    style={{
+                      background: `conic-gradient(#f7c272 0 ${progressPercent}%, rgba(255,255,255,0.10) ${progressPercent}% 100%)`,
+                    }}
+                  />
+                  <div className="relative flex h-[28px] w-[28px] items-center justify-center rounded-full bg-[#201d18] text-[9px] font-semibold text-[#f7c272]">
+                    {progressPercent}%
+                  </div>
+                </div>
+              )}
           </div>
         </div>
 
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[35%] overflow-hidden">
-          <div className="pointer-events-none absolute -bottom-10 -right-10 h-[180px] w-[180px] rounded-full bg-[#10B981]/18 blur-3xl transform scale-125" />
-          <div className="pointer-events-none absolute -bottom-4 right-10 h-[140px] w-[140px] rounded-full bg-[#059669]/25 blur-3xl transform scale-110" />
-          <div className="pointer-events-none absolute -bottom-16 left-10 h-[160px] w-[160px] rounded-full bg-white/10 blur-3xl transform scale-125" />
-          <div className="pointer-events-none absolute bottom-0 left-1/2 h-[80px] w-[80px] -translate-x-1/2 rounded-full bg-[#059669]/10 blur-2xl" />
+          <div className="pointer-events-none absolute -bottom-10 -right-10 h-[140px] w-[140px] rounded-full bg-[#f5a847]/18 blur-3xl transform scale-125" />
+          <div className="pointer-events-none absolute -bottom-4 right-10 h-[110px] w-[110px] rounded-full bg-[#f59e0b]/20 blur-3xl transform scale-110" />
+          <div className="pointer-events-none absolute -bottom-16 left-10 h-[130px] w-[130px] rounded-full bg-white/10 blur-3xl transform scale-125" />
         </div>
       </div>
     </div>

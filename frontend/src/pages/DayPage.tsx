@@ -221,9 +221,10 @@ export default function DayPage() {
               document.body,
             )}
 
-            <DiaryCard diary={day.diary} />
-
-            <TasbihCard />
+            <div className="mb-4 grid grid-cols-2 gap-3">
+              <DiaryCard diary={day.diary} />
+              <TasbihCard />
+            </div>
 
             <div
               className="mb-4 overflow-hidden rounded-[20px] p-5 shadow-[0_16px_40px_rgba(0,0,0,0.20)]"
