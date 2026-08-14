@@ -25,21 +25,17 @@ import nightImage from "../assets/images/backgrounds/night.jpg";
 
 type DayPart = "morning" | "day" | "evening" | "night";
 
-const heroThemes: Record<DayPart, { greeting: string; image: string }> = {
+const heroThemes: Record<DayPart, { image: string }> = {
   morning: {
-    greeting: "Доброе утро",
     image: morningImage,
   },
   day: {
-    greeting: "Добрый день",
     image: dayImage,
   },
   evening: {
-    greeting: "Добрый вечер",
     image: eveningImage,
   },
   night: {
-    greeting: "Доброй ночи",
     image: nightImage,
   },
 };
@@ -98,18 +94,18 @@ export default function DayPage() {
             <header
               className="mb-6 overflow-hidden rounded-[28px] shadow-xl transition-all duration-300 ease-out"
               style={{
-                minHeight: 280,
-                backgroundImage: `linear-gradient(rgba(0,0,0,.25), rgba(0,0,0,.45)), url(${theme.image})`,
+                minHeight: 320,
+                backgroundImage: `linear-gradient(rgba(0,0,0,.20), rgba(0,0,0,.45)), url(${theme.image})`,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
                 backgroundRepeat: "no-repeat",
               }}
             >
-              <div className="relative h-full w-full px-6 pt-6 sm:px-8 sm:pt-8">
+              <div className="relative h-full w-full px-5 pb-4 pt-5 sm:px-7 sm:pb-5 sm:pt-6">
                 <button
                   type="button"
                   onClick={() => setIsRemindersOpen(true)}
-                  className="absolute right-6 top-6 z-30 flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl bg-white/10 text-white transition duration-200 ease-out hover:scale-105 hover:bg-white/15 active:scale-95 pointer-events-auto"
+                  className="absolute right-5 top-5 z-30 flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl bg-white/10 text-white transition duration-200 ease-out hover:scale-105 hover:bg-white/15 active:scale-95 pointer-events-auto"
                   aria-label="Открыть напоминания"
                 >
                   <span className="text-xl">🔔</span>
@@ -118,56 +114,58 @@ export default function DayPage() {
                   )}
                 </button>
 
-                <div className="relative z-10 flex h-full flex-col justify-between text-white">
-                  <div>
-                    <h1 className="mt-3 text-4xl font-semibold text-white sm:text-5xl">
-                      {theme.greeting}
+                <div className="relative z-10 flex h-full min-h-[280px] flex-col justify-between text-white">
+                  <div className="max-w-[260px] pt-2 sm:max-w-[300px]">
+                    <h1 className="text-3xl font-semibold leading-tight text-white sm:text-4xl">
+                      Выбери намерение
                     </h1>
                   </div>
 
-                  <p className="text-base text-white/75">
+                  <button
+                    type="button"
+                    onClick={() => setIsIntentionOpen(true)}
+                    className="mt-5 block w-full max-w-[320px] rounded-[20px] border border-white/30 bg-[rgba(255,255,255,0.09)] px-4 py-4 text-left text-white transition duration-250 ease-in-out hover:-translate-y-0.5 hover:bg-[rgba(255,255,255,0.12)] active:scale-[0.98]"
+                    style={{
+                      backdropFilter: "blur(14px)",
+                      WebkitBackdropFilter: "blur(14px)",
+                      boxShadow: "inset 0 1px rgba(255,255,255,0.12)",
+                    }}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-white/70">
+                        НАМЕРЕНИЕ ДНЯ
+                      </p>
+                      <span className="text-2xl font-semibold text-white/90">
+                        &gt;
+                      </span>
+                    </div>
+                    <p className="mt-3 text-base font-medium leading-snug text-white sm:text-lg">
+                      {day.intention?.text
+                        ? day.intention.text
+                        : "Выбрать намерение"}
+                    </p>
+                  </button>
+
+                  <p className="pt-2 text-sm text-white/85 sm:text-base">
                     {parseDay(day.date).toLocaleDateString("ru-RU", {
                       weekday: "long",
                       day: "numeric",
                       month: "long",
                     })}
                   </p>
-
-                  <button
-                    type="button"
-                    onClick={() => setIsIntentionOpen(true)}
-                    className="mt-5 block max-w-[290px] w-[78%] rounded-[20px] border border-[rgba(255,255,255,0.8)] bg-[rgba(15,20,28,0.10)] px-5 py-5 text-left text-white transition duration-250 ease-in-out hover:-translate-y-0.5 active:scale-[0.98]"
-                    style={{
-                      backdropFilter: "blur(14px)",
-                      boxShadow: "inset 0 1px rgba(255,255,255,.08)",
-                    }}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <p className="text-[12px] uppercase tracking-[0.12em] text-[rgba(255,255,255,0.70)]">
-                        ◎ намерение дня
-                      </p>
-                      <span className="text-[18px] font-semibold text-white">
-                        &gt;
-                      </span>
-                    </div>
-                    <p className="mt-3 text-[20px] font-semibold leading-[1.3] text-white">
-                      {day.intention?.text
-                        ? day.intention.text
-                        : "Сегодня намерение ещё не выбрано."}
-                    </p>
-                  </button>
-                  <IntentionModal
-                    open={isIntentionOpen}
-                    initialValue={day.intention?.text ?? ""}
-                    onClose={() => setIsIntentionOpen(false)}
-                    onSave={async (text) => {
-                      await createMutation.mutateAsync(text);
-                      setIsIntentionOpen(false);
-                    }}
-                  />
                 </div>
               </div>
             </header>
+
+            <IntentionModal
+              open={isIntentionOpen}
+              initialValue={day.intention?.text ?? ""}
+              onClose={() => setIsIntentionOpen(false)}
+              onSave={async (text) => {
+                await createMutation.mutateAsync(text);
+                setIsIntentionOpen(false);
+              }}
+            />
 
             {createPortal(
               <AnimatePresence>
