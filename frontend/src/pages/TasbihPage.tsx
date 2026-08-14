@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import type { CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button";
 import ConfirmModal from "../components/ui/ConfirmModal";
@@ -18,17 +17,12 @@ import { haptic } from "../lib/telegram";
 import type { TasbihCounter } from "../api/tasbih.api";
 
 const TASBIH_SETTINGS_KEY = "tasbih_settings";
-const DEFAULT_TASBIH_SETTINGS: TasbihSettings = {
+const DEFAULT_TASBIH_SETTINGS = {
   vibration: true,
   sound: true,
-  theme: "light",
 };
 
-type TasbihSettings = {
-  vibration: boolean;
-  sound: boolean;
-  theme: "light" | "dark";
-};
+type TasbihSettings = typeof DEFAULT_TASBIH_SETTINGS;
 
 function readTasbihSettings(): TasbihSettings {
   try {
@@ -45,10 +39,6 @@ function readTasbihSettings(): TasbihSettings {
         typeof parsed.sound === "boolean"
           ? parsed.sound
           : DEFAULT_TASBIH_SETTINGS.sound,
-      theme:
-        parsed.theme === "dark" || parsed.theme === "light"
-          ? parsed.theme
-          : DEFAULT_TASBIH_SETTINGS.theme,
     };
   } catch {
     return DEFAULT_TASBIH_SETTINGS;
@@ -72,16 +62,6 @@ export default function TasbihPage() {
   const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const SWIPE_THRESHOLD = 40;
-
-  const localThemeStyle: CSSProperties = {
-    ["--app-bg" as string]: settings.theme === "dark" ? "#111827" : "#f5f7fb",
-    ["--app-surface" as string]:
-      settings.theme === "dark" ? "#1f2937" : "#ffffff",
-    ["--app-text" as string]: settings.theme === "dark" ? "#f9fafb" : "#111827",
-    ["--app-hint" as string]: settings.theme === "dark" ? "#9ca3af" : "#6b7280",
-    ["--app-border" as string]:
-      settings.theme === "dark" ? "#374151" : "#e5e7eb",
-  };
 
   useBackButton("/");
 
@@ -161,16 +141,18 @@ export default function TasbihPage() {
   };
 
   const handleIncrement = () => {
-    if (selectedCounter) {
-      incrementMutation.mutate(selectedCounter.id);
+    if (!selectedCounter) return;
 
-      if (settings.vibration) {
-        haptic("selection");
-      }
+    incrementMutation.mutate(selectedCounter.id, {
+      onSuccess: () => {
+        if (settings.vibration) {
+          haptic("selection");
+        }
+      },
+    });
 
-      if (settings.sound) {
-        playTasbihClick();
-      }
+    if (settings.sound) {
+      playTasbihClick();
     }
   };
 
@@ -266,7 +248,7 @@ export default function TasbihPage() {
   // Empty state
   if (counters.length === 0) {
     return (
-      <div className="flex min-h-screen flex-col" style={localThemeStyle}>
+      <div className="flex min-h-screen flex-col">
         <header className="flex items-center justify-between px-4 pb-2 pt-4">
           <div className="flex items-center gap-2">
             <span className="text-xl">📿</span>
@@ -339,13 +321,6 @@ export default function TasbihPage() {
               sound: !current.sound,
             }))
           }
-          onSelectTheme={(theme) =>
-            setSettings((current) => ({
-              ...current,
-              theme,
-            }))
-          }
-          themeStyle={localThemeStyle}
         />
       </div>
     );
@@ -353,7 +328,7 @@ export default function TasbihPage() {
 
   // Main screen
   return (
-    <div className="flex min-h-screen flex-col" style={localThemeStyle}>
+    <div className="flex min-h-screen flex-col">
       {/* Header */}
       <header className="flex items-center justify-between px-4 pb-2 pt-4">
         <div className="flex items-center gap-2">
@@ -493,13 +468,6 @@ export default function TasbihPage() {
             sound: !current.sound,
           }))
         }
-        onSelectTheme={(theme) =>
-          setSettings((current) => ({
-            ...current,
-            theme,
-          }))
-        }
-        themeStyle={localThemeStyle}
       />
 
       {/* Create Modal */}

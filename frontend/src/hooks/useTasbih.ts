@@ -104,8 +104,9 @@ export function useIncrementTasbih() {
   return useMutation({
     mutationFn: (id: string) => incrementTasbihCounter(id),
     onSuccess: () => {
-      haptic("selection");
-      // Инвалидируем список, чтобы обновилось значение count
+      // Инвалидируем список, чтобы обновилось значение count.
+      // Виброотклик для обычного подсчёта должен вызываться только
+      // в пользовательском обработчике tap, а не в общем mutation hook.
       void queryClient.invalidateQueries({ queryKey: TASBIH_QUERY_KEY });
     },
     onError: (error) => {
