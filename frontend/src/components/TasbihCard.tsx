@@ -27,7 +27,7 @@ export default function TasbihCard() {
           type="button"
           onClick={handleCardClick}
           className="absolute inset-0 z-30 cursor-pointer pointer-events-auto"
-          aria-label="Открыть счётчики Асхаров"
+          aria-label="Открыть счётчики Азкаров"
         />
 
         <div className="relative z-20 flex h-full flex-col justify-between p-5">
@@ -38,7 +38,7 @@ export default function TasbihCard() {
               </div>
               <div>
                 <p className="text-[34px] font-semibold leading-[1.05] text-white">
-                  Асхары
+                  Азкары
                 </p>
                 <p className="mt-1 text-[16px] text-white/55">Счётчик</p>
               </div>

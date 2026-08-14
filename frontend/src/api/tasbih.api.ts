@@ -1,7 +1,7 @@
 import { api } from "./axios";
 
 /**
- * Счётчик Тасбих/Асхар.
+ * Счётчик Тасбих/Азкары.
  * Может быть с целевым числом (target) или бесконечный (isInfinite).
  */
 export interface TasbihCounter {

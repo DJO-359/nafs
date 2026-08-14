@@ -170,7 +170,7 @@ export default function TasbihPage() {
       <div className="flex min-h-screen flex-col">
         <header className="flex items-center justify-between px-4 pb-2 pt-4">
           <h1 className="text-lg font-semibold text-[var(--app-text)]">
-            📿 Асхары
+            📿 Азкары
           </h1>
 
           <div className="flex items-center gap-2">
@@ -197,7 +197,7 @@ export default function TasbihPage() {
           <div className="text-center">
             <p className="text-6xl">📿</p>
             <h2 className="mt-4 text-2xl font-semibold text-[var(--app-text)]">
-              Асхары
+              Азкары
             </h2>
             <p className="mt-2 text-[var(--app-hint)]">
               Создайте свой первый счётчик
@@ -218,12 +218,15 @@ export default function TasbihPage() {
 
   // Main screen
   return (
-    <div className="flex min-h-screen flex-col justify-between">
+    <div className="flex min-h-screen flex-col">
       {/* Header */}
-      <header className="mb-4 flex items-center justify-between px-4 pt-1">
-        <h1 className="text-lg font-semibold text-[var(--app-text)]">
-          📿 Асхары
-        </h1>
+      <header className="flex items-center justify-between px-4 pb-2 pt-4">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">📿</span>
+          <h1 className="text-lg font-semibold text-[var(--app-text)]">
+            Азкары
+          </h1>
+        </div>
 
         <div className="flex items-center gap-2">
           <button
@@ -246,13 +249,14 @@ export default function TasbihPage() {
       </header>
 
       {/* Main Content - Counter Display */}
-      <div className="flex flex-1 flex-col items-center justify-center px-4">
+      <main className="flex-1 px-4 pb-4 pt-3">
         <div
-          className="flex w-full flex-1 flex-col items-center justify-center space-y-8"
+          className="flex h-full w-full flex-col items-center justify-start pt-2"
           style={{ touchAction: "pan-y" }}
           onPointerDown={handlePointerDown}
           onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerLeave}
+          onPointerCancel={handlePointerLeave}
         >
           {/* Counter Name with Actions Menu */}
           <div
@@ -274,64 +278,61 @@ export default function TasbihPage() {
           </div>
 
           {/* Large Count Display */}
-          <div className="relative">
-            <div className="text-center">
-              <p className="text-7xl font-bold text-emerald-600">
-                {selectedCounter?.count}
-              </p>
-              <p className="mt-2 text-xl text-[var(--app-hint)]">
-                {selectedCounter?.isInfinite
-                  ? "/ ∞"
-                  : `/ ${selectedCounter?.target}`}
+          <div className="mt-8 text-center">
+            <p className="text-7xl font-bold text-emerald-600">
+              {selectedCounter?.count}
+            </p>
+            <p className="mt-2 text-xl text-[var(--app-hint)]">
+              {selectedCounter?.isInfinite
+                ? "/ ∞"
+                : `/ ${selectedCounter?.target}`}
+            </p>
+          </div>
+
+          {/* Progress indicator for non-infinite counters */}
+          {selectedCounter && !selectedCounter.isInfinite && (
+            <div className="mt-5 w-48">
+              <div className="relative h-1 w-full overflow-hidden rounded-full bg-[var(--app-border)]">
+                <div
+                  className="h-full bg-emerald-500 transition-all duration-300"
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      (selectedCounter.count / (selectedCounter.target || 1)) *
+                        100,
+                    )}%`,
+                  }}
+                />
+              </div>
+              <p className="mt-1 text-center text-xs text-[var(--app-hint)]">
+                {selectedCounter.count} / {selectedCounter.target}
               </p>
             </div>
+          )}
 
-            {/* Progress indicator for non-infinite counters */}
-            {selectedCounter && !selectedCounter.isInfinite && (
-              <div className="mt-4 w-48">
-                <div className="relative h-1 w-full overflow-hidden rounded-full bg-[var(--app-border)]">
-                  <div
-                    className="h-full bg-emerald-500 transition-all duration-300"
-                    style={{
-                      width: `${Math.min(
-                        100,
-                        (selectedCounter.count /
-                          (selectedCounter.target || 1)) *
-                          100,
-                      )}%`,
-                    }}
-                  />
-                </div>
-                <p className="mt-1 text-center text-xs text-[var(--app-hint)]">
-                  {selectedCounter.count} / {selectedCounter.target}
-                </p>
-              </div>
-            )}
-          </div>
+          {counters.length > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-2">
+              {counters.map((_, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setSelectedIndex(idx);
+                  }}
+                  className={`h-2.5 rounded-full transition ${
+                    idx === selectedIndex
+                      ? "w-6 bg-emerald-600"
+                      : "w-2.5 bg-[var(--app-border)]"
+                  }`}
+                  aria-label={`Переключиться на счётчик ${idx + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
-
-        {counters.length > 1 && (
-          <div className="mt-2 flex items-center justify-center gap-2 pb-2">
-            {counters.map((_, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onPointerDown={(event) => event.stopPropagation()}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setSelectedIndex(idx);
-                }}
-                className={`h-2.5 rounded-full transition ${
-                  idx === selectedIndex
-                    ? "w-6 bg-emerald-600"
-                    : "w-2.5 bg-[var(--app-border)]"
-                }`}
-                aria-label={`Переключиться на счётчик ${idx + 1}`}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      </main>
 
       {/* Create Modal */}
       <CreateTasbihModal
