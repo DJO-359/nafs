@@ -13,14 +13,6 @@ export default function TasbihCard() {
     navigate("/tasbih");
   };
 
-  const progressPercent =
-    firstCounter && !firstCounter.isInfinite
-      ? Math.min(
-          100,
-          Math.round((firstCounter.count / (firstCounter.target || 1)) * 100),
-        )
-      : null;
-
   const formatProgressValue = (counter: TasbihCounter): string => {
     if (counter.isInfinite) {
       return `${counter.count} / ∞`;
@@ -60,41 +52,15 @@ export default function TasbihCard() {
                   {isError ? "Ошибка загрузки" : "Загрузка..."}
                 </p>
               ) : firstCounter ? (
-                <>
-                  <p className="text-[14px] font-medium text-white/90">
-                    {firstCounter.name}
-                  </p>
-                  <p className="mt-1 text-[16px] font-semibold text-white">
-                    {formatProgressValue(firstCounter)}
-                  </p>
-                  {progressPercent !== null && (
-                    <p className="mt-1 text-[12px] font-medium text-[#f7c272]">
-                      {progressPercent}%
-                    </p>
-                  )}
-                </>
+                <p className="text-[16px] font-semibold text-white">
+                  {formatProgressValue(firstCounter)}
+                </p>
               ) : (
                 <p className="text-[13px] font-medium text-white/60">
                   Нет счётчиков
                 </p>
               )}
             </div>
-
-            {firstCounter &&
-              !firstCounter.isInfinite &&
-              progressPercent !== null && (
-                <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[rgba(255,255,255,0.05)]">
-                  <div
-                    className="absolute inset-0 rounded-full"
-                    style={{
-                      background: `conic-gradient(#f7c272 0 ${progressPercent}%, rgba(255,255,255,0.10) ${progressPercent}% 100%)`,
-                    }}
-                  />
-                  <div className="relative flex h-[28px] w-[28px] items-center justify-center rounded-full bg-[#201d18] text-[9px] font-semibold text-[#f7c272]">
-                    {progressPercent}%
-                  </div>
-                </div>
-              )}
           </div>
         </div>
 
