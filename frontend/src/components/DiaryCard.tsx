@@ -64,7 +64,7 @@ export default function DiaryCard({ diary }: Props) {
             aria-label="Добавить запись"
           >
             <span className="text-xl leading-none">＋</span>
-            Добавить запись
+            Запись
           </button>
         </div>
 
