@@ -67,11 +67,11 @@ export default function TasbihCard() {
                   <p className="mt-1 text-[16px] font-semibold text-white">
                     {formatProgressValue(firstCounter)}
                   </p>
-                  {progressPercent !== null && (
+                  {/* {progressPercent !== null && (
                     <p className="mt-1 text-[12px] font-medium text-[#f7c272]">
                       {progressPercent}%
                     </p>
-                  )}
+                  )} */}
                 </>
               ) : (
                 <p className="text-[13px] font-medium text-white/60">
