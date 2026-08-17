@@ -31,16 +31,21 @@ export default function DiaryCard({ diary }: Props) {
 
   return (
     <div className="relative">
-      <div className="relative h-[190px] w-full overflow-hidden rounded-[24px] border border-white/15 bg-[linear-gradient(160deg,#0F2239_0%,#132C49_50%,#0D2036_100%)] shadow-[0_10px_26px_rgba(0,0,0,0.18)] transition duration-250 ease-in-out hover:-translate-y-0.5 active:scale-[0.98]">
-        <button
-          type="button"
-          onClick={openDiary}
-          className="absolute inset-0 z-10 cursor-pointer"
-          aria-label={
-            latestDiary ? "Открыть дневник" : "Добавить запись в дневник"
+      <div
+        onClick={openDiary}
+        className="relative h-[190px] w-full cursor-pointer overflow-hidden rounded-[24px] border border-white/15 bg-[linear-gradient(160deg,#0F2239_0%,#132C49_50%,#0D2036_100%)] shadow-[0_10px_26px_rgba(0,0,0,0.18)] transition duration-250 ease-in-out hover:-translate-y-0.5 active:scale-[0.98]"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openDiary();
           }
-        />
-
+        }}
+        aria-label={
+          latestDiary ? "Открыть дневник" : "Добавить запись в дневник"
+        }
+      >
         <div className="relative z-20 flex h-full flex-col items-center justify-start p-4 pt-5 text-center">
           <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[linear-gradient(180deg,#4C8DFF_0%,#2959FF_100%)] shadow-[0_10px_24px_rgba(59,130,246,0.24)]">
             <span className="text-xl">📖</span>

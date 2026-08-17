@@ -13,13 +13,6 @@ export default function TasbihCard() {
     navigate("/tasbih");
   };
 
-  const formatProgressValue = (counter: TasbihCounter): string => {
-    if (counter.isInfinite) {
-      return `${counter.count} / ∞`;
-    }
-    return `${counter.count} / ${counter.target}`;
-  };
-
   const progressPercent =
     firstCounter && !firstCounter.isInfinite
       ? Math.min(
@@ -30,61 +23,49 @@ export default function TasbihCard() {
 
   return (
     <div className="relative">
-      <div className="relative h-[190px] w-full overflow-hidden rounded-[24px] border border-[#f5b266]/30 bg-[linear-gradient(160deg,#191510_0%,#201d18_35%,#171310_100%)] shadow-[0_10px_26px_rgba(0,0,0,0.18)] transition duration-250 ease-in-out hover:-translate-y-0.5 active:scale-[0.98]">
-        <button
-          type="button"
-          onClick={handleCardClick}
-          className="absolute inset-0 z-30 cursor-pointer pointer-events-auto"
-          aria-label="Открыть счётчики Азкаров"
-        />
-
+      <div
+        onClick={handleCardClick}
+        className="relative h-[190px] w-full cursor-pointer overflow-hidden rounded-[24px] border border-[#f5b266]/30 bg-[linear-gradient(160deg,#191510_0%,#201d18_35%,#171310_100%)] shadow-[0_10px_26px_rgba(0,0,0,0.18)] transition duration-250 ease-in-out hover:-translate-y-0.5 active:scale-[0.98]"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            handleCardClick();
+          }
+        }}
+        aria-label="Открыть счётчики Азкаров"
+      >
         <div className="relative z-20 flex h-full flex-col justify-between p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-[14px] border border-[#f5b266]/40 bg-[linear-gradient(180deg,#f8d19c_0%,#f5a847_100%)] shadow-[0_10px_24px_rgba(245,168,71,0.22)]">
-                <span className="text-xl">📿</span>
-              </div>
-              <div>
-                <p className="text-[26px] font-semibold leading-none text-white">
-                  Асхары
-                </p>
-              </div>
+          <div className="flex flex-col items-center gap-3 text-center">
+            <div className="flex h-11 w-11 items-center justify-center rounded-[14px] border border-[#f5b266]/40 bg-[linear-gradient(180deg,#f8d19c_0%,#f5a847_100%)] shadow-[0_10px_24px_rgba(245,168,71,0.22)]">
+              <span className="text-xl">📿</span>
             </div>
-            <span className="text-[22px] text-[#f7c272]/80">›</span>
+            <p className="text-[26px] font-semibold leading-none text-white">
+              Асхары
+            </p>
           </div>
 
-          <div className="mt-2 flex min-h-0 items-end justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              {isLoading || isError ? (
-                <p className="text-[13px] font-medium text-white/60">
-                  {isError ? "Ошибка загрузки" : "Загрузка..."}
-                </p>
-              ) : firstCounter ? (
-                <p className="text-[16px] font-semibold text-white">
-                  {formatProgressValue(firstCounter)}
-                </p>
-              ) : (
-                <p className="text-[13px] font-medium text-white/60">
-                  Нет счётчиков
-                </p>
-              )}
-            </div>
-
-            {firstCounter &&
+          <div className="mt-4 flex min-h-0 items-end justify-end gap-3">
+            {isLoading || isError ? (
+              <p className="text-[13px] font-medium text-white/60">
+                {isError ? "Ошибка загрузки" : "Загрузка..."}
+              </p>
+            ) : firstCounter &&
               !firstCounter.isInfinite &&
-              progressPercent !== null && (
-                <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[rgba(255,255,255,0.05)]">
-                  <div
-                    className="absolute inset-0 rounded-full"
-                    style={{
-                      background: `conic-gradient(#f7c272 0 ${progressPercent}%, rgba(255,255,255,0.10) ${progressPercent}% 100%)`,
-                    }}
-                  />
-                  <div className="relative flex h-[28px] w-[28px] items-center justify-center rounded-full bg-[#201d18] text-[9px] font-semibold text-[#f7c272]">
-                    {progressPercent}%
-                  </div>
+              progressPercent !== null ? (
+              <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[rgba(255,255,255,0.05)]">
+                <div
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    background: `conic-gradient(#f7c272 0 ${progressPercent}%, rgba(255,255,255,0.10) ${progressPercent}% 100%)`,
+                  }}
+                />
+                <div className="relative flex h-[28px] w-[28px] items-center justify-center rounded-full bg-[#201d18] text-[9px] font-semibold text-[#f7c272]">
+                  {progressPercent}%
                 </div>
-              )}
+              </div>
+            ) : null}
           </div>
         </div>
 
