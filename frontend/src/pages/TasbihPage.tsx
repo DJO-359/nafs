@@ -95,6 +95,30 @@ export default function TasbihPage() {
   const selectedCounter: TasbihCounter | null =
     counters.length > 0 ? counters[selectedIndex] : null;
 
+  const target = selectedCounter?.target ?? null;
+  const currentCount = selectedCounter?.count ?? 0;
+  const isInfiniteCounter = selectedCounter?.isInfinite ?? false;
+  const safeTarget = target && target > 0 ? target : null;
+
+  const completedRounds =
+    safeTarget !== null ? Math.floor(currentCount / safeTarget) : 0;
+  const currentRoundCount = safeTarget !== null ? currentCount % safeTarget : 0;
+  const isRoundCompleted =
+    safeTarget !== null && currentCount > 0 && currentCount % safeTarget === 0;
+  const ringProgress =
+    safeTarget === null
+      ? 0
+      : isRoundCompleted
+        ? 100
+        : (currentRoundCount / safeTarget) * 100;
+
+  const ringSize = 260;
+  const ringRadius = 110;
+  const ringCircumference = 2 * Math.PI * ringRadius;
+  const ringStrokeOffset =
+    ringCircumference -
+    (Math.min(100, Math.max(0, ringProgress)) / 100) * ringCircumference;
+
   const handlePrevious = () => {
     if (selectedIndex > 0) {
       setSelectedIndex(selectedIndex - 1);
@@ -395,38 +419,57 @@ export default function TasbihPage() {
             />
           </div>
 
-          {/* Large Count Display */}
-          <div className="mt-8 text-center">
-            <p className="text-7xl font-bold text-emerald-600">
-              {selectedCounter?.count}
-            </p>
-            <p className="mt-2 text-xl text-[var(--app-hint)]">
-              {selectedCounter?.isInfinite
-                ? "/ ∞"
-                : `/ ${selectedCounter?.target}`}
-            </p>
-          </div>
-
-          {/* Progress indicator for non-infinite counters */}
-          {selectedCounter && !selectedCounter.isInfinite && (
-            <div className="mt-5 w-48">
-              <div className="relative h-1 w-full overflow-hidden rounded-full bg-[var(--app-border)]">
-                <div
-                  className="h-full bg-emerald-500 transition-all duration-300"
-                  style={{
-                    width: `${Math.min(
-                      100,
-                      (selectedCounter.count / (selectedCounter.target || 1)) *
-                        100,
-                    )}%`,
-                  }}
+          {/* Circular progress ring */}
+          <div className="mt-8 flex w-full items-center justify-center">
+            <div
+              className="relative flex items-center justify-center"
+              style={{ width: ringSize, height: ringSize }}
+            >
+              <svg
+                width={ringSize}
+                height={ringSize}
+                viewBox={`0 0 ${ringSize} ${ringSize}`}
+                className="-rotate-90"
+                aria-label={`Прогресс счётчика: ${currentCount}`}
+              >
+                <circle
+                  cx={ringSize / 2}
+                  cy={ringSize / 2}
+                  r={ringRadius}
+                  fill="none"
+                  stroke="rgba(148, 163, 184, 0.25)"
+                  strokeWidth="14"
                 />
+                {!isInfiniteCounter && (
+                  <circle
+                    cx={ringSize / 2}
+                    cy={ringSize / 2}
+                    r={ringRadius}
+                    fill="none"
+                    stroke="var(--app-primary, #22c55e)"
+                    strokeWidth="14"
+                    strokeLinecap="round"
+                    strokeDasharray={ringCircumference}
+                    strokeDashoffset={ringStrokeOffset}
+                    style={{
+                      transition: "stroke-dashoffset 300ms ease-in-out",
+                    }}
+                  />
+                )}
+              </svg>
+
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <p className="text-5xl font-bold leading-none text-[var(--app-text)] sm:text-6xl">
+                  {selectedCounter?.count ?? 0}
+                </p>
+                <p className="mt-3 text-xs text-[var(--app-hint)] sm:text-sm">
+                  {selectedCounter?.isInfinite
+                    ? "∞"
+                    : `цель ${safeTarget ?? 0} / кругов ${completedRounds}`}
+                </p>
               </div>
-              <p className="mt-1 text-center text-xs text-[var(--app-hint)]">
-                {selectedCounter.count} / {selectedCounter.target}
-              </p>
             </div>
-          )}
+          </div>
 
           {counters.length > 1 && (
             <div className="mt-8 flex items-center justify-center gap-2">
