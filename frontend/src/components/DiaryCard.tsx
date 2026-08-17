@@ -1,3 +1,4 @@
+import type { MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import type { DiaryEntry } from "../types/day";
 
@@ -17,8 +18,15 @@ export default function DiaryCard({ diary }: Props) {
     return `${year}-${month}-${day}`;
   }
 
-  const handleCardClick = () => {
+  const openDiary = () => {
     navigate(`/day/${formatLocalDate(new Date())}`);
+  };
+
+  const createDiaryEntry = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    navigate(`/day/${formatLocalDate(new Date())}`, {
+      state: { openNewDiary: true },
+    });
   };
 
   return (
@@ -26,36 +34,33 @@ export default function DiaryCard({ diary }: Props) {
       <div className="relative h-[190px] w-full overflow-hidden rounded-[24px] border border-white/15 bg-[linear-gradient(160deg,#0F2239_0%,#132C49_50%,#0D2036_100%)] shadow-[0_10px_26px_rgba(0,0,0,0.18)] transition duration-250 ease-in-out hover:-translate-y-0.5 active:scale-[0.98]">
         <button
           type="button"
-          onClick={handleCardClick}
-          className="absolute inset-0 z-30 cursor-pointer pointer-events-auto"
+          onClick={openDiary}
+          className="absolute inset-0 z-10 cursor-pointer"
           aria-label={
             latestDiary ? "Открыть дневник" : "Добавить запись в дневник"
           }
         />
 
-        <div className="relative z-20 flex h-full flex-col justify-between p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[linear-gradient(180deg,#4C8DFF_0%,#2959FF_100%)] shadow-[0_10px_24px_rgba(59,130,246,0.24)]">
-                <span className="text-xl">📖</span>
-              </div>
-              <div>
-                <p className="text-[26px] font-semibold leading-none text-white">
-                  Дневник
-                </p>
-              </div>
-            </div>
-            <span className="text-[22px] text-white/45">›</span>
+        <div className="relative z-20 flex h-full flex-col items-center justify-start p-4 pt-5 text-center">
+          <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[linear-gradient(180deg,#4C8DFF_0%,#2959FF_100%)] shadow-[0_10px_24px_rgba(59,130,246,0.24)]">
+            <span className="text-xl">📖</span>
           </div>
 
-          <div className="mt-1 space-y-1">
-            <p className="text-[11px] uppercase tracking-[0.16em] text-white/55">
-              Последняя запись
-            </p>
-            <p className="line-clamp-3 text-[14px] font-medium leading-5 text-white/90">
-              {latestDiary?.content ?? "Сегодня ещё нет записей"}
-            </p>
-          </div>
+          <p className="mt-3 text-[24px] font-semibold leading-none text-white">
+            Дневник
+          </p>
+
+          <div className="mt-4 h-px w-full bg-white/15" />
+
+          <button
+            type="button"
+            onClick={createDiaryEntry}
+            className="relative z-30 mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[16px] bg-[linear-gradient(180deg,#4C8DFF_0%,#2F60FF_100%)] px-4 py-3 text-[15px] font-semibold text-white shadow-[0_12px_28px_rgba(59,130,246,0.32)] transition hover:brightness-110 active:scale-[0.98]"
+            aria-label="Добавить запись"
+          >
+            <span className="text-xl leading-none">＋</span>
+            Добавить запись
+          </button>
         </div>
 
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[35%] overflow-hidden">

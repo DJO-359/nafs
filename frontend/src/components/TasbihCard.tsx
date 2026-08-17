@@ -13,7 +13,7 @@ export default function TasbihCard() {
     navigate("/tasbih");
   };
 
-  const formatProgress = (counter: TasbihCounter): string => {
+  const formatProgressValue = (counter: TasbihCounter): string => {
     if (counter.isInfinite) {
       return `${counter.count} / ∞`;
     }
@@ -53,26 +53,18 @@ export default function TasbihCard() {
             <span className="text-[22px] text-[#f7c272]/80">›</span>
           </div>
 
-          <div className="mt-1 flex min-h-0 items-end justify-between gap-3">
+          <div className="mt-2 flex min-h-0 items-end justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] uppercase tracking-[0.16em] text-[#f7c272]/70">
-                Счётчик
-              </p>
               {isLoading || isError ? (
-                <p className="mt-1 text-[13px] font-medium text-white/60">
+                <p className="text-[13px] font-medium text-white/60">
                   {isError ? "Ошибка загрузки" : "Загрузка..."}
                 </p>
               ) : firstCounter ? (
-                <>
-                  <p className="mt-1 line-clamp-1 text-[14px] font-medium text-white">
-                    {firstCounter.name}
-                  </p>
-                  <p className="mt-1 text-[16px] font-semibold text-white">
-                    {formatProgress(firstCounter)}
-                  </p>
-                </>
+                <p className="text-[16px] font-semibold text-white">
+                  {formatProgressValue(firstCounter)}
+                </p>
               ) : (
-                <p className="mt-1 text-[13px] font-medium text-white/60">
+                <p className="text-[13px] font-medium text-white/60">
                   Нет счётчиков
                 </p>
               )}

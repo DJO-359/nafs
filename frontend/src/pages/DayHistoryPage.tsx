@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -28,6 +28,7 @@ type CalendarNavigationState = {
   fromCalendar?: boolean;
   calendarYear?: number;
   calendarMonth?: number;
+  openNewDiary?: boolean;
 };
 
 function formatDay(date: string): string {
@@ -173,6 +174,12 @@ export default function DayHistoryPage() {
     setColor("#ffffff");
     setIsDiaryOpen(false);
   };
+
+  useEffect(() => {
+    if (state?.openNewDiary) {
+      openNewEntry();
+    }
+  }, [state?.openNewDiary]);
 
   // Проверяет, есть ли что сохранять
   const hasChanges = (): boolean => {
