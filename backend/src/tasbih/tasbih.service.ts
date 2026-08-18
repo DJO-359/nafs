@@ -34,8 +34,12 @@ export class TasbihService {
     let hasChanges = false;
 
     for (const counter of counters) {
+      const lastActiveDateNormalized = this.normalizeDateString(
+        counter.lastActiveDate,
+      );
+
       // Проверить смену дня
-      if (counter.lastActiveDate !== today) {
+      if (lastActiveDateNormalized !== today) {
         counter.countAtDayStart = counter.count;
         counter.dailyCompleted = 0;
         counter.lastActiveDate = today;
@@ -97,12 +101,37 @@ export class TasbihService {
   }
 
   /**
+   * Нормализовать дату из БД в формат YYYY-MM-DD строки.
+   * Sequelize может вернуть Date объект или строку, нужно унифицировать.
+   */
+  private normalizeDateString(
+    date: string | Date | null | undefined,
+  ): string | null {
+    if (!date) return null;
+
+    if (date instanceof Date) {
+      // Конвертировать Date в YYYY-MM-DD
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    // Уже строка, вернуть как есть
+    return String(date);
+  }
+
+  /**
    * Проверить смену дня и обновить дневные свойства счётчика.
    * Если наступил новый день, сохраняем текущий count как countAtDayStart
    * и сбрасываем dailyCompleted.
    */
   private ensureDayTransition(counter: TasbihCounter, today: string): void {
-    if (counter.lastActiveDate !== today) {
+    const lastActiveDateNormalized = this.normalizeDateString(
+      counter.lastActiveDate,
+    );
+
+    if (lastActiveDateNormalized !== today) {
       counter.countAtDayStart = counter.count;
       counter.dailyCompleted = 0;
       counter.lastActiveDate = today;
