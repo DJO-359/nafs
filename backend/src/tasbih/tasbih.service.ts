@@ -38,15 +38,23 @@ export class TasbihService {
         counter.lastActiveDate,
       );
 
+      this.logger.debug(
+        `[FINDALL] Counter ${counter.id}: count=${counter.count}, countAtDayStart=${counter.countAtDayStart}, dailyCompleted=${counter.dailyCompleted}, lastActiveDate=${counter.lastActiveDate}, lastActiveDateNormalized=${lastActiveDateNormalized}, today=${today}`,
+      );
+
       // Проверить смену дня только если дата была установлена ранее
       if (lastActiveDateNormalized && lastActiveDateNormalized !== today) {
         // Смена дня: сохраняем текущий count и сбрасываем дневной прогресс
+        this.logger.debug(
+          `[FINDALL] Day transition detected for ${counter.id}`,
+        );
         counter.countAtDayStart = counter.count;
         counter.dailyCompleted = 0;
         counter.lastActiveDate = today;
         hasChanges = true;
       } else if (!lastActiveDateNormalized) {
         // Первая инициализация: просто устанавливаем сегодня без изменения countAtDayStart
+        this.logger.debug(`[FINDALL] First initialization for ${counter.id}`);
         counter.lastActiveDate = today;
         hasChanges = true;
       }
@@ -55,6 +63,9 @@ export class TasbihService {
       if (!counter.isInfinite && counter.target && counter.target > 0) {
         const dayProgress = counter.count - counter.countAtDayStart;
         const newDailyCompleted = Math.floor(dayProgress / counter.target);
+        this.logger.debug(
+          `[FINDALL] Recalculating for ${counter.id}: dayProgress=${dayProgress}, newDailyCompleted=${newDailyCompleted}, current=${counter.dailyCompleted}`,
+        );
         if (newDailyCompleted !== counter.dailyCompleted) {
           counter.dailyCompleted = newDailyCompleted;
           hasChanges = true;
@@ -253,6 +264,10 @@ export class TasbihService {
     const timezone = await this.getUserTimezone(userId);
     const today = todayInZone(timezone);
 
+    this.logger.debug(
+      `[INCREMENT] Before: count=${counter.count}, countAtDayStart=${counter.countAtDayStart}, dailyCompleted=${counter.dailyCompleted}, lastActiveDate=${counter.lastActiveDate}, today=${today}`,
+    );
+
     // Проверить смену дня
     this.ensureDayTransition(counter, today);
 
@@ -260,6 +275,10 @@ export class TasbihService {
 
     // Пересчитать dailyCompleted
     this.recalculateDailyCompleted(counter);
+
+    this.logger.debug(
+      `[INCREMENT] After: count=${counter.count}, countAtDayStart=${counter.countAtDayStart}, dailyCompleted=${counter.dailyCompleted}, lastActiveDate=${counter.lastActiveDate}`,
+    );
 
     await counter.save();
     return counter;
