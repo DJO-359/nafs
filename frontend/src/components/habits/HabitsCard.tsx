@@ -70,12 +70,12 @@ const HabitsCard = forwardRef<HabitsCardHandle, {}>(
 
     return (
       <Card>
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <h2 className="text-lg font-semibold">🌱 Привычки</h2>
           <p className="mt-1 text-sm text-[var(--app-hint)]">
             Спокойный прогресс без лишнего
           </p>
-        </div>
+        </div> */}
 
         <HabitForm
           key={editingHabit?.id ?? "new"}

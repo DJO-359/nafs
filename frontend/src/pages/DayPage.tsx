@@ -237,7 +237,7 @@ export default function DayPage() {
               <div className="flex h-full flex-col justify-between">
                 <div className="flex items-center justify-between gap-4">
                   <p className="text-[18px] font-semibold text-white">
-                    Прогресс дня
+                    🌱 Привычки
                   </p>
                   <p className="text-[18px] font-semibold text-white">
                     {progressPercent}%
