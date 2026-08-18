@@ -65,6 +65,26 @@ export class TasbihCounter extends Model<TasbihCounter> {
   })
   declare isInfinite: boolean;
 
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  })
+  declare countAtDayStart: number;
+
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  })
+  declare dailyCompleted: number;
+
+  @Column({
+    type: DataType.DATEONLY,
+    allowNull: true,
+  })
+  declare lastActiveDate: string | null;
+
   @CreatedAt
   declare createdAt: Date;
 

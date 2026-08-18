@@ -6,9 +6,6 @@ export default function TasbihCard() {
   const navigate = useNavigate();
   const { data: counters = [], isLoading, isError } = useTasbih();
 
-  const firstCounter: TasbihCounter | null =
-    counters.length > 0 ? counters[0] : null;
-
   const handleCardClick = () => {
     navigate("/tasbih");
   };
@@ -19,6 +16,19 @@ export default function TasbihCard() {
     }
     return `${counter.count} / ${counter.target}`;
   };
+
+  const getDotsCount = (): number => {
+    if (counters.length === 0) return 0;
+    return Math.min(counters.length, 4);
+  };
+
+  const isDotGreen = (index: number): boolean => {
+    if (index >= counters.length) return false;
+    const counter = counters[index];
+    return counter.dailyCompleted > 0;
+  };
+
+  const dotsCount = getDotsCount();
 
   return (
     <div className="relative">
@@ -45,16 +55,31 @@ export default function TasbihCard() {
             </p>
           </div>
 
-          <div className="mt-4 flex min-h-0 items-end justify-between gap-3">
-            <div className="min-w-0 flex-1">
+          <div className="mt-4 flex min-h-0 flex-col items-end justify-between gap-3">
+            <div className="w-full">
               {isLoading || isError ? (
                 <p className="text-[13px] font-medium text-white/60">
                   {isError ? "Ошибка загрузки" : "Загрузка..."}
                 </p>
-              ) : firstCounter ? (
-                <p className="text-[16px] font-semibold text-white">
-                  {formatProgressValue(firstCounter)}
-                </p>
+              ) : counters.length > 0 ? (
+                <>
+                  <p className="text-[16px] font-semibold text-white">
+                    {formatProgressValue(counters[0])}
+                  </p>
+                  {dotsCount > 0 && (
+                    <div className="mt-2 flex gap-1.5">
+                      {Array.from({ length: dotsCount }).map((_, idx) => (
+                        <div
+                          key={idx}
+                          className={`h-1.5 w-1.5 rounded-full transition ${
+                            isDotGreen(idx) ? "bg-emerald-500" : "bg-white/40"
+                          }`}
+                          aria-label={`Счётчик ${idx + 1}: ${isDotGreen(idx) ? "завершён сегодня" : "не завершён"}`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </>
               ) : (
                 <p className="text-[13px] font-medium text-white/60">
                   Нет счётчиков

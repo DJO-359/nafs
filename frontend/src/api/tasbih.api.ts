@@ -11,6 +11,9 @@ export interface TasbihCounter {
   target: number | null;
   count: number;
   isInfinite: boolean;
+  countAtDayStart: number;
+  dailyCompleted: number;
+  lastActiveDate: string | null;
   createdAt: string;
   updatedAt: string;
 }

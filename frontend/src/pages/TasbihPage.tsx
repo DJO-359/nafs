@@ -97,14 +97,16 @@ export default function TasbihPage() {
 
   const target = selectedCounter?.target ?? null;
   const currentCount = selectedCounter?.count ?? 0;
+  const countAtDayStart = selectedCounter?.countAtDayStart ?? 0;
+  const dailyCompleted = selectedCounter?.dailyCompleted ?? 0;
   const isInfiniteCounter = selectedCounter?.isInfinite ?? false;
   const safeTarget = target && target > 0 ? target : null;
 
-  const completedRounds =
-    safeTarget !== null ? Math.floor(currentCount / safeTarget) : 0;
-  const currentRoundCount = safeTarget !== null ? currentCount % safeTarget : 0;
+  // Текущий прогресс в рамках дня (от countAtDayStart до текущего count)
+  const dayProgress = currentCount - countAtDayStart;
+  const currentRoundCount = safeTarget !== null ? dayProgress % safeTarget : 0;
   const isRoundCompleted =
-    safeTarget !== null && currentCount > 0 && currentCount % safeTarget === 0;
+    safeTarget !== null && dayProgress > 0 && dayProgress % safeTarget === 0;
   const ringProgress =
     safeTarget === null
       ? 0
@@ -465,7 +467,7 @@ export default function TasbihPage() {
                 <p className="mt-3 text-xs text-[var(--app-hint)] sm:text-sm">
                   {selectedCounter?.isInfinite
                     ? "∞"
-                    : `цель ${safeTarget ?? 0} / кругов ${completedRounds}`}
+                    : `цель ${safeTarget ?? 0} / кругов ${dailyCompleted}`}
                 </p>
               </div>
             </div>

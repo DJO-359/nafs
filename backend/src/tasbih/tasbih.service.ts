@@ -4,6 +4,8 @@ import { InjectModel } from '@nestjs/sequelize';
 import { TasbihCounter } from './models/tasbih-counter.model';
 import { CreateTasbihCounterDto } from './dto/create-tasbih-counter.dto';
 import { UpdateTasbihCounterDto } from './dto/update-tasbih-counter.dto';
+import { User } from '../users/models/user.model';
+import { todayInZone, safeTimeZone } from '../common/utils/timezone.util';
 
 @Injectable()
 export class TasbihService {
@@ -12,6 +14,8 @@ export class TasbihService {
   constructor(
     @InjectModel(TasbihCounter)
     private readonly tasbihCounterModel: typeof TasbihCounter,
+    @InjectModel(User)
+    private readonly userModel: typeof User,
   ) {}
 
   /**
@@ -43,18 +47,69 @@ export class TasbihService {
   }
 
   /**
+   * Получить user по ID (для получения timezone).
+   */
+  private async getUserTimezone(userId: string): Promise<string> {
+    const user = await this.userModel.findOne({
+      where: { id: userId },
+      attributes: ['timezone'],
+    });
+
+    if (!user) {
+      this.logger.warn(`User ${userId} not found, using UTC`);
+      return 'UTC';
+    }
+
+    return safeTimeZone(user.timezone);
+  }
+
+  /**
+   * Проверить смену дня и обновить дневные свойства счётчика.
+   * Если наступил новый день, сохраняем текущий count как countAtDayStart
+   * и сбрасываем dailyCompleted.
+   */
+  private ensureDayTransition(counter: TasbihCounter, today: string): void {
+    if (counter.lastActiveDate !== today) {
+      counter.countAtDayStart = counter.count;
+      counter.dailyCompleted = 0;
+      counter.lastActiveDate = today;
+    }
+  }
+
+  /**
+   * Пересчитать dailyCompleted на основе текущего count и target.
+   * Используется после increment или при изменении target.
+   */
+  private recalculateDailyCompleted(counter: TasbihCounter): void {
+    if (counter.isInfinite) {
+      counter.dailyCompleted = 0;
+    } else if (counter.target && counter.target > 0) {
+      const dayProgress = counter.count - counter.countAtDayStart;
+      counter.dailyCompleted = Math.floor(dayProgress / counter.target);
+    } else {
+      counter.dailyCompleted = 0;
+    }
+  }
+
+  /**
    * Создать новый счётчик.
    */
   async create(
     userId: string,
     dto: CreateTasbihCounterDto,
   ): Promise<TasbihCounter> {
+    const timezone = await this.getUserTimezone(userId);
+    const today = todayInZone(timezone);
+
     return this.tasbihCounterModel.create({
       userId,
       name: dto.name,
       target: dto.isInfinite ? null : dto.target,
       count: dto.count ?? 0,
       isInfinite: dto.isInfinite ?? false,
+      countAtDayStart: 0,
+      dailyCompleted: 0,
+      lastActiveDate: today,
     } as TasbihCounter);
   }
 
@@ -67,25 +122,41 @@ export class TasbihService {
     dto: UpdateTasbihCounterDto,
   ): Promise<TasbihCounter> {
     const counter = await this.findOne(userId, id);
+    const timezone = await this.getUserTimezone(userId);
+    const today = todayInZone(timezone);
+
+    // Проверить смену дня
+    this.ensureDayTransition(counter, today);
 
     if (dto.name !== undefined) {
       counter.name = dto.name;
     }
 
+    // Отслеживаем, изменился ли target, для пересчёта dailyCompleted
+    let targetChanged = false;
+
     if (dto.isInfinite !== undefined) {
       counter.isInfinite = dto.isInfinite;
-      // Если переводим в бесконечный, обнуляем target
+      targetChanged = true;
+      // Если переводим в бесконечный, обнуляем target и dailyCompleted
       if (dto.isInfinite) {
         counter.target = null;
+        counter.dailyCompleted = 0;
       } else if (dto.target !== undefined) {
         counter.target = dto.target;
       }
     } else if (dto.target !== undefined) {
       counter.target = dto.target;
+      targetChanged = true;
     }
 
     if (dto.count !== undefined) {
       counter.count = dto.count;
+    }
+
+    // Пересчитать dailyCompleted если изменился target или count
+    if (targetChanged || dto.count !== undefined) {
+      this.recalculateDailyCompleted(counter);
     }
 
     await counter.save();
@@ -105,7 +176,17 @@ export class TasbihService {
    */
   async increment(userId: string, id: string): Promise<TasbihCounter> {
     const counter = await this.findOne(userId, id);
+    const timezone = await this.getUserTimezone(userId);
+    const today = todayInZone(timezone);
+
+    // Проверить смену дня
+    this.ensureDayTransition(counter, today);
+
     counter.count += 1;
+
+    // Пересчитать dailyCompleted
+    this.recalculateDailyCompleted(counter);
+
     await counter.save();
     return counter;
   }
@@ -115,7 +196,14 @@ export class TasbihService {
    */
   async reset(userId: string, id: string): Promise<TasbihCounter> {
     const counter = await this.findOne(userId, id);
+    const timezone = await this.getUserTimezone(userId);
+    const today = todayInZone(timezone);
+
     counter.count = 0;
+    counter.countAtDayStart = 0;
+    counter.dailyCompleted = 0;
+    counter.lastActiveDate = today;
+
     await counter.save();
     return counter;
   }
