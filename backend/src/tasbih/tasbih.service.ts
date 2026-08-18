@@ -20,12 +20,45 @@ export class TasbihService {
 
   /**
    * Получить все счётчики пользователя.
+   * При загрузке проверяет смену дня и пересчитывает дневной прогресс.
    */
   async findAll(userId: string): Promise<TasbihCounter[]> {
-    return this.tasbihCounterModel.findAll({
+    const counters = await this.tasbihCounterModel.findAll({
       where: { userId },
       order: [['createdAt', 'DESC']],
     });
+
+    // Проверить смену дня для всех счётчиков и пересчитать dailyCompleted
+    const timezone = await this.getUserTimezone(userId);
+    const today = todayInZone(timezone);
+    let hasChanges = false;
+
+    for (const counter of counters) {
+      // Проверить смену дня
+      if (counter.lastActiveDate !== today) {
+        counter.countAtDayStart = counter.count;
+        counter.dailyCompleted = 0;
+        counter.lastActiveDate = today;
+        hasChanges = true;
+      }
+
+      // Пересчитать dailyCompleted (на случай, если что-то сбилось)
+      if (!counter.isInfinite && counter.target && counter.target > 0) {
+        const dayProgress = counter.count - counter.countAtDayStart;
+        const newDailyCompleted = Math.floor(dayProgress / counter.target);
+        if (newDailyCompleted !== counter.dailyCompleted) {
+          counter.dailyCompleted = newDailyCompleted;
+          hasChanges = true;
+        }
+      }
+    }
+
+    // Сохранить изменения, если они есть
+    if (hasChanges) {
+      await Promise.all(counters.map((c) => c.save()));
+    }
+
+    return counters;
   }
 
   /**
@@ -132,30 +165,32 @@ export class TasbihService {
       counter.name = dto.name;
     }
 
-    // Отслеживаем, изменился ли target, для пересчёта dailyCompleted
-    let targetChanged = false;
+    // Отслеживаем, изменился ли target или count, для пересчёта dailyCompleted
+    let needsRecalculation = false;
 
     if (dto.isInfinite !== undefined) {
       counter.isInfinite = dto.isInfinite;
-      targetChanged = true;
       // Если переводим в бесконечный, обнуляем target и dailyCompleted
       if (dto.isInfinite) {
         counter.target = null;
         counter.dailyCompleted = 0;
       } else if (dto.target !== undefined) {
         counter.target = dto.target;
+        needsRecalculation = true;
       }
     } else if (dto.target !== undefined) {
       counter.target = dto.target;
-      targetChanged = true;
+      needsRecalculation = true;
     }
 
     if (dto.count !== undefined) {
       counter.count = dto.count;
+      needsRecalculation = true;
     }
 
     // Пересчитать dailyCompleted если изменился target или count
-    if (targetChanged || dto.count !== undefined) {
+    // countAtDayStart НЕ изменяется при редактировании!
+    if (needsRecalculation) {
       this.recalculateDailyCompleted(counter);
     }
 
