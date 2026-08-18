@@ -38,15 +38,20 @@ export class TasbihService {
         counter.lastActiveDate,
       );
 
-      // Проверить смену дня
-      if (lastActiveDateNormalized !== today) {
+      // Если lastActiveDate не установлена или это новый день
+      if (!lastActiveDateNormalized) {
+        // Первая инициализация: просто устанавливаем сегодня без изменения countAtDayStart
+        counter.lastActiveDate = today;
+        hasChanges = true;
+      } else if (lastActiveDateNormalized !== today) {
+        // Смена дня: сохраняем текущий count и сбрасываем дневной прогресс
         counter.countAtDayStart = counter.count;
         counter.dailyCompleted = 0;
         counter.lastActiveDate = today;
         hasChanges = true;
       }
 
-      // Пересчитать dailyCompleted (на случай, если что-то сбилось)
+      // Пересчитать dailyCompleted на основе текущего состояния
       if (!counter.isInfinite && counter.target && counter.target > 0) {
         const dayProgress = counter.count - counter.countAtDayStart;
         const newDailyCompleted = Math.floor(dayProgress / counter.target);
@@ -109,15 +114,20 @@ export class TasbihService {
   ): string | null {
     if (!date) return null;
 
+    if (typeof date === 'string') {
+      // Уже строка, вернуть как есть
+      return date.substring(0, 10); // Берем только дату, без времени
+    }
+
     if (date instanceof Date) {
       // Конвертировать Date в YYYY-MM-DD
-      const year = date.getUTCFullYear();
-      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-      const day = String(date.getUTCDate()).padStart(2, '0');
+      // Используем локальную дату, чтобы не было смещения из-за UTC
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
       return `${year}-${month}-${day}`;
     }
 
-    // Уже строка, вернуть как есть
     return String(date);
   }
 
