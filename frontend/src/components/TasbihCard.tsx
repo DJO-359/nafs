@@ -63,9 +63,6 @@ export default function TasbihCard() {
                 </p>
               ) : counters.length > 0 ? (
                 <>
-                  {/* <p className="text-[16px] font-semibold text-white">
-                    {formatProgressValue(counters[0])}
-                  </p> */}
                   {dotsCount > 0 && (
                     <div className="mt-2 flex gap-1.5">
                       {Array.from({ length: dotsCount }).map((_, idx) => (
