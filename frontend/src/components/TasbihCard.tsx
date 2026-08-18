@@ -71,7 +71,6 @@ export default function TasbihCard() {
                           className={`h-1.5 w-1.5 rounded-full transition ${
                             isDotGreen(idx) ? "bg-emerald-500" : "bg-white/40"
                           }`}
-                          aria-label={`Счётчик ${idx + 1}: ${isDotGreen(idx) ? "завершён сегодня" : "не завершён"}`}
                         />
                       ))}
                     </div>
