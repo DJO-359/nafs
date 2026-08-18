@@ -38,15 +38,15 @@ export class TasbihService {
         counter.lastActiveDate,
       );
 
-      // Если lastActiveDate не установлена или это новый день
-      if (!lastActiveDateNormalized) {
-        // Первая инициализация: просто устанавливаем сегодня без изменения countAtDayStart
-        counter.lastActiveDate = today;
-        hasChanges = true;
-      } else if (lastActiveDateNormalized !== today) {
+      // Проверить смену дня только если дата была установлена ранее
+      if (lastActiveDateNormalized && lastActiveDateNormalized !== today) {
         // Смена дня: сохраняем текущий count и сбрасываем дневной прогресс
         counter.countAtDayStart = counter.count;
         counter.dailyCompleted = 0;
+        counter.lastActiveDate = today;
+        hasChanges = true;
+      } else if (!lastActiveDateNormalized) {
+        // Первая инициализация: просто устанавливаем сегодня без изменения countAtDayStart
         counter.lastActiveDate = today;
         hasChanges = true;
       }
