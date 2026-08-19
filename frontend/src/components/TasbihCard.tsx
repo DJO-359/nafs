@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import { useTasbih } from "../hooks/useTasbih";
-import type { TasbihCounter } from "../api/tasbih.api";
 
 export default function TasbihCard() {
   const navigate = useNavigate();
@@ -8,13 +7,6 @@ export default function TasbihCard() {
 
   const handleCardClick = () => {
     navigate("/tasbih");
-  };
-
-  const formatProgressValue = (counter: TasbihCounter): string => {
-    if (counter.isInfinite) {
-      return `${counter.count} / ∞`;
-    }
-    return `${counter.count} / ${counter.target}`;
   };
 
   const getDotsCount = (): number => {
