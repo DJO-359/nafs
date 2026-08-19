@@ -1,5 +1,4 @@
 import { forwardRef, useImperativeHandle, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import Card from "../ui/Card";
 import {
   useCreateHabit,
@@ -27,6 +26,7 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
   function HabitsCard(_, ref) {
     const [open, setOpen] = useState(false);
     const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
+    const [isExpanded, setIsExpanded] = useState(false);
 
     const { data: habits = [], isLoading } = useHabits();
 
@@ -39,8 +39,8 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
       [habits],
     );
     const visibleHabits = useMemo(
-      () => activeHabits.slice(0, 5),
-      [activeHabits],
+      () => (isExpanded ? activeHabits : activeHabits.slice(0, 5)),
+      [activeHabits, isExpanded],
     );
     const completedToday = activeHabits.filter(
       (habit) => habit.isCompletedToday,
@@ -205,12 +205,13 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
             </div>
 
             {activeHabits.length > 5 && (
-              <Link
-                to="/habits"
+              <button
+                type="button"
+                onClick={() => setIsExpanded((expanded) => !expanded)}
                 className="mt-3 block text-center text-sm font-medium text-emerald-700 hover:underline"
               >
-                Показать все привычки
-              </Link>
+                {isExpanded ? "Скрыть привычки" : "Показать все привычки"}
+              </button>
             )}
           </div>
         )}
