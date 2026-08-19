@@ -2,6 +2,8 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
+import ConfirmModal from "../ui/ConfirmModal";
+import { useDeleteHabit } from "../../hooks/useHabits";
 import type { CreateHabitDto, Habit } from "../../api/habit.api";
 
 interface Props {
@@ -75,6 +77,9 @@ export default function HabitForm({
   onSubmit,
   loading = false,
 }: Props) {
+  const deleteMutation = useDeleteHabit();
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+
   // Значения по умолчанию для новой привычки — период на 30 дней от сегодня
   const defaultDates = getPeriodDates("30_DAYS") ?? {
     startDate: toInputDate(new Date()),
@@ -148,6 +153,14 @@ export default function HabitForm({
       startDate,
       endDate,
     });
+  }
+
+  async function handleDelete() {
+    if (!initialHabit) return;
+
+    await deleteMutation.mutateAsync(initialHabit.id);
+    setIsDeleteConfirmOpen(false);
+    onClose();
   }
 
   return (
@@ -234,7 +247,9 @@ export default function HabitForm({
               {periodType === "CUSTOM" && (
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <p className="mb-1 text-sm text-[var(--app-hint)]">Начало</p>
+                    <p className="mb-1 text-sm text-[var(--app-hint)]">
+                      Начало
+                    </p>
                     <input
                       type="date"
                       value={startDate}
@@ -244,7 +259,9 @@ export default function HabitForm({
                     />
                   </div>
                   <div>
-                    <p className="mb-1 text-sm text-[var(--app-hint)]">Окончание</p>
+                    <p className="mb-1 text-sm text-[var(--app-hint)]">
+                      Окончание
+                    </p>
                     <input
                       type="date"
                       value={endDate}
@@ -256,7 +273,7 @@ export default function HabitForm({
                 </div>
               )}
 
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button loading={loading} onClick={handleSubmit}>
                   Сохранить
                 </Button>
@@ -267,11 +284,31 @@ export default function HabitForm({
                 >
                   Отмена
                 </button>
+                {initialHabit && (
+                  <button
+                    type="button"
+                    onClick={() => setIsDeleteConfirmOpen(true)}
+                    disabled={deleteMutation.isPending}
+                    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    🗑️ Удалить
+                  </button>
+                )}
               </div>
             </div>
           </div>
         </motion.div>
       )}
+
+      <ConfirmModal
+        open={isDeleteConfirmOpen}
+        title="Удалить привычку?"
+        description="Привычка будет удалена без возможности восстановления."
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={() => {
+          void handleDelete();
+        }}
+      />
     </AnimatePresence>
   );
 }
