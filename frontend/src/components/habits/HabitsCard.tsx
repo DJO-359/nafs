@@ -14,20 +14,16 @@ export interface HabitsCardHandle {
   openCreate: () => void;
 }
 
-// ✅ Новая функция formatPeriod – вычисляет дни из дат
-function formatPeriod(habit: Habit) {
-  const start = new Date(habit.startDate);
-  const end = new Date(habit.endDate);
+function getProvidedStreak(habit: Habit) {
+  const habitWithStreak = habit as Habit & {
+    streak?: number;
+    currentStreak?: number;
+  };
 
-  const days =
-    Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
-  if (days === 1) return "1 день";
-  if (days >= 2 && days <= 4) return `${days} дня`;
-  return `${days} дней`;
+  return habitWithStreak.currentStreak ?? habitWithStreak.streak;
 }
 
-const HabitsCard = forwardRef<HabitsCardHandle, {}>(
+const HabitsCard = forwardRef<HabitsCardHandle, object>(
   function HabitsCard(_, ref) {
     const [open, setOpen] = useState(false);
     const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
@@ -38,7 +34,20 @@ const HabitsCard = forwardRef<HabitsCardHandle, {}>(
     const updateMutation = useUpdateHabit();
     const toggleMutation = useToggleHabit();
 
-    const visibleHabits = useMemo(() => habits.slice(0, 5), [habits]);
+    const activeHabits = useMemo(
+      () => habits.filter((habit) => !habit.isArchived),
+      [habits],
+    );
+    const visibleHabits = useMemo(
+      () => activeHabits.slice(0, 5),
+      [activeHabits],
+    );
+    const completedToday = activeHabits.filter(
+      (habit) => habit.isCompletedToday,
+    ).length;
+    const progressPercent = activeHabits.length
+      ? Math.round((completedToday / activeHabits.length) * 100)
+      : 0;
 
     async function handleSubmit(dto: CreateHabitDto) {
       if (editingHabit) {
@@ -70,12 +79,24 @@ const HabitsCard = forwardRef<HabitsCardHandle, {}>(
 
     return (
       <Card>
-        {/* <div className="mb-6">
-          <h2 className="text-lg font-semibold">🌱 Привычки</h2>
-          <p className="mt-1 text-sm text-[var(--app-hint)]">
-            Спокойный прогресс без лишнего
-          </p>
-        </div> */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <button
+              type="button"
+              onClick={openCreate}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-xl font-medium leading-none text-white shadow-sm transition hover:bg-emerald-700 active:scale-95"
+              aria-label="Создать привычку"
+            >
+              +
+            </button>
+            <h2 className="truncate text-lg font-semibold text-(--app-text)">
+              Привычки
+            </h2>
+          </div>
+          <span className="shrink-0 text-sm font-semibold text-emerald-600">
+            {progressPercent}%
+          </span>
+        </div>
 
         <HabitForm
           key={editingHabit?.id ?? "new"}
@@ -90,16 +111,14 @@ const HabitsCard = forwardRef<HabitsCardHandle, {}>(
         />
 
         {isLoading ? (
-          <p className="text-sm text-[var(--app-hint)]">Загрузка...</p>
+          <p className="text-sm text-(--app-hint)">Загрузка...</p>
         ) : (
           <div>
             {visibleHabits.length === 0 && !open && (
-              <p className="text-sm text-[var(--app-hint)]">
-                Пока нет привычек
-              </p>
+              <p className="text-sm text-(--app-hint)">Пока нет привычек</p>
             )}
 
-            <div className="space-y-[14px]">
+            <div className="mt-4 divide-y divide-(--app-border)">
               {visibleHabits.map((habit) => (
                 <div
                   key={habit.id}
@@ -111,46 +130,81 @@ const HabitsCard = forwardRef<HabitsCardHandle, {}>(
                       openEdit(habit);
                     }
                   }}
-                  className="group w-full cursor-pointer transform rounded-[22px] bg-white p-5 shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition duration-[250ms] ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200"
+                  className="group flex w-full cursor-pointer items-center gap-3 py-3 first:pt-0 last:pb-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200"
                 >
-                  <div className="flex items-start gap-4">
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        toggleMutation.mutate(habit.id);
-                      }}
-                      className={`flex h-[34px] w-[34px] items-center justify-center rounded-full border transition duration-[250ms] ease-out ${
-                        habit.isCompletedToday
-                          ? "border-emerald-600 bg-emerald-600 text-white"
-                          : "border-[var(--app-border)] bg-white text-transparent"
-                      }`}
-                      aria-label="Отметить привычку"
-                    >
-                      ✓
-                    </button>
+                  <div
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg"
+                    style={{
+                      backgroundColor: `${habit.color}20`,
+                      color: habit.color,
+                    }}
+                  >
+                    {habit.icon}
+                  </div>
 
-                    <div className="min-w-0">
-                      <p className="text-[17px] font-semibold text-slate-900">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <p className="min-w-0 flex-1 truncate text-sm font-semibold text-(--app-text)">
                         {habit.title}
                       </p>
-
-                      {habit.description ? (
-                        <p className="mt-1 text-[14px] text-[#7A7A7A]">
-                          {habit.description}
-                        </p>
-                      ) : null}
-
-                      <p className="mt-2 text-xs text-[var(--app-hint)]">
-                        {formatPeriod(habit)}
-                      </p>
+                      <span className="shrink-0 text-xs text-(--app-hint)">
+                        {habit.completedDays}/{habit.totalDays}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-2">
+                      <div className="flex h-1.5 min-w-0 flex-1 gap-0.5 overflow-hidden rounded-full bg-(--app-border)">
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${Math.min(100, Math.max(0, habit.progress))}%`,
+                            backgroundColor: habit.color,
+                          }}
+                        />
+                      </div>
+                      {(() => {
+                        const streak = getProvidedStreak(habit);
+                        return streak === undefined ? null : (
+                          <span className="shrink-0 text-xs text-(--app-hint)">
+                            🔥 {streak}д
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      toggleMutation.mutate(habit.id);
+                    }}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-sm transition active:scale-95"
+                    style={
+                      habit.isCompletedToday
+                        ? {
+                            borderColor: habit.color,
+                            backgroundColor: habit.color,
+                            color: "white",
+                          }
+                        : {
+                            borderColor: "var(--app-border)",
+                            backgroundColor: "var(--app-surface)",
+                            color: "var(--app-hint)",
+                          }
+                    }
+                    aria-label={
+                      habit.isCompletedToday
+                        ? "Снять отметку привычки"
+                        : "Отметить привычку"
+                    }
+                  >
+                    ✓
+                  </button>
                 </div>
               ))}
             </div>
 
-            {habits.length > 5 && (
+            {activeHabits.length > 5 && (
               <Link
                 to="/habits"
                 className="mt-3 block text-center text-sm font-medium text-emerald-700 hover:underline"

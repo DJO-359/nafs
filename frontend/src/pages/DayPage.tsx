@@ -1,19 +1,16 @@
 import { Link } from "react-router-dom";
 
 import { createPortal } from "react-dom";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import ReminderList from "../components/ReminderList";
 import DiaryCard from "../components/DiaryCard";
 import TasbihCard from "../components/TasbihCard";
 import ProgressCard from "../components/ProgressCard";
-import HabitsCard, {
-  type HabitsCardHandle,
-} from "../components/habits/HabitsCard";
+import HabitsCard from "../components/habits/HabitsCard";
 import IntentionModal from "../components/IntentionModal";
 import QueryState from "../components/ui/QueryState";
 import { useDay } from "../hooks/useDay";
-import { useHabits } from "../hooks/useHabits";
 import { useIntention } from "../hooks/useIntention";
 import { useReminder } from "../hooks/useReminder";
 import type { CreateReminderDto } from "../api/reminder.api";
@@ -55,10 +52,8 @@ function parseDay(date: string): Date {
 
 export default function DayPage() {
   const dayQuery = useDay();
-  const { data: habits = [] } = useHabits();
   const { createMutation } = useIntention();
   const reminderMutation = useReminder();
-  const habitsRef = useRef<HabitsCardHandle>(null);
   const [isIntentionOpen, setIsIntentionOpen] = useState(false);
   const [isRemindersOpen, setIsRemindersOpen] = useState(false);
 
@@ -67,15 +62,6 @@ export default function DayPage() {
   return (
     <QueryState query={dayQuery}>
       {(day) => {
-        const completedHabits = habits.filter(
-          (habit) => habit.isCompletedToday,
-        ).length;
-        const remainingHabits = habits.length - completedHabits;
-        const progressPercent =
-          habits.length === 0
-            ? 0
-            : Math.round((completedHabits / habits.length) * 100);
-
         const currentHour = new Date().getHours();
         const dayPart = getDayPart(currentHour);
         const theme = heroThemes[dayPart];
@@ -226,46 +212,8 @@ export default function DayPage() {
               <TasbihCard />
             </div>
 
-            <div
-              className="mb-4 overflow-hidden rounded-[20px] p-5 shadow-[0_16px_40px_rgba(0,0,0,0.20)]"
-              style={{
-                height: 118,
-                background: "linear-gradient(180deg, #10263F, #132F4B)",
-                boxShadow: "inset 0 1px rgba(255,255,255,.05)",
-              }}
-            >
-              <div className="flex h-full flex-col justify-between">
-                <div className="flex items-center justify-between gap-4">
-                  <p className="text-[18px] font-semibold text-white">
-                    🌱 Привычки
-                  </p>
-                  <p className="text-[18px] font-semibold text-white">
-                    {progressPercent}%
-                  </p>
-                </div>
-
-                <div className="mt-3 h-2 rounded-full bg-white/10 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-[#5D8EFF]"
-                    style={{
-                      width: `${progressPercent}%`,
-                      transition: "width .35s ease",
-                    }}
-                  />
-                </div>
-
-                <p className="text-sm text-white/75">
-                  {habits.length === 0
-                    ? "Нет привычек на сегодня"
-                    : remainingHabits === 0
-                      ? "Все привычки выполнены. Отличная работа."
-                      : `Ещё ${remainingHabits} привычк${remainingHabits % 10 === 1 && remainingHabits !== 11 ? "а" : remainingHabits % 10 >= 2 && remainingHabits % 10 <= 4 && !(remainingHabits >= 12 && remainingHabits <= 14) ? "и" : ""} до идеального дня.`}
-                </p>
-              </div>
-            </div>
-
             <div className="space-y-4">
-              <HabitsCard ref={habitsRef} />
+              <HabitsCard />
 
               <ProgressCard reminders={day.reminders} />
             </div>
@@ -288,17 +236,6 @@ export default function DayPage() {
                   <div className="mt-2 font-medium">История</div>
                 </Link>
               </div>
-
-              <button
-                type="button"
-                onClick={() => habitsRef.current?.openCreate()}
-                className="absolute left-1/2 bottom-[-24px] -translate-x-1/2 flex h-[64px] w-[64px] items-center justify-center rounded-full bg-white shadow-[0_12px_30px_rgba(0,0,0,0.15)] transition duration-[250ms] ease-out active:scale-[0.95]"
-                aria-label="Добавить привычку"
-              >
-                <span className="text-[30px] font-semibold text-slate-900">
-                  +
-                </span>
-              </button>
             </div>
           </div>
         );
