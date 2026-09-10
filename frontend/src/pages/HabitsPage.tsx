@@ -1,15 +1,19 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Card from "../components/ui/Card";
 import { useBackButton } from "../hooks/useBackButton";
 import {
   useCreateHabit,
+  useDeleteHabit,
   useHabits,
   useToggleHabit,
   useUpdateHabit,
 } from "../hooks/useHabits";
 import HabitForm from "../components/habits/HabitForm";
+import SuspendedHabitModal from "../components/habits/SuspendedHabitModal";
 import type { CreateHabitDto, Habit } from "../api/habit.api";
+import { getHabitMissedDayIndexes } from "../lib/habit-progress";
+import { useHabitSuspensions } from "../hooks/useHabitSuspension";
 
 const WEEK_DAYS = [
   { label: "ПН", offset: 1 },
@@ -69,6 +73,91 @@ function getCurrentWeekCompletion(habits: Habit[]) {
   });
 }
 
+interface HabitPageRowProps {
+  habit: Habit;
+  isSuspended: boolean;
+  onEdit: () => void;
+  toggle: () => void;
+}
+
+function HabitPageRow({
+  habit,
+  isSuspended,
+  onEdit,
+  toggle,
+}: HabitPageRowProps) {
+  const [modalOpen, setModalOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={onEdit}
+        className={`group flex w-full items-center gap-3 rounded-3xl bg-(--app-bg) px-3 py-2 text-left transition-all duration-300 ease-out hover:bg-(--app-surface) ${isSuspended ? "opacity-75 saturate-50" : ""}`}
+      >
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            if (isSuspended) {
+              setModalOpen(true);
+            } else {
+              toggle();
+            }
+          }}
+          className={`flex h-10 shrink-0 items-center justify-center rounded-full border transition-[background-color,border-color,color,transform] duration-200 ease-out active:scale-95 ${isSuspended ? "min-w-[6.5rem] px-3 text-xs" : habit.isCompletedToday ? "w-10 border-emerald-600 bg-emerald-600 text-white" : "w-10 border-(--app-border) bg-(--app-bg) text-(--app-hint)"}`}
+          style={
+            isSuspended
+              ? {
+                  borderColor: "var(--app-border)",
+                  backgroundColor: "var(--app-border)",
+                  color: "var(--app-text)",
+                }
+              : undefined
+          }
+          aria-label={isSuspended ? "Активировать привычку" : undefined}
+        >
+          {isSuspended ? "Активировать" : "✓"}
+        </button>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-3">
+            <p className="truncate text-sm font-semibold">{habit.title}</p>
+            <span className="text-sm font-semibold text-(--app-hint)">
+              {habit.progress}%
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-(--app-hint)">
+            {habit.description || formatPeriodLabel(habit)}
+          </p>
+          <div className="mt-2 flex items-center gap-3">
+            <div className="relative flex-1 h-1.5 overflow-hidden rounded-full bg-(--app-border)">
+              <div
+                className="h-1.5 rounded-full bg-emerald-600 transition-[width] duration-500 ease-out"
+                style={{ width: `${Math.min(100, habit.progress)}%` }}
+              />
+              {getHabitMissedDayIndexes(habit).map((dayIndex) => (
+                <span
+                  key={dayIndex}
+                  aria-hidden="true"
+                  className="pointer-events-none absolute top-1/2 z-10 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-500 motion-safe:animate-[habit-missed-dot_320ms_ease-out]"
+                  style={{
+                    left: `${((dayIndex + 0.5) / Math.max(habit.totalDays, 1)) * 100}%`,
+                  }}
+                />
+              ))}
+            </div>
+            <span className="text-xs text-(--app-hint)">{habit.progress}%</span>
+          </div>
+        </div>
+      </button>
+      <SuspendedHabitModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+      />
+    </>
+  );
+}
+
 export default function HabitsPage() {
   const [open, setOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
@@ -76,6 +165,7 @@ export default function HabitsPage() {
 
   useBackButton();
   const createMutation = useCreateHabit();
+  const deleteMutation = useDeleteHabit();
   const updateMutation = useUpdateHabit();
   const toggleMutation = useToggleHabit();
 
@@ -87,6 +177,18 @@ export default function HabitsPage() {
     () => habits.filter((habit) => !habit.isArchived),
     [habits],
   );
+  const { suspendedIds: suspendedHabitIds, expiredHabitIds } =
+    useHabitSuspensions(activeHabits);
+  const requestedDeletionIds = useRef(new Set<string>());
+
+  useEffect(() => {
+    expiredHabitIds.forEach((habitId) => {
+      if (requestedDeletionIds.current.has(habitId)) return;
+
+      requestedDeletionIds.current.add(habitId);
+      deleteMutation.mutate(habitId);
+    });
+  }, [deleteMutation, expiredHabitIds]);
 
   const celebrationHabit = useMemo(() => {
     const completed = habits.find(
@@ -203,50 +305,16 @@ export default function HabitsPage() {
             </div>
           ) : (
             activeHabits.map((habit) => (
-              <button
-                type="button"
+              <HabitPageRow
                 key={habit.id}
-                onClick={() => {
+                habit={habit}
+                isSuspended={suspendedHabitIds.has(habit.id)}
+                onEdit={() => {
                   setEditingHabit(habit);
                   setOpen(true);
                 }}
-                className="group flex w-full items-center gap-3 rounded-3xl bg-(--app-bg) px-3 py-2 text-left transition hover:bg-(--app-surface)"
-              >
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    toggleMutation.mutate(habit.id);
-                  }}
-                  className={`flex h-10 w-10 items-center justify-center rounded-full border transition ${habit.isCompletedToday ? "border-emerald-600 bg-emerald-600 text-white" : "border-(--app-border) bg-(--app-bg) text-(--app-hint)"}`}
-                >
-                  ✓
-                </button>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="truncate text-sm font-semibold">
-                      {habit.title}
-                    </p>
-                    <span className="text-sm font-semibold text-(--app-hint)">
-                      {habit.progress}%
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-(--app-hint)">
-                    {habit.description || formatPeriodLabel(habit)}
-                  </p>
-                  <div className="mt-2 flex items-center gap-3">
-                    <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-(--app-border)">
-                      <div
-                        className="h-1.5 rounded-full bg-emerald-600"
-                        style={{ width: `${Math.min(100, habit.progress)}%` }}
-                      />
-                    </div>
-                    <span className="text-xs text-(--app-hint)">
-                      {habit.progress}%
-                    </span>
-                  </div>
-                </div>
-              </button>
+                toggle={() => toggleMutation.mutate(habit.id)}
+              />
             ))
           )}
         </div>

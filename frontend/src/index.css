@@ -50,6 +50,18 @@ body {
   color: var(--app-text);
 }
 
+@keyframes habit-missed-dot {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
 /* Нижняя навигация не должна залезать под системную полосу жестов */
 .safe-bottom {
   padding-bottom: max(0.75rem, env(safe-area-inset-bottom));

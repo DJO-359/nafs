@@ -1,13 +1,24 @@
-import { forwardRef, useImperativeHandle, useMemo, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Card from "../ui/Card";
 import {
   useCreateHabit,
+  useDeleteHabit,
   useHabits,
   useToggleHabit,
   useUpdateHabit,
 } from "../../hooks/useHabits";
 import HabitForm from "./HabitForm";
+import SuspendedHabitModal from "./SuspendedHabitModal";
 import type { CreateHabitDto, Habit } from "../../api/habit.api";
+import { getHabitMissedDayIndexes } from "../../lib/habit-progress";
+import { useHabitSuspensions } from "../../hooks/useHabitSuspension";
 
 export interface HabitsCardHandle {
   openCreate: () => void;
@@ -22,6 +33,122 @@ function getProvidedStreak(habit: Habit) {
   return habitWithStreak.currentStreak ?? habitWithStreak.streak;
 }
 
+interface HabitRowProps {
+  habit: Habit;
+  isSuspended: boolean;
+  onEdit: () => void;
+  toggle: () => void;
+}
+
+function HabitRow({ habit, isSuspended, onEdit, toggle }: HabitRowProps) {
+  const [modalOpen, setModalOpen] = useState(false);
+
+  return (
+    <>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onEdit}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            onEdit();
+          }
+        }}
+        className={`group flex w-full cursor-pointer items-center gap-3 py-3 first:pt-0 last:pb-0 transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 ${isSuspended ? "opacity-75 saturate-50" : ""}`}
+      >
+        <div
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg"
+          style={{
+            backgroundColor: `${habit.color}20`,
+            color: habit.color,
+          }}
+        >
+          {habit.icon}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-center gap-2">
+            <p className="min-w-0 flex-1 truncate text-sm font-semibold text-(--app-text)">
+              {habit.title}
+            </p>
+            <span className="shrink-0 text-xs text-(--app-hint)">
+              {habit.completedDays}/{habit.totalDays}
+            </span>
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            <div className="relative flex h-1.5 min-w-0 flex-1 gap-0.5 overflow-hidden rounded-full bg-(--app-border)">
+              <div
+                className="h-full rounded-full transition-[width] duration-500 ease-out"
+                style={{
+                  width: `${Math.min(100, Math.max(0, habit.progress))}%`,
+                  backgroundColor: habit.color,
+                }}
+              />
+              {getHabitMissedDayIndexes(habit).map((dayIndex) => (
+                <span
+                  key={dayIndex}
+                  aria-hidden="true"
+                  className="pointer-events-none absolute top-1/2 z-10 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-500 motion-safe:animate-[habit-missed-dot_320ms_ease-out]"
+                  style={{
+                    left: `${((dayIndex + 0.5) / Math.max(habit.totalDays, 1)) * 100}%`,
+                  }}
+                />
+              ))}
+            </div>
+            {(() => {
+              const streak = getProvidedStreak(habit);
+              return streak === undefined ? null : (
+                <span className="shrink-0 text-xs text-(--app-hint)">
+                  🔥 {streak}д
+                </span>
+              );
+            })()}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            if (isSuspended) {
+              setModalOpen(true);
+            } else {
+              toggle();
+            }
+          }}
+          className={`flex h-10 shrink-0 items-center justify-center rounded-full border text-sm transition-[background-color,border-color,color,transform] duration-200 ease-out active:scale-95 ${isSuspended ? "min-w-[6.5rem] px-3 text-xs" : "w-10"}`}
+          style={
+            !isSuspended && habit.isCompletedToday
+              ? {
+                  borderColor: habit.color,
+                  backgroundColor: habit.color,
+                  color: "white",
+                }
+              : !isSuspended
+                ? {
+                    borderColor: "var(--app-border)",
+                    backgroundColor: "var(--app-surface)",
+                    color: "var(--app-hint)",
+                  }
+                : {
+                    borderColor: "var(--app-border)",
+                    backgroundColor: "var(--app-bg)",
+                    color: "var(--app-hint)",
+                  }
+          }
+          aria-label={isSuspended ? "Активировать привычку" : undefined}
+        >
+          {isSuspended ? "Активировать" : "✓"}
+        </button>
+      </div>
+      <SuspendedHabitModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+      />
+    </>
+  );
+}
+
 const HabitsCard = forwardRef<HabitsCardHandle, object>(
   function HabitsCard(_, ref) {
     const [open, setOpen] = useState(false);
@@ -31,6 +158,7 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
     const { data: habits = [], isLoading } = useHabits();
 
     const createMutation = useCreateHabit();
+    const deleteMutation = useDeleteHabit();
     const updateMutation = useUpdateHabit();
     const toggleMutation = useToggleHabit();
 
@@ -42,6 +170,18 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
       () => (isExpanded ? activeHabits : activeHabits.slice(0, 5)),
       [activeHabits, isExpanded],
     );
+    const { suspendedIds: suspendedHabitIds, expiredHabitIds } =
+      useHabitSuspensions(activeHabits);
+    const requestedDeletionIds = useRef(new Set<string>());
+
+    useEffect(() => {
+      expiredHabitIds.forEach((habitId) => {
+        if (requestedDeletionIds.current.has(habitId)) return;
+
+        requestedDeletionIds.current.add(habitId);
+        deleteMutation.mutate(habitId);
+      });
+    }, [deleteMutation, expiredHabitIds]);
     const completedToday = activeHabits.filter(
       (habit) => habit.isCompletedToday,
     ).length;
@@ -120,87 +260,13 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
 
             <div className="mt-4 divide-y divide-(--app-border)">
               {visibleHabits.map((habit) => (
-                <div
+                <HabitRow
                   key={habit.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => openEdit(habit)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      openEdit(habit);
-                    }
-                  }}
-                  className="group flex w-full cursor-pointer items-center gap-3 py-3 first:pt-0 last:pb-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200"
-                >
-                  <div
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg"
-                    style={{
-                      backgroundColor: `${habit.color}20`,
-                      color: habit.color,
-                    }}
-                  >
-                    {habit.icon}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <p className="min-w-0 flex-1 truncate text-sm font-semibold text-(--app-text)">
-                        {habit.title}
-                      </p>
-                      <span className="shrink-0 text-xs text-(--app-hint)">
-                        {habit.completedDays}/{habit.totalDays}
-                      </span>
-                    </div>
-                    <div className="mt-2 flex items-center gap-2">
-                      <div className="flex h-1.5 min-w-0 flex-1 gap-0.5 overflow-hidden rounded-full bg-(--app-border)">
-                        <div
-                          className="h-full rounded-full"
-                          style={{
-                            width: `${Math.min(100, Math.max(0, habit.progress))}%`,
-                            backgroundColor: habit.color,
-                          }}
-                        />
-                      </div>
-                      {(() => {
-                        const streak = getProvidedStreak(habit);
-                        return streak === undefined ? null : (
-                          <span className="shrink-0 text-xs text-(--app-hint)">
-                            🔥 {streak}д
-                          </span>
-                        );
-                      })()}
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      toggleMutation.mutate(habit.id);
-                    }}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-sm transition active:scale-95"
-                    style={
-                      habit.isCompletedToday
-                        ? {
-                            borderColor: habit.color,
-                            backgroundColor: habit.color,
-                            color: "white",
-                          }
-                        : {
-                            borderColor: "var(--app-border)",
-                            backgroundColor: "var(--app-surface)",
-                            color: "var(--app-hint)",
-                          }
-                    }
-                    aria-label={
-                      habit.isCompletedToday
-                        ? "Снять отметку привычки"
-                        : "Отметить привычку"
-                    }
-                  >
-                    ✓
-                  </button>
-                </div>
+                  habit={habit}
+                  isSuspended={suspendedHabitIds.has(habit.id)}
+                  onEdit={() => openEdit(habit)}
+                  toggle={() => toggleMutation.mutate(habit.id)}
+                />
               ))}
             </div>
 
