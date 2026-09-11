@@ -38,9 +38,16 @@ interface HabitRowProps {
   isSuspended: boolean;
   onEdit: () => void;
   toggle: () => void;
+  onClearSuspension: () => void;
 }
 
-function HabitRow({ habit, isSuspended, onEdit, toggle }: HabitRowProps) {
+function HabitRow({
+  habit,
+  isSuspended,
+  onEdit,
+  toggle,
+  onClearSuspension,
+}: HabitRowProps) {
   const [modalOpen, setModalOpen] = useState(false);
 
   return (
@@ -75,34 +82,41 @@ function HabitRow({ habit, isSuspended, onEdit, toggle }: HabitRowProps) {
               {habit.completedDays}/{habit.totalDays}
             </span>
           </div>
-          <div className="mt-2 flex items-center gap-2">
-            <div className="relative flex h-1.5 min-w-0 flex-1 gap-0.5 overflow-hidden rounded-full bg-(--app-border)">
-              <div
-                className="h-full rounded-full transition-[width] duration-500 ease-out"
-                style={{
-                  width: `${Math.min(100, Math.max(0, habit.progress))}%`,
-                  backgroundColor: habit.color,
-                }}
-              />
+          <div className="mt-2">
+            <div className="flex items-center gap-2">
+              <div className="relative flex h-1.5 min-w-0 flex-1 gap-0.5 overflow-hidden rounded-full bg-(--app-border)">
+                <div
+                  className="h-full rounded-full transition-[width] duration-500 ease-out"
+                  style={{
+                    width: `${Math.min(100, Math.max(0, habit.progress))}%`,
+                    backgroundColor: isSuspended
+                      ? "var(--app-border)"
+                      : habit.color,
+                  }}
+                />
+              </div>
+              {(() => {
+                const streak = getProvidedStreak(habit);
+                return streak === undefined ? null : (
+                  <span className="shrink-0 text-xs text-(--app-hint)">
+                    🔥 {streak}д
+                  </span>
+                );
+              })()}
+            </div>
+
+            <div className="relative mt-1 h-3 w-full">
               {getHabitMissedDayIndexes(habit).map((dayIndex) => (
                 <span
                   key={dayIndex}
                   aria-hidden="true"
-                  className="pointer-events-none absolute top-1/2 z-10 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-500 motion-safe:animate-[habit-missed-dot_320ms_ease-out]"
+                  className="pointer-events-none absolute top-1/2 z-10 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-500 shadow-sm shadow-red-950/40 motion-safe:animate-[habit-missed-dot_320ms_ease-out]"
                   style={{
                     left: `${((dayIndex + 0.5) / Math.max(habit.totalDays, 1)) * 100}%`,
                   }}
                 />
               ))}
             </div>
-            {(() => {
-              const streak = getProvidedStreak(habit);
-              return streak === undefined ? null : (
-                <span className="shrink-0 text-xs text-(--app-hint)">
-                  🔥 {streak}д
-                </span>
-              );
-            })()}
           </div>
         </div>
 
@@ -116,7 +130,7 @@ function HabitRow({ habit, isSuspended, onEdit, toggle }: HabitRowProps) {
               toggle();
             }
           }}
-          className={`flex h-10 shrink-0 items-center justify-center rounded-full border text-sm transition-[background-color,border-color,color,transform] duration-200 ease-out active:scale-95 ${isSuspended ? "min-w-[6.5rem] px-3 text-xs" : "w-10"}`}
+          className={`flex h-10 shrink-0 items-center justify-center rounded-full border text-sm transition-[background-color,border-color,color,transform] duration-200 ease-out active:scale-95 ${isSuspended ? "min-w-[6.5rem] border-emerald-600 bg-emerald-600 px-3 text-xs font-semibold text-black" : "w-10"}`}
           style={
             !isSuspended && habit.isCompletedToday
               ? {
@@ -130,11 +144,7 @@ function HabitRow({ habit, isSuspended, onEdit, toggle }: HabitRowProps) {
                     backgroundColor: "var(--app-surface)",
                     color: "var(--app-hint)",
                   }
-                : {
-                    borderColor: "var(--app-border)",
-                    backgroundColor: "var(--app-bg)",
-                    color: "var(--app-hint)",
-                  }
+                : undefined
           }
           aria-label={isSuspended ? "Активировать привычку" : undefined}
         >
@@ -143,7 +153,10 @@ function HabitRow({ habit, isSuspended, onEdit, toggle }: HabitRowProps) {
       </div>
       <SuspendedHabitModal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={() => {
+          setModalOpen(false);
+          onClearSuspension();
+        }}
       />
     </>
   );
@@ -170,8 +183,11 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
       () => (isExpanded ? activeHabits : activeHabits.slice(0, 5)),
       [activeHabits, isExpanded],
     );
-    const { suspendedIds: suspendedHabitIds, expiredHabitIds } =
-      useHabitSuspensions(activeHabits);
+    const {
+      suspendedIds: suspendedHabitIds,
+      expiredHabitIds,
+      clearSuspension,
+    } = useHabitSuspensions(activeHabits);
     const requestedDeletionIds = useRef(new Set<string>());
 
     useEffect(() => {
@@ -266,6 +282,7 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
                   isSuspended={suspendedHabitIds.has(habit.id)}
                   onEdit={() => openEdit(habit)}
                   toggle={() => toggleMutation.mutate(habit.id)}
+                  onClearSuspension={() => clearSuspension(habit.id)}
                 />
               ))}
             </div>

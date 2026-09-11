@@ -6,9 +6,14 @@ import {
 } from "../lib/habit-progress";
 
 const STORAGE_PREFIX = "habit-suspended-";
+const REACTIVATED_PREFIX = "habit-reactivated-";
 
 function getStorageKey(habitId: string) {
   return `${STORAGE_PREFIX}${habitId}`;
+}
+
+function getReactivatedStorageKey(habitId: string) {
+  return `${REACTIVATED_PREFIX}${habitId}`;
 }
 
 function hasCompletionAfter(habit: Habit, dateKey: string) {
@@ -31,6 +36,17 @@ export function useHabitSuspensions(habits: Habit[]) {
   );
   const [expiredHabitIds, setExpiredHabitIds] = useState<string[]>([]);
 
+  function clearSuspension(habitId: string) {
+    localStorage.removeItem(getStorageKey(habitId));
+    localStorage.setItem(getReactivatedStorageKey(habitId), todayKey);
+    setSuspendedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(habitId);
+      return next;
+    });
+    setExpiredHabitIds((prev) => prev.filter((id) => id !== habitId));
+  }
+
   useEffect(() => {
     const now = new Date();
     const nextDay = new Date(now);
@@ -50,6 +66,14 @@ export function useHabitSuspensions(habits: Habit[]) {
     habits.forEach((habit) => {
       const storageKey = getStorageKey(habit.id);
       const storedDate = localStorage.getItem(storageKey);
+      const reactivatedDate = localStorage.getItem(
+        getReactivatedStorageKey(habit.id),
+      );
+
+      if (reactivatedDate && hasCompletionAfter(habit, reactivatedDate)) {
+        localStorage.removeItem(getReactivatedStorageKey(habit.id));
+      }
+
       const hasThreeMissedDays = getHabitConsecutiveMissedDays(habit) >= 3;
       const canStartNewSuspension =
         !storedDate || hasCompletionAfter(habit, storedDate);
@@ -71,11 +95,19 @@ export function useHabitSuspensions(habits: Habit[]) {
           nextExpiredHabitIds.push(habit.id);
         }
       }
+
+      if (
+        reactivatedDate &&
+        todayKey > reactivatedDate &&
+        !hasCompletionAfter(habit, reactivatedDate)
+      ) {
+        nextExpiredHabitIds.push(habit.id);
+      }
     });
 
     setSuspendedIds(nextSuspendedIds);
     setExpiredHabitIds(nextExpiredHabitIds);
   }, [habits, todayKey]);
 
-  return { suspendedIds, expiredHabitIds };
+  return { suspendedIds, expiredHabitIds, clearSuspension };
 }
