@@ -105,15 +105,12 @@ function HabitRow({
               })()}
             </div>
 
-            <div className="relative mt-1 h-3 w-full">
+            <div className="mt-1 flex h-3 items-center gap-1">
               {getHabitMissedDayIndexes(habit).map((dayIndex) => (
                 <span
                   key={dayIndex}
                   aria-hidden="true"
-                  className="pointer-events-none absolute top-1/2 z-10 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-500 shadow-sm shadow-red-950/40 motion-safe:animate-[habit-missed-dot_320ms_ease-out]"
-                  style={{
-                    left: `${((dayIndex + 0.5) / Math.max(habit.totalDays, 1)) * 100}%`,
-                  }}
+                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-500 shadow-sm shadow-red-950/40 motion-safe:animate-[habit-missed-dot_320ms_ease-out]"
                 />
               ))}
             </div>

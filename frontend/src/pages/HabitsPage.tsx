@@ -107,16 +107,7 @@ function HabitPageRow({
               toggle();
             }
           }}
-          className={`flex h-10 shrink-0 items-center justify-center rounded-full border transition-[background-color,border-color,color,transform] duration-200 ease-out active:scale-95 ${isSuspended ? "min-w-26 px-3 text-xs" : habit.isCompletedToday ? "w-10 border-emerald-600 bg-emerald-600 text-white" : "w-10 border-(--app-border) bg-(--app-bg) text-(--app-hint)"}`}
-          style={
-            isSuspended
-              ? {
-                  borderColor: "var(--app-border)",
-                  backgroundColor: "var(--app-border)",
-                  color: "var(--app-text)",
-                }
-              : undefined
-          }
+          className={`flex h-10 shrink-0 items-center justify-center rounded-full border transition-[background-color,border-color,color,transform] duration-200 ease-out active:scale-95 ${isSuspended ? "min-w-26 border-emerald-600 bg-emerald-600 px-3 text-xs font-semibold text-black" : habit.isCompletedToday ? "w-10 border-emerald-600 bg-emerald-600 text-white" : "w-10 border-(--app-border) bg-(--app-bg) text-(--app-hint)"}`}
           aria-label={isSuspended ? "Активировать привычку" : undefined}
         >
           {isSuspended ? "Активировать" : "✓"}
@@ -131,24 +122,30 @@ function HabitPageRow({
           <p className="mt-1 text-xs text-(--app-hint)">
             {habit.description || formatPeriodLabel(habit)}
           </p>
-          <div className="mt-2 flex items-center gap-3">
-            <div className="relative flex-1 h-1.5 overflow-hidden rounded-full bg-(--app-border)">
-              <div
-                className="h-1.5 rounded-full bg-emerald-600 transition-[width] duration-500 ease-out"
-                style={{ width: `${Math.min(100, habit.progress)}%` }}
-              />
+          <div className="mt-2">
+            <div className="flex items-center gap-3">
+              <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-(--app-border)">
+                <div
+                  className={`h-1.5 rounded-full transition-[width] duration-500 ease-out ${isSuspended ? "" : "bg-emerald-600"}`}
+                  style={{
+                    width: `${Math.min(100, habit.progress)}%`,
+                    backgroundColor: isSuspended
+                      ? "var(--app-border)"
+                      : undefined,
+                  }}
+                />
+              </div>
+              <span className="text-xs text-(--app-hint)">{habit.progress}%</span>
+            </div>
+            <div className="mt-1 flex h-3 items-center gap-1">
               {getHabitMissedDayIndexes(habit).map((dayIndex) => (
                 <span
                   key={dayIndex}
                   aria-hidden="true"
-                  className="pointer-events-none absolute top-1/2 z-10 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-500 motion-safe:animate-[habit-missed-dot_320ms_ease-out]"
-                  style={{
-                    left: `${((dayIndex + 0.5) / Math.max(habit.totalDays, 1)) * 100}%`,
-                  }}
+                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-500 motion-safe:animate-[habit-missed-dot_320ms_ease-out]"
                 />
               ))}
             </div>
-            <span className="text-xs text-(--app-hint)">{habit.progress}%</span>
           </div>
         </div>
       </button>

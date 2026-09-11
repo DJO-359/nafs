@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import type { Habit } from "../api/habit.api";
-import { getHabitMissedDayIndexes, toDateKey } from "../lib/habit-progress";
+import {
+  getHabitConsecutiveMissedDays,
+  getHabitMissedDayIndexes,
+  toDateKey,
+} from "../lib/habit-progress";
 
 const STORAGE_PREFIX = "habit-suspended-";
 const REACTIVATED_PREFIX = "habit-reactivated-";
@@ -13,19 +17,6 @@ function getReactivatedStorageKey(habitId: string) {
   return `${REACTIVATED_PREFIX}${habitId}`;
 }
 
-function hasCompletionAfter(habit: Habit, dateKey: string) {
-  return habit.completions.some(
-    (completion) => completion.completedDate > dateKey,
-  );
-}
-
-function addDays(dateKey: string, days: number) {
-  const [year, month, day] = dateKey.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  date.setUTCDate(date.getUTCDate() + days);
-  return date.toISOString().slice(0, 10);
-}
-
 function toUtcDate(dateKey: string): Date {
   const [year, month, day] = dateKey.split("-").map(Number);
   return new Date(Date.UTC(year, month - 1, day));
@@ -34,7 +25,7 @@ function toUtcDate(dateKey: string): Date {
 function dateFromMissedIndex(habit: Habit, index: number): string {
   const start = toUtcDate(habit.startDate);
   start.setUTCDate(start.getUTCDate() + index);
-  return toDateKey(start);
+  return start.toISOString().slice(0, 10);
 }
 
 export function useHabitSuspensions(habits: Habit[]) {
@@ -76,42 +67,28 @@ export function useHabitSuspensions(habits: Habit[]) {
       const reactivatedDate = localStorage.getItem(
         getReactivatedStorageKey(habit.id),
       );
-
       const missedIndexes = getHabitMissedDayIndexes(habit);
-      const hasThreeMissedDays = missedIndexes.length >= 3;
-      const canStartNewSuspension =
-        !storedDate || hasCompletionAfter(habit, storedDate);
 
-      if (hasThreeMissedDays && canStartNewSuspension) {
-        localStorage.setItem(storageKey, todayKey);
-        nextSuspendedIds.add(habit.id);
-      } else if (storedDate === todayKey) {
-        nextSuspendedIds.add(habit.id);
+      if (reactivatedDate) {
+        const hasMissedAfterReactivate = missedIndexes.some((index) => {
+          return dateFromMissedIndex(habit, index) >= reactivatedDate;
+        });
+
+        if (hasMissedAfterReactivate) {
+          nextExpiredHabitIds.push(habit.id);
+        }
+
+        return;
       }
 
       if (storedDate) {
-        const recoveryDate = addDays(storedDate, 1);
-        const missedRecoveryDay = !habit.completions.some(
-          (completion) => completion.completedDate === recoveryDate,
-        );
-
-        if (todayKey > recoveryDate && missedRecoveryDay) {
-          nextExpiredHabitIds.push(habit.id);
-        }
+        nextSuspendedIds.add(habit.id);
+        return;
       }
 
-      if (reactivatedDate) {
-        if (hasCompletionAfter(habit, reactivatedDate)) {
-          localStorage.removeItem(getReactivatedStorageKey(habit.id));
-        } else {
-          const hasMissedAfterReactivate = missedIndexes.some((index) => {
-            return dateFromMissedIndex(habit, index) > reactivatedDate;
-          });
-
-          if (hasMissedAfterReactivate) {
-            nextExpiredHabitIds.push(habit.id);
-          }
-        }
+      if (getHabitConsecutiveMissedDays(habit) >= 3) {
+        localStorage.setItem(storageKey, todayKey);
+        nextSuspendedIds.add(habit.id);
       }
     });
 
