@@ -23,7 +23,7 @@ export default function TasbihSettingsModal({
   return (
     <Modal
       open={open}
-      title="⚙ Настройки Асхары"
+      title="⚙ Настройки Азкары"
       onClose={onClose}
       headerAction={
         <button

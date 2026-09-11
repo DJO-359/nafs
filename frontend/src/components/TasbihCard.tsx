@@ -43,7 +43,7 @@ export default function TasbihCard() {
               <span className="text-xl">📿</span>
             </div>
             <p className="text-[26px] font-semibold leading-none text-white">
-              Асхары
+              Азкары
             </p>
           </div>
 

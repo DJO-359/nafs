@@ -279,7 +279,7 @@ export default function TasbihPage() {
           <div className="flex items-center gap-2">
             <span className="text-xl">📿</span>
             <h1 className="text-lg font-semibold text-[var(--app-text)]">
-              Асхары
+              Азкары
             </h1>
           </div>
 
@@ -288,7 +288,7 @@ export default function TasbihPage() {
               type="button"
               onClick={() => setIsSettingsModalOpen(true)}
               className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--app-surface)] text-xl leading-none text-[var(--app-text)] shadow-sm transition hover:bg-[var(--app-border)]"
-              aria-label="Настройки Асхары"
+              aria-label="Настройки Азкары"
             >
               ⚙
             </button>
@@ -360,7 +360,7 @@ export default function TasbihPage() {
         <div className="flex items-center gap-2">
           <span className="text-xl">📿</span>
           <h1 className="text-lg font-semibold text-[var(--app-text)]">
-            Асхары
+            Азкары
           </h1>
         </div>
 
@@ -369,7 +369,7 @@ export default function TasbihPage() {
             type="button"
             onClick={() => setIsSettingsModalOpen(true)}
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--app-surface)] text-xl leading-none text-[var(--app-text)] shadow-sm transition hover:bg-[var(--app-border)]"
-            aria-label="Настройки Асхары"
+            aria-label="Настройки Азкары"
           >
             ⚙
           </button>
