@@ -130,7 +130,7 @@ function HabitRow({
               toggle();
             }
           }}
-          className={`flex h-10 shrink-0 items-center justify-center rounded-full border text-sm transition-[background-color,border-color,color,transform] duration-200 ease-out active:scale-95 ${isSuspended ? "min-w-[6.5rem] border-emerald-600 bg-emerald-600 px-3 text-xs font-semibold text-black" : "w-10"}`}
+          className={`flex h-10 shrink-0 items-center justify-center rounded-full border text-sm transition-[background-color,border-color,color,transform] duration-200 ease-out active:scale-95 ${isSuspended ? "min-w-26 border-emerald-600 bg-emerald-600 px-3 text-xs font-semibold text-black" : "w-10"}`}
           style={
             !isSuspended && habit.isCompletedToday
               ? {

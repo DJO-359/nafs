@@ -107,7 +107,7 @@ function HabitPageRow({
               toggle();
             }
           }}
-          className={`flex h-10 shrink-0 items-center justify-center rounded-full border transition-[background-color,border-color,color,transform] duration-200 ease-out active:scale-95 ${isSuspended ? "min-w-[6.5rem] px-3 text-xs" : habit.isCompletedToday ? "w-10 border-emerald-600 bg-emerald-600 text-white" : "w-10 border-(--app-border) bg-(--app-bg) text-(--app-hint)"}`}
+          className={`flex h-10 shrink-0 items-center justify-center rounded-full border transition-[background-color,border-color,color,transform] duration-200 ease-out active:scale-95 ${isSuspended ? "min-w-26 px-3 text-xs" : habit.isCompletedToday ? "w-10 border-emerald-600 bg-emerald-600 text-white" : "w-10 border-(--app-border) bg-(--app-bg) text-(--app-hint)"}`}
           style={
             isSuspended
               ? {
