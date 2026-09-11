@@ -16,8 +16,7 @@ export default function SuspendedHabitModal({ open, onClose }: Props) {
       footer={<Button onClick={onClose}>Понятно</Button>}
     >
       <div className="space-y-3 text-(--app-hint)">
-        <p>Ты пропустил 3 дня подряд.</p>
-        <p>Вернись завтра, чтобы продолжить.</p>
+        <p>Ты пропустил 3 дня.</p>
         <p className="font-medium text-amber-700">
           ⚠️ Следующий пропуск — привычка будет удалена без возможности
           восстановления.

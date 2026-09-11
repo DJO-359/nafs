@@ -78,6 +78,7 @@ interface HabitPageRowProps {
   isSuspended: boolean;
   onEdit: () => void;
   toggle: () => void;
+  onClearSuspension: () => void;
 }
 
 function HabitPageRow({
@@ -85,6 +86,7 @@ function HabitPageRow({
   isSuspended,
   onEdit,
   toggle,
+  onClearSuspension,
 }: HabitPageRowProps) {
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -152,7 +154,10 @@ function HabitPageRow({
       </button>
       <SuspendedHabitModal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={() => {
+          setModalOpen(false);
+          onClearSuspension();
+        }}
       />
     </>
   );
@@ -177,8 +182,11 @@ export default function HabitsPage() {
     () => habits.filter((habit) => !habit.isArchived),
     [habits],
   );
-  const { suspendedIds: suspendedHabitIds, expiredHabitIds } =
-    useHabitSuspensions(activeHabits);
+  const {
+    suspendedIds: suspendedHabitIds,
+    expiredHabitIds,
+    clearSuspension,
+  } = useHabitSuspensions(activeHabits);
   const requestedDeletionIds = useRef(new Set<string>());
 
   useEffect(() => {
@@ -314,6 +322,7 @@ export default function HabitsPage() {
                   setOpen(true);
                 }}
                 toggle={() => toggleMutation.mutate(habit.id)}
+                onClearSuspension={() => clearSuspension(habit.id)}
               />
             ))
           )}

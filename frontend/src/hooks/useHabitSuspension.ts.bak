@@ -26,17 +26,6 @@ function addDays(dateKey: string, days: number) {
   return date.toISOString().slice(0, 10);
 }
 
-function toUtcDate(dateKey: string): Date {
-  const [year, month, day] = dateKey.split("-").map(Number);
-  return new Date(Date.UTC(year, month - 1, day));
-}
-
-function dateFromMissedIndex(habit: Habit, index: number): string {
-  const start = toUtcDate(habit.startDate);
-  start.setUTCDate(start.getUTCDate() + index);
-  return toDateKey(start);
-}
-
 export function useHabitSuspensions(habits: Habit[]) {
   const [todayKey, setTodayKey] = useState(() => toDateKey(new Date()));
   const [suspendedIds, setSuspendedIds] = useState<Set<string>>(
@@ -52,6 +41,7 @@ export function useHabitSuspensions(habits: Habit[]) {
       next.delete(habitId);
       return next;
     });
+    setExpiredHabitIds((prev) => prev.filter((id) => id !== habitId));
   }
 
   useEffect(() => {
@@ -76,7 +66,6 @@ export function useHabitSuspensions(habits: Habit[]) {
       const reactivatedDate = localStorage.getItem(
         getReactivatedStorageKey(habit.id),
       );
-
       const missedIndexes = getHabitMissedDayIndexes(habit);
       const hasThreeMissedDays = missedIndexes.length >= 3;
       const canStartNewSuspension =
@@ -100,18 +89,21 @@ export function useHabitSuspensions(habits: Habit[]) {
         }
       }
 
-      if (reactivatedDate) {
-        if (hasCompletionAfter(habit, reactivatedDate)) {
-          localStorage.removeItem(getReactivatedStorageKey(habit.id));
-        } else {
-          const hasMissedAfterReactivate = missedIndexes.some((index) => {
-            return dateFromMissedIndex(habit, index) > reactivatedDate;
-          });
-
-          if (hasMissedAfterReactivate) {
-            nextExpiredHabitIds.push(habit.id);
-          }
-        }
+      if (
+        reactivatedDate &&
+        todayKey > reactivatedDate &&
+        !hasCompletionAfter(habit, reactivatedDate) &&
+        missedIndexes.some((index) => {
+          const completionDates = habit.completions.map(
+            (completion) => completion.completedDate,
+          );
+          return (
+            habit.startDate &&
+            !completionDates.includes(addDays(reactivatedDate, index + 1))
+          );
+        })
+      ) {
+        nextExpiredHabitIds.push(habit.id);
       }
     });
 
