@@ -472,9 +472,6 @@ export default function DayHistoryPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h1 className="text-3xl font-semibold">Дневник</h1>
-                      <p className="text-sm text-[var(--app-hint)]">
-                        {formatDay(day.date)}
-                      </p>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -495,17 +492,6 @@ export default function DayHistoryPage() {
                       >
                         🔍
                       </button>
-
-                      {isToday && (
-                        <button
-                          type="button"
-                          onClick={openNewEntry}
-                          className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-500 text-xl text-white transition hover:bg-blue-600"
-                          aria-label="Добавить новую запись"
-                        >
-                          ✏️
-                        </button>
-                      )}
 
                       <button
                         type="button"
@@ -562,6 +548,17 @@ export default function DayHistoryPage() {
                   </div>
                 </div>
               </div>
+
+              {isToday && (
+                <button
+                  type="button"
+                  onClick={openNewEntry}
+                  className="fixed bottom-24 right-6 z-80 inline-flex h-14 w-14 items-center justify-center rounded-full bg-blue-500 text-3xl font-semibold text-white shadow-lg transition hover:bg-blue-600 focus:outline-none"
+                  aria-label="Добавить новую запись"
+                >
+                  +
+                </button>
+              )}
 
               <Card className="rounded-[28px] p-6">
                 {diaryEntries.length === 0 ? (
@@ -667,6 +664,15 @@ export default function DayHistoryPage() {
                   </div>
                 )}
               </Card>
+
+              <button
+                type="button"
+                onClick={openNewEntry}
+                className="fixed bottom-24 right-6 z-[80] inline-flex h-14 w-14 items-center justify-center rounded-full bg-blue-500 text-3xl font-semibold text-white shadow-lg transition hover:bg-blue-600 focus:outline-none"
+                aria-label="Добавить новую запись"
+              >
+                +
+              </button>
 
               {/* Модалка календаря – скрываем кнопку "Отмена" */}
               <Modal
