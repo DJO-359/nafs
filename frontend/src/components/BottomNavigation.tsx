@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 import { haptic } from "../lib/telegram";
 
 const ITEMS = [
-  { to: "/", label: "Сегодня", icon: "🏠" },
+  { to: "/", label: "", icon: "🏠" },
   { to: "/stats", label: "Статистика", icon: "📊" },
 ];
 
