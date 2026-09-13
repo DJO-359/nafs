@@ -220,14 +220,6 @@ export default function DayPage() {
             <div className="relative">
               <div className="mt-6 grid grid-cols-2 gap-3">
                 <Link
-                  to="/calendar"
-                  className="rounded-xl bg-[var(--app-surface)] p-4 text-center shadow transition hover:shadow-md"
-                >
-                  📅
-                  <div className="mt-2 font-medium">Календарь</div>
-                </Link>
-
-                <Link
                   to="/history"
                   className="rounded-xl bg-[var(--app-surface)] p-4 text-center shadow transition hover:shadow-md"
                 >
