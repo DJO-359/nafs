@@ -4,6 +4,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
+
 import Card from "../components/ui/Card";
 import ConfirmModal from "../components/ui/ConfirmModal";
 import EmptyState from "../components/ui/EmptyState";
@@ -103,6 +105,8 @@ export default function DayHistoryPage() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [swipedEntryId, setSwipedEntryId] = useState<string | null>(null);
+
+  useBodyScrollLock(isCalendarOpen || isDiaryOpen || isSearchOpen);
   const [confirmDeleteEntry, setConfirmDeleteEntry] =
     useState<DiaryEntry | null>(null);
   const [pinPickerEntry, setPinPickerEntry] = useState<DiaryEntry | null>(null);

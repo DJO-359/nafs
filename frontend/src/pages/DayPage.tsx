@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import ReminderList from "../components/ReminderList";
+import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import DiaryCard from "../components/DiaryCard";
 import TasbihCard from "../components/TasbihCard";
 import ProgressCard from "../components/ProgressCard";
@@ -56,6 +57,7 @@ export default function DayPage() {
   const reminderMutation = useReminder();
   const [isIntentionOpen, setIsIntentionOpen] = useState(false);
   const [isRemindersOpen, setIsRemindersOpen] = useState(false);
+  useBodyScrollLock(isRemindersOpen);
 
   // Контейнер и отступы даёт Layout. Раньше здесь был второй min-h-screen
   // с собственным p-4, из-за чего отступы удваивались.
