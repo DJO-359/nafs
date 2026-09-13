@@ -52,11 +52,19 @@ function HabitRow({
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deltaX, setDeltaX] = useState(0);
+  const deltaXRef = useRef(0);
   const startX = useRef<number | null>(null);
+  const startDeltaX = useRef(0);
   const MAX_SWIPE = 84;
 
+  function applyDelta(nextDelta: number) {
+    const clamped = Math.min(0, Math.max(-MAX_SWIPE, nextDelta));
+    deltaXRef.current = clamped;
+    setDeltaX(clamped);
+  }
+
   function resetSwipe() {
-    setDeltaX(0);
+    applyDelta(0);
   }
 
   return (
@@ -85,26 +93,27 @@ function HabitRow({
           }}
           onPointerDown={(event) => {
             startX.current = event.clientX;
+            startDeltaX.current = deltaXRef.current;
           }}
           onPointerMove={(event) => {
             if (startX.current === null) return;
             const dx = event.clientX - startX.current;
-            if (dx < 0) {
-              const next = Math.max(dx, -MAX_SWIPE);
-              setDeltaX(next);
-            }
+            const next = startDeltaX.current + dx;
+            applyDelta(next);
           }}
           onPointerUp={() => {
-            if (deltaX < -MAX_SWIPE / 2) {
-              setDeltaX(-MAX_SWIPE);
+            if (deltaXRef.current < -MAX_SWIPE / 2) {
+              applyDelta(-MAX_SWIPE);
             } else {
               resetSwipe();
             }
             startX.current = null;
+            startDeltaX.current = 0;
           }}
           onPointerCancel={() => {
             resetSwipe();
             startX.current = null;
+            startDeltaX.current = 0;
           }}
         >
           <div
