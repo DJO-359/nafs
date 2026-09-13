@@ -22,6 +22,39 @@ import nightImage from "../assets/images/backgrounds/night.jpg";
 
 type DayPart = "morning" | "day" | "evening" | "night";
 
+function HistoryIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d="M3.8 12a8.2 8.2 0 1 0 2.2-6.2"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M4 4v7h7"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 8v4l3 2"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 const heroThemes: Record<DayPart, { image: string }> = {
   morning: {
     image: morningImage,
@@ -218,13 +251,29 @@ export default function DayPage() {
             </div>
 
             <div className="relative">
-              <div className="mt-6 grid grid-cols-2 gap-3">
+              <div className="mt-6 flex items-center justify-center gap-2 rounded-xl bg-[var(--app-surface)] px-3 py-3 shadow transition">
+                <Link
+                  to="/"
+                  className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-[var(--app-text)] transition hover:bg-[var(--app-bg)]"
+                >
+                  <span className="text-base">🏠</span>
+                  <span>Сегодня</span>
+                </Link>
+
+                <Link
+                  to="/stats"
+                  className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-[var(--app-text)] transition hover:bg-[var(--app-bg)]"
+                >
+                  <span className="text-base">📊</span>
+                  <span>Статистика</span>
+                </Link>
+
                 <Link
                   to="/history"
-                  className="rounded-xl bg-[var(--app-surface)] p-4 text-center shadow transition hover:shadow-md"
+                  className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-[var(--app-text)] transition hover:bg-[var(--app-bg)]"
                 >
-                  📖
-                  <div className="mt-2 font-medium">История</div>
+                  <HistoryIcon className="h-4 w-4" />
+                  <span>История</span>
                 </Link>
               </div>
             </div>
