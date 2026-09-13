@@ -67,7 +67,9 @@ export default function AddToHomeScreenCard() {
           disabled={loading}
         >
           <span className="text-base">📱</span>
-          <span>{loading ? "Подождите..." : "Добавить на главный экран"}</span>
+          <span>
+            {loading ? "Подождите..." : "Добавить ярлык на главный экран"}
+          </span>
         </button>
       ) : null}
     </div>
