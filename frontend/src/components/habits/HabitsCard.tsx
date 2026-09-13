@@ -17,6 +17,7 @@ import {
 import HabitForm from "./HabitForm";
 import SuspendedHabitModal from "./SuspendedHabitModal";
 import ConfirmModal from "../ui/ConfirmModal";
+import Modal from "../ui/Modal";
 import type { CreateHabitDto, Habit } from "../../api/habit.api";
 import { getHabitMissedDayIndexes } from "../../lib/habit-progress";
 import { useHabitSuspensions } from "../../hooks/useHabitSuspension";
@@ -260,6 +261,7 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
     const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
     const [isExpanded, setIsExpanded] = useState(false);
     const [formResetVersion, setFormResetVersion] = useState(0);
+    const [warningOpen, setWarningOpen] = useState(false);
 
     const { data: habits = [], isLoading } = useHabits();
 
@@ -271,6 +273,13 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
     const activeHabits = useMemo(
       () => habits.filter((habit) => !habit.isArchived),
       [habits],
+    );
+    const hasMissedActiveHabits = useMemo(
+      () =>
+        activeHabits.some(
+          (habit) => getHabitMissedDayIndexes(habit).length > 0,
+        ),
+      [activeHabits],
     );
     const visibleHabits = useMemo(
       () =>
@@ -352,14 +361,60 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
                 +
               </button>
             )}
-            <h2 className="truncate text-lg font-semibold text-(--app-text)">
-              Привычки
-            </h2>
+            <div className="flex min-w-0 items-center gap-2">
+              <h2 className="truncate text-lg font-semibold text-(--app-text)">
+                Привычки
+              </h2>
+              {hasMissedActiveHabits && (
+                <button
+                  type="button"
+                  aria-label="Показать объяснение красных точек"
+                  onClick={() => setWarningOpen(true)}
+                  className="shrink-0 rounded-full px-1 text-lg font-bold text-amber-600 transition hover:scale-105"
+                >
+                  ⚠️
+                </button>
+              )}
+            </div>
           </div>
           <span className="shrink-0 text-sm font-semibold text-emerald-600">
             {progressPercent}%
           </span>
         </div>
+
+        <Modal
+          open={warningOpen}
+          title="⚠️ Внимание"
+          onClose={() => setWarningOpen(false)}
+          showCancel={false}
+          footer={
+            <button
+              type="button"
+              onClick={() => setWarningOpen(false)}
+              className="rounded-lg border border-(--app-border) px-4 py-2 text-sm font-medium text-(--app-text) transition hover:bg-(--app-bg)"
+            >
+              Понятно
+            </button>
+          }
+        >
+          <div className="space-y-3 text-sm text-(--app-hint)">
+            <p className="font-medium text-(--app-text)">
+              Красные точки показывают пропущенные дни.
+            </p>
+            <div className="space-y-1">
+              <p>🔴 1 точка — 1 пропущенный день</p>
+              <p>🔴 🔴 2 точки — 2 пропущенных дня</p>
+              <p>и т.д.</p>
+            </div>
+            <div className="space-y-1">
+              <p>30 дней → 2 пропуска</p>
+              <p>60 дней → 5 пропусков</p>
+              <p>90 дней → 8 пропусков</p>
+              <p>180 дней → 15 пропусков</p>
+              <p>365 дней → 30 пропусков</p>
+            </div>
+          </div>
+        </Modal>
 
         <HabitForm
           key={`${editingHabit?.id ?? "new"}-${formResetVersion}`}
