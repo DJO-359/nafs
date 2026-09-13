@@ -76,7 +76,6 @@ function getCurrentWeekCompletion(habits: Habit[]) {
 interface HabitPageRowProps {
   habit: Habit;
   isSuspended: boolean;
-  onEdit: () => void;
   toggle: () => void;
   onClearSuspension: () => void;
 }
@@ -84,7 +83,6 @@ interface HabitPageRowProps {
 function HabitPageRow({
   habit,
   isSuspended,
-  onEdit,
   toggle,
   onClearSuspension,
 }: HabitPageRowProps) {
@@ -92,9 +90,7 @@ function HabitPageRow({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={onEdit}
+      <div
         className={`group flex w-full items-center gap-3 rounded-3xl bg-(--app-bg) px-3 py-2 text-left transition-all duration-300 ease-out hover:bg-(--app-surface) ${isSuspended ? "opacity-75 saturate-50" : ""}`}
       >
         <button
@@ -135,7 +131,9 @@ function HabitPageRow({
                   }}
                 />
               </div>
-              <span className="text-xs text-(--app-hint)">{habit.progress}%</span>
+              <span className="text-xs text-(--app-hint)">
+                {habit.progress}%
+              </span>
             </div>
             <div className="mt-1 flex h-3 items-center gap-1">
               {getHabitMissedDayIndexes(habit).map((dayIndex) => (
@@ -148,7 +146,7 @@ function HabitPageRow({
             </div>
           </div>
         </div>
-      </button>
+      </div>
       <SuspendedHabitModal
         open={modalOpen}
         onClose={() => {
@@ -314,10 +312,6 @@ export default function HabitsPage() {
                 key={habit.id}
                 habit={habit}
                 isSuspended={suspendedHabitIds.has(habit.id)}
-                onEdit={() => {
-                  setEditingHabit(habit);
-                  setOpen(true);
-                }}
                 toggle={() => toggleMutation.mutate(habit.id)}
                 onClearSuspension={() => clearSuspension(habit.id)}
               />

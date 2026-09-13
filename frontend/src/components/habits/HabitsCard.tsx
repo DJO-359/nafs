@@ -36,7 +36,6 @@ function getProvidedStreak(habit: Habit) {
 interface HabitRowProps {
   habit: Habit;
   isSuspended: boolean;
-  onEdit: () => void;
   toggle: () => void;
   onClearSuspension: () => void;
 }
@@ -44,7 +43,6 @@ interface HabitRowProps {
 function HabitRow({
   habit,
   isSuspended,
-  onEdit,
   toggle,
   onClearSuspension,
 }: HabitRowProps) {
@@ -53,15 +51,7 @@ function HabitRow({
   return (
     <>
       <div
-        role="button"
-        tabIndex={0}
-        onClick={onEdit}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            onEdit();
-          }
-        }}
-        className={`group flex w-full cursor-pointer items-center gap-3 py-3 first:pt-0 last:pb-0 transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 ${isSuspended ? "opacity-75 saturate-50" : ""}`}
+        className={`group flex w-full items-center gap-3 py-3 first:pt-0 last:pb-0 transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 ${isSuspended ? "opacity-75 saturate-50" : ""}`}
       >
         <div
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg"
@@ -236,11 +226,6 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
       openCreate,
     }));
 
-    function openEdit(habit: Habit) {
-      setEditingHabit(habit);
-      setOpen(true);
-    }
-
     return (
       <Card>
         <div className="flex items-center justify-between gap-3">
@@ -296,7 +281,6 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
                   key={habit.id}
                   habit={habit}
                   isSuspended={suspendedHabitIds.has(habit.id)}
-                  onEdit={() => openEdit(habit)}
                   toggle={() => toggleMutation.mutate(habit.id)}
                   onClearSuspension={() => clearSuspension(habit.id)}
                 />
