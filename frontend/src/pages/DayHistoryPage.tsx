@@ -458,19 +458,22 @@ export default function DayHistoryPage() {
 
           return (
             <>
-              <div className="mb-6 flex items-start justify-between gap-4">
-                {!isToday && (
+              <div className="mb-6 flex items-start gap-4">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center">
                   <button
                     type="button"
                     onClick={handleBack}
-                    className="text-xl font-medium text-[var(--app-text)] transition hover:text-[var(--app-hint)]"
+                    className={`text-xl font-medium text-[var(--app-text)] transition hover:text-[var(--app-hint)] ${
+                      isToday ? "invisible pointer-events-none" : ""
+                    }`}
                     aria-label="Назад"
+                    disabled={isToday}
                   >
                     ←
                   </button>
-                )}
+                </div>
 
-                <div className="flex-1">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h1 className="text-3xl font-semibold">Дневник</h1>
