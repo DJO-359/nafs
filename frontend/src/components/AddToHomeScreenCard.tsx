@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getWebApp, runTelegramCloseAndBackProbe } from "../lib/telegram";
+import { getWebApp } from "../lib/telegram";
 
 type HomeStatus = "added" | "missed" | "unsupported" | null;
 
@@ -72,16 +72,6 @@ export default function AddToHomeScreenCard() {
           </span>
         </button>
       ) : null}
-
-      {import.meta.env.DEV && (
-        <button
-          type="button"
-          onClick={() => runTelegramCloseAndBackProbe(400)}
-          className="mt-2 flex w-full items-center justify-center rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-2 text-sm font-semibold text-[var(--app-text)] shadow-sm transition hover:bg-[var(--app-bg)]"
-        >
-          TEST CLOSE + BACK
-        </button>
-      )}
     </div>
   );
 }
