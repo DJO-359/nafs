@@ -166,6 +166,7 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
     const [open, setOpen] = useState(false);
     const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
     const [isExpanded, setIsExpanded] = useState(false);
+    const [formResetVersion, setFormResetVersion] = useState(0);
 
     const { data: habits = [], isLoading } = useHabits();
 
@@ -205,18 +206,25 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
       ? Math.round((completedToday / activeHabits.length) * 100)
       : 0;
 
+    function closeHabitForm() {
+      setOpen(false);
+      setEditingHabit(null);
+      setFormResetVersion((version) => version + 1);
+    }
+
     async function handleSubmit(dto: CreateHabitDto) {
       if (editingHabit) {
         await updateMutation.mutateAsync({
           id: editingHabit.id,
           dto,
         });
-      } else {
-        await createMutation.mutateAsync(dto);
+
+        closeHabitForm();
+        return;
       }
 
-      setOpen(false);
-      setEditingHabit(null);
+      await createMutation.mutateAsync(dto);
+      closeHabitForm();
     }
 
     function openCreate() {
@@ -237,14 +245,25 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
       <Card>
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <button
-              type="button"
-              onClick={openCreate}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-xl font-medium leading-none text-white shadow-sm transition hover:bg-emerald-700 active:scale-95"
-              aria-label="Создать привычку"
-            >
-              +
-            </button>
+            {open && !editingHabit ? (
+              <button
+                type="button"
+                onClick={closeHabitForm}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--app-border)] text-2xl font-medium leading-none text-[var(--app-text)] shadow-sm transition hover:bg-[var(--app-bg)] active:scale-95"
+                aria-label="Закрыть форму создания привычки"
+              >
+                ×
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={openCreate}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-xl font-medium leading-none text-white shadow-sm transition hover:bg-emerald-700 active:scale-95"
+                aria-label="Создать привычку"
+              >
+                +
+              </button>
+            )}
             <h2 className="truncate text-lg font-semibold text-(--app-text)">
               Привычки
             </h2>
@@ -255,13 +274,10 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
         </div>
 
         <HabitForm
-          key={editingHabit?.id ?? "new"}
+          key={`${editingHabit?.id ?? "new"}-${formResetVersion}`}
           open={open}
           initialHabit={editingHabit}
-          onClose={() => {
-            setOpen(false);
-            setEditingHabit(null);
-          }}
+          onClose={closeHabitForm}
           onSubmit={handleSubmit}
           loading={createMutation.isPending || updateMutation.isPending}
         />
