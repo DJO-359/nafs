@@ -654,7 +654,7 @@ export default function DayHistoryPage() {
                 )}
               </Card>
 
-              {isToday && !isDiaryOpen && (
+              {!isDiaryOpen && (
                 <button
                   type="button"
                   onClick={openNewEntry}
