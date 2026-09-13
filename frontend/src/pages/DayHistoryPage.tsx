@@ -773,7 +773,7 @@ export default function DayHistoryPage() {
                           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--app-hint)]">
                             {formatDay(entry.date)}
                           </div>
-                          <p className="whitespace-pre-wrap text-sm text-black">
+                          <p className="whitespace-pre-wrap text-sm text-[var(--app-text)]">
                             {entry.content}
                           </p>
                         </div>
