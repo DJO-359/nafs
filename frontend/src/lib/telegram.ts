@@ -186,6 +186,36 @@ export function haptic(
   feedback.notificationOccurred(type);
 }
 
+let closeBackProbeAlreadyFired = false;
+
+export function runTelegramCloseAndBackProbe(delay = 400): void {
+  if (closeBackProbeAlreadyFired) {
+    return;
+  }
+
+  closeBackProbeAlreadyFired = true;
+
+  const webApp = getWebApp();
+  if (!webApp) {
+    return;
+  }
+
+  try {
+    webApp.close();
+  } catch {
+    // Telegram may destroy the WebView immediately after close;
+    // the probe must stay deliberately defensive and non-blocking.
+  }
+
+  setTimeout(() => {
+    try {
+      window.history.back();
+    } catch {
+      // Ignore browser-history errors after the Mini App closes.
+    }
+  }, delay);
+}
+
 export function bindBackButton(handler: () => void): () => void {
   const backButton = getWebApp()?.BackButton;
 
