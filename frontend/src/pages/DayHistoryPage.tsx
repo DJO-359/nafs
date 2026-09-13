@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -19,6 +19,7 @@ import { useDayByDate } from "../hooks/useDayByDate";
 import { useBackButton } from "../hooks/useBackButton";
 import { useDeleteDiary } from "../hooks/useDeleteDiary";
 import { useDiary } from "../hooks/useDiary";
+import { useDiaryHistory } from "../hooks/useDiaryHistory";
 import { useInvalidateDayData } from "../hooks/useInvalidateDayData";
 import { describeError } from "../lib/errors";
 import { haptic } from "../lib/telegram";
@@ -94,10 +95,13 @@ export default function DayHistoryPage() {
   const location = useLocation();
   const state = location.state as CalendarNavigationState | null;
   const query = useDayByDate(date);
+  const diaryHistoryQuery = useDiaryHistory();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isDiaryOpen, setIsDiaryOpen] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchText, setSearchText] = useState("");
   const [swipedEntryId, setSwipedEntryId] = useState<string | null>(null);
   const [confirmDeleteEntry, setConfirmDeleteEntry] =
     useState<DiaryEntry | null>(null);
@@ -113,6 +117,29 @@ export default function DayHistoryPage() {
   const diaryMutation = useDiary();
   const deleteDiaryMutation = useDeleteDiary();
   const invalidateDayData = useInvalidateDayData();
+
+  const searchResults = useMemo(() => {
+    const normalizedQuery = searchText.trim().toLowerCase();
+    if (!normalizedQuery || diaryHistoryQuery.isError) {
+      return [];
+    }
+
+    const historyEntries = Array.isArray(diaryHistoryQuery.data)
+      ? diaryHistoryQuery.data
+      : [];
+
+    return historyEntries.filter((entry) => {
+      const content = entry.content.toLowerCase();
+      if (content.includes(normalizedQuery)) return true;
+
+      const pluralVariant = normalizedQuery.endsWith("а")
+        ? normalizedQuery.slice(0, -1) + "ы"
+        : normalizedQuery;
+      return (
+        pluralVariant !== normalizedQuery && content.includes(pluralVariant)
+      );
+    });
+  }, [diaryHistoryQuery.data, diaryHistoryQuery.isError, searchText]);
 
   const updateEntryMutation = useMutation({
     mutationFn: ({
@@ -456,6 +483,15 @@ export default function DayHistoryPage() {
                         📅
                       </button>
 
+                      <button
+                        type="button"
+                        onClick={() => setIsSearchOpen(true)}
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl transition hover:bg-[var(--app-surface)]"
+                        aria-label="Поиск по дневнику"
+                      >
+                        🔍
+                      </button>
+
                       {isToday && (
                         <button
                           type="button"
@@ -684,6 +720,66 @@ export default function DayHistoryPage() {
                       )}
                     </QueryState>
                   </Card>
+                </div>
+              </Modal>
+
+              <Modal
+                open={isSearchOpen}
+                title="Поиск по дневнику"
+                onClose={() => {
+                  setIsSearchOpen(false);
+                  setSearchText("");
+                }}
+                footer={null}
+                showCancel={false}
+                headerAction={
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSearchOpen(false);
+                      setSearchText("");
+                    }}
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--app-bg)] text-xl text-[var(--app-text)] transition hover:bg-[var(--app-surface)]"
+                    aria-label="Закрыть поиск"
+                  >
+                    ✕
+                  </button>
+                }
+              >
+                <div className="space-y-4">
+                  <input
+                    value={searchText}
+                    onChange={(event) => setSearchText(event.target.value)}
+                    className="w-full rounded-2xl border border-[var(--app-border)] bg-[var(--app-bg)] px-4 py-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                    placeholder="Введите текст записи"
+                    autoFocus
+                  />
+
+                  {searchText.trim() === "" ? (
+                    <div className="text-sm text-[var(--app-hint)]">
+                      Введите текст для поиска по всем записям дневника.
+                    </div>
+                  ) : searchResults.length === 0 ? (
+                    <div className="text-sm font-medium text-[var(--app-text)]">
+                      Записей не найдено
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {searchResults.map((entry) => (
+                        <div
+                          key={entry.id}
+                          className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-bg)] p-3"
+                        >
+                          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--app-hint)]">
+                            {formatDay(entry.date)}
+                          </div>
+                          <p className="whitespace-pre-wrap text-sm text-black">
+                            {entry.content}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </Modal>
 
