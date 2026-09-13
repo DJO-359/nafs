@@ -4,7 +4,7 @@ import { haptic } from "../lib/telegram";
 
 const ITEMS = [
   { to: "/", label: "", icon: "🏠" },
-  { to: "/stats", label: "Статистика", icon: "📊" },
+  { to: "/stats", label: "", icon: "📊" },
 ];
 
 export default function BottomNavigation() {

@@ -7,7 +7,6 @@ import ReminderList from "../components/ReminderList";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import DiaryCard from "../components/DiaryCard";
 import TasbihCard from "../components/TasbihCard";
-import ProgressCard from "../components/ProgressCard";
 import HabitsCard from "../components/habits/HabitsCard";
 import IntentionModal from "../components/IntentionModal";
 import QueryState from "../components/ui/QueryState";
@@ -216,8 +215,6 @@ export default function DayPage() {
 
             <div className="space-y-4">
               <HabitsCard />
-
-              <ProgressCard reminders={day.reminders} />
             </div>
 
             <div className="relative">
