@@ -142,6 +142,9 @@ function HabitRow({
         open={modalOpen}
         onClose={() => {
           setModalOpen(false);
+        }}
+        onContinue={() => {
+          setModalOpen(false);
           onClearSuspension();
         }}
       />

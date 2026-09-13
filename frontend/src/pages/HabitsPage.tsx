@@ -151,6 +151,9 @@ function HabitPageRow({
         open={modalOpen}
         onClose={() => {
           setModalOpen(false);
+        }}
+        onContinue={() => {
+          setModalOpen(false);
           onClearSuspension();
         }}
       />
