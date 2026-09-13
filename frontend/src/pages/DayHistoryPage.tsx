@@ -549,17 +549,6 @@ export default function DayHistoryPage() {
                 </div>
               </div>
 
-              {isToday && (
-                <button
-                  type="button"
-                  onClick={openNewEntry}
-                  className="fixed bottom-24 right-6 z-80 inline-flex h-14 w-14 items-center justify-center rounded-full bg-blue-500 text-3xl font-semibold text-white shadow-lg transition hover:bg-blue-600 focus:outline-none"
-                  aria-label="Добавить новую запись"
-                >
-                  +
-                </button>
-              )}
-
               <Card className="rounded-[28px] p-6">
                 {diaryEntries.length === 0 ? (
                   <div className="space-y-6">
@@ -665,14 +654,18 @@ export default function DayHistoryPage() {
                 )}
               </Card>
 
-              <button
-                type="button"
-                onClick={openNewEntry}
-                className="fixed bottom-24 right-6 z-[80] inline-flex h-14 w-14 items-center justify-center rounded-full bg-blue-500 text-3xl font-semibold text-white shadow-lg transition hover:bg-blue-600 focus:outline-none"
-                aria-label="Добавить новую запись"
-              >
-                +
-              </button>
+              {isToday && !isDiaryOpen && (
+                <button
+                  type="button"
+                  onClick={openNewEntry}
+                  className="fixed bottom-24 right-6 z-[80] inline-flex h-14 w-14 items-center justify-center rounded-full bg-blue-500 text-white shadow-[0_12px_24px_rgba(37,99,235,0.34)] transition active:scale-95 hover:bg-blue-600 focus:outline-none"
+                  aria-label="Добавить новую запись"
+                >
+                  <span className="inline-flex h-8 w-8 items-center justify-center text-[30px] font-semibold leading-none">
+                    +
+                  </span>
+                </button>
+              )}
 
               {/* Модалка календаря – скрываем кнопку "Отмена" */}
               <Modal
