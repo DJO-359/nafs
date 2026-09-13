@@ -100,21 +100,23 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     }
 
     try {
+      const miniAppUrl = this.configService.getOrThrow<string>('MINI_APP_URL');
+      const keyboard = reminderId
+        ? [
+            [{ text: 'Открыть', web_app: { url: miniAppUrl } }],
+            [{ text: '✅ Выполнено', callback_data: `done:${reminderId}` }],
+            [{ text: '⏰ Через час', callback_data: `hour:${reminderId}` }],
+            [
+              {
+                text: '📅 Завтра',
+                callback_data: `tomorrow:${reminderId}`,
+              },
+            ],
+          ]
+        : undefined;
+
       await this.bot.sendMessage(chatId, text, {
-        reply_markup: reminderId
-          ? {
-              inline_keyboard: [
-                [{ text: '✅ Выполнено', callback_data: `done:${reminderId}` }],
-                [{ text: '⏰ Через час', callback_data: `hour:${reminderId}` }],
-                [
-                  {
-                    text: '📅 Завтра',
-                    callback_data: `tomorrow:${reminderId}`,
-                  },
-                ],
-              ],
-            }
-          : undefined,
+        reply_markup: keyboard ? { inline_keyboard: keyboard } : undefined,
       });
 
       return { status: 'sent' };
