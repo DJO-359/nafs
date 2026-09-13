@@ -2,9 +2,43 @@ import { NavLink } from "react-router-dom";
 
 import { haptic } from "../lib/telegram";
 
+function HistoryIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d="M3.8 12a8.2 8.2 0 1 0 2.2-6.2"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M4 4v7h7"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 8v4l3 2"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 const ITEMS = [
   { to: "/", label: "", icon: "🏠" },
   { to: "/stats", label: "", icon: "📊" },
+  { to: "/history", label: "", icon: <HistoryIcon className="h-5 w-5" /> },
 ];
 
 export default function BottomNavigation() {
@@ -34,11 +68,15 @@ export default function BottomNavigation() {
                 }`}
               >
                 <span
-                  className={`text-lg transition duration-[250ms] ease-out ${
+                  className={`inline-flex items-center justify-center transition duration-[250ms] ease-out ${
                     isActive ? "scale-[1.08]" : "scale-100"
                   }`}
                 >
-                  {item.icon}
+                  {typeof item.icon === "string" ? (
+                    <span className="text-lg">{item.icon}</span>
+                  ) : (
+                    item.icon
+                  )}
                 </span>
 
                 <span className="text-[11px] leading-4">{item.label}</span>
