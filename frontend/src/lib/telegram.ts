@@ -43,12 +43,15 @@ interface TelegramWebApp {
   version?: string;
   platform?: string;
   colorScheme?: "light" | "dark";
+  viewportHeight?: number;
 
   themeParams?: ThemeParams;
 
   ready: () => void;
   expand: () => void;
   close: () => void;
+  disableVerticalSwipes?: () => void;
+  enableVerticalSwipes?: () => void;
 
   BackButton?: BackButton;
   HapticFeedback?: HapticFeedback;
@@ -129,6 +132,7 @@ export function initTelegram(): void {
 
   webApp.ready();
   webApp.expand();
+  webApp.disableVerticalSwipes?.();
 
   applyTheme(webApp);
 
