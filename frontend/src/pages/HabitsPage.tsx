@@ -91,98 +91,141 @@ function HabitPageRow({
 }: HabitPageRowProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deltaX, setDeltaX] = useState(0);
+  const startX = useRef<number | null>(null);
+  const MAX_SWIPE = 84;
+
+  function resetSwipe() {
+    setDeltaX(0);
+  }
 
   return (
     <>
-      <div
-        className={`group flex w-full items-center gap-3 rounded-3xl bg-(--app-bg) px-3 py-2 text-left transition-all duration-300 ease-out hover:bg-(--app-surface) ${isSuspended ? "opacity-75 saturate-50" : ""}`}
-      >
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            setDeleteConfirmOpen(true);
-          }}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-(--app-border) bg-(--app-surface) text-base leading-none text-(--app-hint) transition hover:bg-(--app-bg) hover:text-red-600"
-          aria-label="Удалить привычку"
-        >
-          🗑️
-        </button>
+      <div className="relative overflow-hidden rounded-3xl">
+        <div className="absolute inset-y-0 right-0 flex w-20 items-center justify-center overflow-hidden rounded-r-3xl bg-red-500">
+          <button
+            type="button"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl text-red-500 shadow-sm transition hover:scale-105"
+            aria-label="Удалить привычку"
+            onClick={(event) => {
+              event.stopPropagation();
+              setDeleteConfirmOpen(true);
+            }}
+          >
+            🗑️
+          </button>
+        </div>
 
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            if (isSuspended) {
-              setModalOpen(true);
-            } else {
-              toggle();
+        <div
+          className={`group flex w-full items-center gap-3 rounded-3xl bg-(--app-bg) px-3 py-2 text-left transition-all duration-300 ease-out hover:bg-(--app-surface) ${isSuspended ? "opacity-75 saturate-50" : ""}`}
+          style={{
+            transform: `translateX(${deltaX}px)`,
+            touchAction: "pan-y",
+          }}
+          onPointerDown={(event) => {
+            startX.current = event.clientX;
+          }}
+          onPointerMove={(event) => {
+            if (startX.current === null) return;
+            const dx = event.clientX - startX.current;
+            if (dx < 0) {
+              const next = Math.max(dx, -MAX_SWIPE);
+              setDeltaX(next);
             }
           }}
-          className={`flex h-10 shrink-0 items-center justify-center rounded-full border transition-[background-color,border-color,color,transform] duration-200 ease-out active:scale-95 ${isSuspended ? "min-w-26 border-emerald-600 bg-emerald-600 px-3 text-xs font-semibold text-black" : habit.isCompletedToday ? "w-10 border-emerald-600 bg-emerald-600 text-white" : "w-10 border-(--app-border) bg-(--app-bg) text-(--app-hint)"}`}
-          aria-label={isSuspended ? "Активировать привычку" : undefined}
+          onPointerUp={() => {
+            if (deltaX < -MAX_SWIPE / 2) {
+              setDeltaX(-MAX_SWIPE);
+            } else {
+              resetSwipe();
+            }
+            startX.current = null;
+          }}
+          onPointerCancel={() => {
+            resetSwipe();
+            startX.current = null;
+          }}
         >
-          {isSuspended ? "Активировать" : "✓"}
-        </button>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-3">
-            <p className="truncate text-sm font-semibold">{habit.title}</p>
-            <span className="text-sm font-semibold text-(--app-hint)">
-              {habit.progress}%
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-(--app-hint)">
-            {habit.description || formatPeriodLabel(habit)}
-          </p>
-          <div className="mt-2">
-            <div className="flex items-center gap-3">
-              <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-(--app-border)">
-                <div
-                  className={`h-1.5 rounded-full transition-[width] duration-500 ease-out ${isSuspended ? "" : "bg-emerald-600"}`}
-                  style={{
-                    width: `${Math.min(100, habit.progress)}%`,
-                    backgroundColor: isSuspended
-                      ? "var(--app-border)"
-                      : undefined,
-                  }}
-                />
-              </div>
-              <span className="text-xs text-(--app-hint)">
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              if (isSuspended) {
+                setModalOpen(true);
+              } else {
+                toggle();
+              }
+            }}
+            className={`flex h-10 shrink-0 items-center justify-center rounded-full border transition-[background-color,border-color,color,transform] duration-200 ease-out active:scale-95 ${isSuspended ? "min-w-26 border-emerald-600 bg-emerald-600 px-3 text-xs font-semibold text-black" : habit.isCompletedToday ? "w-10 border-emerald-600 bg-emerald-600 text-white" : "w-10 border-(--app-border) bg-(--app-bg) text-(--app-hint)"}`}
+            aria-label={isSuspended ? "Активировать привычку" : undefined}
+          >
+            {isSuspended ? "Активировать" : "✓"}
+          </button>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-3">
+              <p className="truncate text-sm font-semibold">{habit.title}</p>
+              <span className="text-sm font-semibold text-(--app-hint)">
                 {habit.progress}%
               </span>
             </div>
-            <div className="mt-1 flex h-3 items-center gap-1">
-              {getHabitMissedDayIndexes(habit).map((dayIndex) => (
-                <span
-                  key={dayIndex}
-                  aria-hidden="true"
-                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-500 motion-safe:animate-[habit-missed-dot_320ms_ease-out]"
-                />
-              ))}
+            <p className="mt-1 text-xs text-(--app-hint)">
+              {habit.description || formatPeriodLabel(habit)}
+            </p>
+            <div className="mt-2">
+              <div className="flex items-center gap-3">
+                <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-(--app-border)">
+                  <div
+                    className={`h-1.5 rounded-full transition-[width] duration-500 ease-out ${isSuspended ? "" : "bg-emerald-600"}`}
+                    style={{
+                      width: `${Math.min(100, habit.progress)}%`,
+                      backgroundColor: isSuspended
+                        ? "var(--app-border)"
+                        : undefined,
+                    }}
+                  />
+                </div>
+                <span className="text-xs text-(--app-hint)">
+                  {habit.progress}%
+                </span>
+              </div>
+              <div className="mt-1 flex h-3 items-center gap-1">
+                {getHabitMissedDayIndexes(habit).map((dayIndex) => (
+                  <span
+                    key={dayIndex}
+                    aria-hidden="true"
+                    className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-500 motion-safe:animate-[habit-missed-dot_320ms_ease-out]"
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>
+        <SuspendedHabitModal
+          open={modalOpen}
+          onClose={() => {
+            setModalOpen(false);
+          }}
+          onContinue={() => {
+            setModalOpen(false);
+            onClearSuspension();
+          }}
+        />
+        <ConfirmModal
+          open={deleteConfirmOpen}
+          title="Удалить привычку?"
+          description="Вы действительно хотите удалить эту привычку?\nЭто действие нельзя отменить."
+          confirmText="Удалить"
+          onConfirm={() => {
+            onDelete();
+            setDeleteConfirmOpen(false);
+            resetSwipe();
+          }}
+          onClose={() => {
+            setDeleteConfirmOpen(false);
+            resetSwipe();
+          }}
+        />
       </div>
-      <SuspendedHabitModal
-        open={modalOpen}
-        onClose={() => {
-          setModalOpen(false);
-        }}
-        onContinue={() => {
-          setModalOpen(false);
-          onClearSuspension();
-        }}
-      />
-      <ConfirmModal
-        open={deleteConfirmOpen}
-        title="Удалить привычку?"
-        description="Вы действительно хотите удалить эту привычку?\nЭто действие нельзя отменить."
-        confirmText="Удалить"
-        onConfirm={() => {
-          onDelete();
-        }}
-        onClose={() => setDeleteConfirmOpen(false)}
-      />
     </>
   );
 }
