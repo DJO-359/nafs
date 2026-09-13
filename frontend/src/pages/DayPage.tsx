@@ -6,6 +6,7 @@ import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import DiaryCard from "../components/DiaryCard";
 import TasbihCard from "../components/TasbihCard";
 import HabitsCard from "../components/habits/HabitsCard";
+import AddToHomeScreenCard from "../components/AddToHomeScreenCard";
 import IntentionModal from "../components/IntentionModal";
 import QueryState from "../components/ui/QueryState";
 import { useDay } from "../hooks/useDay";
@@ -213,6 +214,7 @@ export default function DayPage() {
 
             <div className="space-y-4">
               <HabitsCard />
+              <AddToHomeScreenCard />
             </div>
           </div>
         );

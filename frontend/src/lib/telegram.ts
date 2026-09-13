@@ -36,6 +36,10 @@ interface HapticFeedback {
   selectionChanged: () => void;
 }
 
+interface TelegramHomeScreenStatus {
+  status: "added" | "missed" | "unsupported";
+}
+
 interface TelegramWebApp {
   initData: string;
   initDataUnsafe?: { user?: TelegramUser };
@@ -52,6 +56,9 @@ interface TelegramWebApp {
   close: () => void;
   disableVerticalSwipes?: () => void;
   enableVerticalSwipes?: () => void;
+
+  addToHomeScreen?: () => void;
+  checkHomeScreenStatus?: () => TelegramHomeScreenStatus | null;
 
   BackButton?: BackButton;
   HapticFeedback?: HapticFeedback;
