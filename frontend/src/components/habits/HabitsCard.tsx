@@ -159,6 +159,8 @@ function HabitRow({
   );
 }
 
+const DEFAULT_HABITS_LIMIT = 5;
+
 const HabitsCard = forwardRef<HabitsCardHandle, object>(
   function HabitsCard(_, ref) {
     const [open, setOpen] = useState(false);
@@ -177,7 +179,8 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
       [habits],
     );
     const visibleHabits = useMemo(
-      () => (isExpanded ? activeHabits : activeHabits.slice(0, 5)),
+      () =>
+        isExpanded ? activeHabits : activeHabits.slice(0, DEFAULT_HABITS_LIMIT),
       [activeHabits, isExpanded],
     );
     const {
@@ -282,17 +285,17 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
                   onClearSuspension={() => clearSuspension(habit.id)}
                 />
               ))}
-            </div>
 
-            {activeHabits.length > 5 && (
-              <button
-                type="button"
-                onClick={() => setIsExpanded((expanded) => !expanded)}
-                className="mt-3 block text-center text-sm font-medium text-emerald-700 hover:underline"
-              >
-                {isExpanded ? "Скрыть привычки" : "Показать все привычки"}
-              </button>
-            )}
+              {activeHabits.length > DEFAULT_HABITS_LIMIT && (
+                <button
+                  type="button"
+                  onClick={() => setIsExpanded((expanded) => !expanded)}
+                  className="mt-3 block w-full text-center text-sm font-medium text-emerald-700 hover:underline"
+                >
+                  {isExpanded ? "Скрыть" : "Показать ещё"}
+                </button>
+              )}
+            </div>
           </div>
         )}
       </Card>
