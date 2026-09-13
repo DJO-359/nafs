@@ -343,6 +343,7 @@ export default function DayHistoryPage() {
       onSuccess: () => {
         setConfirmDeleteEntry(null);
         setSwipedEntryId(null);
+
         queryClient.setQueryData(["day", date], (oldData) => {
           if (!oldData || typeof oldData !== "object") return oldData;
           return {
@@ -352,6 +353,7 @@ export default function DayHistoryPage() {
             ),
           };
         });
+
         invalidateDayData();
       },
     });
@@ -727,6 +729,15 @@ export default function DayHistoryPage() {
                         <CalendarGrid
                           days={data.days}
                           onSelect={handleCalendarSelect}
+                          diaryDates={
+                            new Set(
+                              Array.isArray(diaryHistoryQuery.data)
+                                ? diaryHistoryQuery.data.map(
+                                    (entry) => entry.date,
+                                  )
+                                : [],
+                            )
+                          }
                         />
                       )}
                     </QueryState>

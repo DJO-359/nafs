@@ -3,6 +3,7 @@ import type { CalendarDay } from "../api/calendar.api";
 interface Props {
   days: CalendarDay[];
   onSelect: (date: string) => void;
+  diaryDates?: Set<string>;
 }
 
 const WEEK_DAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
@@ -25,7 +26,11 @@ function todayString(): string {
   return `${now.getFullYear()}-${month}-${day}`;
 }
 
-export default function CalendarGrid({ days, onSelect }: Props) {
+export default function CalendarGrid({
+  days,
+  onSelect,
+  diaryDates = new Set<string>(),
+}: Props) {
   if (!days.length) return null;
 
   const firstWeekday = (parseDay(days[0].date).getDay() + 6) % 7;
@@ -46,7 +51,7 @@ export default function CalendarGrid({ days, onSelect }: Props) {
 
         {days.map((day) => {
           const isToday = day.date === today;
-          const hasEntries = day.status !== "empty";
+          const hasEntries = diaryDates.has(day.date);
 
           const visiblePinEmojis = (day.pinEmojis ?? [])
             .filter(Boolean)
