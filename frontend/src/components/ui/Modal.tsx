@@ -1,4 +1,5 @@
 import { createPortal } from "react-dom";
+import { useEffect } from "react";
 import type { ReactNode } from "react";
 
 interface Props {
@@ -20,6 +21,51 @@ export default function Modal({
   headerAction,
   showCancel = true,
 }: Props) {
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousScrollX = window.scrollX;
+    const previousScrollY = window.scrollY;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      window.scrollTo({
+        top: previousScrollY,
+        left: previousScrollX,
+        behavior: "auto",
+      });
+    };
+  }, [open]);
+l = true,
+}: Props) {
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousScrollX = window.scrollX;
+    const previousScrollY = window.scrollY;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      window.scrollTo({
+        top: previousScrollY,
+        left: previousScrollX,
+        behavior: "auto",
+      });
+    };
+  }, [open]);
+
   if (!open) return null;
 
   return createPortal(
