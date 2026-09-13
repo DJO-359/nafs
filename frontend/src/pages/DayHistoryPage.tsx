@@ -554,8 +554,16 @@ export default function DayHistoryPage() {
                   <div className="space-y-6">
                     <EmptyState
                       icon="📖"
-                      title="За сегодняшний день ещё нет записей."
-                      description="Запишите несколько мыслей, событий или благодарностей."
+                      title={
+                        date === todayString()
+                          ? "За сегодняшний день ещё нет записей."
+                          : "За этот день нет записей."
+                      }
+                      description={
+                        date === todayString()
+                          ? "Запишите несколько мыслей, событий или благодарностей."
+                          : undefined
+                      }
                     />
                   </div>
                 ) : (
