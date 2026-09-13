@@ -271,7 +271,7 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
               <p className="text-sm text-(--app-hint)">Пока нет привычек</p>
             )}
 
-            <div className="mt-4 divide-y divide-(--app-border)">
+            <div className="mt-4 divide-y divide-(--app-border) pb-[120px]">
               {visibleHabits.map((habit) => (
                 <HabitRow
                   key={habit.id}
