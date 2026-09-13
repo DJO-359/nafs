@@ -96,8 +96,19 @@ function HabitPageRow({
     <>
       <div
         className={`group flex w-full items-center gap-3 rounded-3xl bg-(--app-bg) px-3 py-2 text-left transition-all duration-300 ease-out hover:bg-(--app-surface) ${isSuspended ? "opacity-75 saturate-50" : ""}`}
-        onClick={() => setDeleteConfirmOpen(true)}
       >
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            setDeleteConfirmOpen(true);
+          }}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-(--app-border) bg-(--app-surface) text-base leading-none text-(--app-hint) transition hover:bg-(--app-bg) hover:text-red-600"
+          aria-label="Удалить привычку"
+        >
+          🗑️
+        </button>
+
         <button
           type="button"
           onClick={(event) => {

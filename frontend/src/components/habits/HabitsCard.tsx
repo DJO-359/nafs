@@ -56,8 +56,19 @@ function HabitRow({
     <>
       <div
         className={`group flex w-full items-center gap-3 py-3 first:pt-0 last:pb-0 transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 ${isSuspended ? "opacity-75 saturate-50" : ""}`}
-        onClick={() => setDeleteConfirmOpen(true)}
       >
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            setDeleteConfirmOpen(true);
+          }}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] text-base leading-none text-[var(--app-hint)] transition hover:bg-[var(--app-bg)] hover:text-red-600"
+          aria-label="Удалить привычку"
+        >
+          🗑️
+        </button>
+
         <div
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg"
           style={{
