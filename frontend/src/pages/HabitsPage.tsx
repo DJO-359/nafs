@@ -94,6 +94,7 @@ function HabitPageRow({
   const [deltaX, setDeltaX] = useState(0);
   const deltaXRef = useRef(0);
   const startX = useRef<number | null>(null);
+  const startY = useRef<number | null>(null);
   const startDeltaX = useRef(0);
   const MAX_SWIPE = 84;
 
@@ -131,27 +132,47 @@ function HabitPageRow({
             touchAction: "pan-y",
           }}
           onPointerDown={(event) => {
+            const target = event.target as HTMLElement;
+            if (target.closest("button")) return;
+
             startX.current = event.clientX;
+            startY.current = event.clientY;
             startDeltaX.current = deltaXRef.current;
           }}
           onPointerMove={(event) => {
-            if (startX.current === null) return;
+            if (startX.current === null || startY.current === null) return;
+
             const dx = event.clientX - startX.current;
+            const dy = event.clientY - startY.current;
+
+            if (Math.abs(dy) >= Math.abs(dx)) {
+              return;
+            }
+
             const next = startDeltaX.current + dx;
             applyDelta(next);
           }}
           onPointerUp={() => {
-            if (deltaXRef.current < -MAX_SWIPE / 2) {
+            if (startDeltaX.current < 0) {
+              if (deltaXRef.current >= -MAX_SWIPE / 2) {
+                applyDelta(0);
+              } else {
+                applyDelta(-MAX_SWIPE);
+              }
+            } else if (deltaXRef.current <= -MAX_SWIPE / 2) {
               applyDelta(-MAX_SWIPE);
             } else {
               resetSwipe();
             }
+
             startX.current = null;
+            startY.current = null;
             startDeltaX.current = 0;
           }}
           onPointerCancel={() => {
             resetSwipe();
             startX.current = null;
+            startY.current = null;
             startDeltaX.current = 0;
           }}
         >
