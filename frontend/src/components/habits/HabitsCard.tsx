@@ -16,6 +16,7 @@ import {
 } from "../../hooks/useHabits";
 import HabitForm from "./HabitForm";
 import SuspendedHabitModal from "./SuspendedHabitModal";
+import ConfirmModal from "../ui/ConfirmModal";
 import type { CreateHabitDto, Habit } from "../../api/habit.api";
 import { getHabitMissedDayIndexes } from "../../lib/habit-progress";
 import { useHabitSuspensions } from "../../hooks/useHabitSuspension";
@@ -38,6 +39,7 @@ interface HabitRowProps {
   isSuspended: boolean;
   toggle: () => void;
   onClearSuspension: () => void;
+  onDelete: () => void;
 }
 
 function HabitRow({
@@ -45,13 +47,16 @@ function HabitRow({
   isSuspended,
   toggle,
   onClearSuspension,
+  onDelete,
 }: HabitRowProps) {
   const [modalOpen, setModalOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   return (
     <>
       <div
         className={`group flex w-full items-center gap-3 py-3 first:pt-0 last:pb-0 transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 ${isSuspended ? "opacity-75 saturate-50" : ""}`}
+        onClick={() => setDeleteConfirmOpen(true)}
       >
         <div
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg"
@@ -147,6 +152,16 @@ function HabitRow({
           setModalOpen(false);
           onClearSuspension();
         }}
+      />
+      <ConfirmModal
+        open={deleteConfirmOpen}
+        title="Удалить привычку?"
+        description="Вы действительно хотите удалить эту привычку?\nЭто действие нельзя отменить."
+        confirmText="Удалить"
+        onConfirm={() => {
+          onDelete();
+        }}
+        onClose={() => setDeleteConfirmOpen(false)}
       />
     </>
   );
@@ -286,6 +301,7 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
                   isSuspended={suspendedHabitIds.has(habit.id)}
                   toggle={() => toggleMutation.mutate(habit.id)}
                   onClearSuspension={() => clearSuspension(habit.id)}
+                  onDelete={() => deleteMutation.mutate(habit.id)}
                 />
               ))}
 
