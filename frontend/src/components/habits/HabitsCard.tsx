@@ -87,11 +87,12 @@ function HabitRow({
         </div>
 
         <div
-          className={`group flex w-full items-center gap-3 py-3 first:pt-0 last:pb-0 transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 ${isSuspended ? "opacity-75 saturate-50" : ""}`}
+          className={`group flex w-full items-center gap-3 py-3 first:pt-0 last:pb-0 transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 ${isSuspended ? "saturate-50" : ""}`}
           style={{
             transform: `translateX(${deltaX}px)`,
             touchAction: "pan-y",
             backgroundColor: "var(--app-surface)",
+            opacity: 1,
           }}
           onPointerDown={(event) => {
             const target = event.target as HTMLElement;
