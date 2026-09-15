@@ -57,6 +57,104 @@ body {
   overscroll-behavior-y: contain;
 }
 
+.bottom-navigation {
+  width: min(calc(100% - 2rem), 23rem);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.bottom-navigation__panel {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  min-height: 4.25rem;
+  padding: 0.45rem;
+  background: color-mix(in srgb, var(--app-surface) 74%, transparent);
+  border: 1px solid color-mix(in srgb, var(--app-text) 12%, transparent);
+  border-radius: 1.5rem;
+  box-shadow: 0 0.75rem 2.5rem rgb(0 0 0 / 18%);
+  backdrop-filter: blur(1.25rem) saturate(135%);
+  -webkit-backdrop-filter: blur(1.25rem) saturate(135%);
+}
+
+.bottom-navigation__link {
+  display: flex;
+  min-width: 0;
+  min-height: 3.25rem;
+  align-items: center;
+  justify-content: center;
+  color: color-mix(in srgb, var(--app-text) 56%, transparent);
+  text-decoration: none;
+}
+
+.bottom-navigation__item {
+  display: inline-flex;
+  min-width: 3.5rem;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid transparent;
+  border-radius: 1rem;
+  transition:
+    color 220ms ease,
+    background 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    transform 220ms ease;
+}
+
+.bottom-navigation__item.is-active {
+  color: #eaf4ff;
+  background: linear-gradient(
+    135deg,
+    rgb(64 133 224 / 82%),
+    rgb(87 160 235 / 66%)
+  );
+  border-color: rgb(170 214 255 / 36%);
+  box-shadow:
+    0 0.35rem 1.1rem rgb(61 139 222 / 28%),
+    inset 0 1px rgb(255 255 255 / 24%);
+  transform: translateY(-0.08rem);
+}
+
+.bottom-navigation__icon {
+  display: inline-flex;
+  width: 1.35rem;
+  height: 1.35rem;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  transition: transform 220ms ease;
+}
+
+.bottom-navigation__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.bottom-navigation__item.is-active .bottom-navigation__icon {
+  transform: scale(1.08);
+}
+
+.bottom-navigation__label {
+  max-width: 0;
+  overflow: hidden;
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1;
+  opacity: 0;
+  white-space: nowrap;
+  transition:
+    max-width 220ms ease,
+    opacity 180ms ease;
+}
+
+.bottom-navigation__item.is-active .bottom-navigation__label {
+  max-width: 4.5rem;
+  opacity: 1;
+}
+
 .volume-slider {
   min-width: 8rem;
   height: 2.75rem;
