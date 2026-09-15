@@ -25,7 +25,7 @@ import {
 const TASBIH_SETTINGS_KEY = "tasbih_settings";
 const DEFAULT_TASBIH_SETTINGS = {
   vibration: true,
-  sound: true,
+  soundVolume: 100,
 };
 
 type TasbihSettings = typeof DEFAULT_TASBIH_SETTINGS;
@@ -36,15 +36,27 @@ function readTasbihSettings(): TasbihSettings {
     if (!saved) return DEFAULT_TASBIH_SETTINGS;
 
     const parsed = JSON.parse(saved) as Partial<TasbihSettings>;
+    const legacySound =
+      typeof (parsed as { sound?: unknown }).sound === "boolean"
+        ? (parsed as { sound: boolean }).sound
+        : typeof (parsed as { soundEnabled?: unknown }).soundEnabled ===
+            "boolean"
+          ? (parsed as { soundEnabled: boolean }).soundEnabled
+          : DEFAULT_TASBIH_SETTINGS.soundVolume > 0;
+    const parsedVolume = (parsed as { soundVolume?: unknown }).soundVolume;
+    const soundVolume =
+      typeof parsedVolume === "number" && Number.isFinite(parsedVolume)
+        ? Math.min(100, Math.max(0, Math.round(parsedVolume)))
+        : legacySound
+          ? 100
+          : 0;
+
     return {
       vibration:
         typeof parsed.vibration === "boolean"
           ? parsed.vibration
           : DEFAULT_TASBIH_SETTINGS.vibration,
-      sound:
-        typeof parsed.sound === "boolean"
-          ? parsed.sound
-          : DEFAULT_TASBIH_SETTINGS.sound,
+      soundVolume,
     };
   } catch {
     return DEFAULT_TASBIH_SETTINGS;
@@ -142,7 +154,7 @@ export default function TasbihPage() {
     }
   };
 
-  const playTasbihClick = () => {
+  const playTasbihClick = (volume: number) => {
     try {
       const AudioCtor =
         window.AudioContext ||
@@ -162,7 +174,10 @@ export default function TasbihPage() {
       oscillator.frequency.exponentialRampToValueAtTime(420, now + 0.04);
 
       gainNode.gain.setValueAtTime(0.0001, now);
-      gainNode.gain.exponentialRampToValueAtTime(0.05, now + 0.008);
+      gainNode.gain.exponentialRampToValueAtTime(
+        0.05 * (volume / 100),
+        now + 0.008,
+      );
       gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
 
       oscillator.connect(gainNode);
@@ -190,8 +205,8 @@ export default function TasbihPage() {
 
     incrementMutation.mutate(selectedCounter.id);
 
-    if (settings.sound) {
-      playTasbihClick();
+    if (settings.soundVolume > 0) {
+      playTasbihClick(settings.soundVolume);
     }
   };
 
@@ -354,10 +369,10 @@ export default function TasbihPage() {
               vibration: !current.vibration,
             }))
           }
-          onToggleSound={() =>
+          onChangeSoundVolume={(soundVolume) =>
             setSettings((current) => ({
               ...current,
-              sound: !current.sound,
+              soundVolume,
             }))
           }
         />
@@ -529,10 +544,10 @@ export default function TasbihPage() {
             vibration: !current.vibration,
           }))
         }
-        onToggleSound={() =>
+        onChangeSoundVolume={(soundVolume) =>
           setSettings((current) => ({
             ...current,
-            sound: !current.sound,
+            soundVolume,
           }))
         }
       />

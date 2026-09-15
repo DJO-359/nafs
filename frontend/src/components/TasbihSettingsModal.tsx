@@ -2,7 +2,7 @@ import Modal from "./ui/Modal";
 
 interface TasbihSettings {
   vibration: boolean;
-  sound: boolean;
+  soundVolume: number;
 }
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
   settings: TasbihSettings;
   onClose: () => void;
   onToggleVibration: () => void;
-  onToggleSound: () => void;
+  onChangeSoundVolume: (volume: number) => void;
 }
 
 export default function TasbihSettingsModal({
@@ -18,7 +18,7 @@ export default function TasbihSettingsModal({
   settings,
   onClose,
   onToggleVibration,
-  onToggleSound,
+  onChangeSoundVolume,
 }: Props) {
   return (
     <Modal
@@ -58,21 +58,34 @@ export default function TasbihSettingsModal({
           </button>
         </div>
 
-        <div className="flex items-center justify-between gap-4 rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] p-3">
-          <div>
-            <p className="text-base font-medium text-[var(--app-text)]">Звук</p>
-            <p className="mt-1 text-sm text-[var(--app-hint)]">
-              Короткий звук при подсчёте
-            </p>
+        <div className="rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] p-3">
+          <p className="text-base font-medium text-[var(--app-text)]">Звук</p>
+          <p className="mt-1 text-sm text-[var(--app-hint)]">
+            Короткий звук при подсчёте
+          </p>
+          <div className="mt-3 flex items-center gap-3">
+            <span className="text-lg text-[var(--app-text)]" aria-hidden="true">
+              {settings.soundVolume === 0 ? "🔇" : "🔊"}
+            </span>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value={settings.soundVolume}
+              onChange={(event) =>
+                onChangeSoundVolume(Number(event.target.value))
+              }
+              className="volume-slider min-w-0 flex-1"
+              style={{
+                background: `linear-gradient(to right, var(--app-accent, #60a5fa) ${settings.soundVolume}%, var(--app-border) ${settings.soundVolume}%)`,
+              }}
+              aria-label="Громкость звука"
+            />
+            <span className="w-10 text-right text-sm tabular-nums text-[var(--app-text)]">
+              {settings.soundVolume}%
+            </span>
           </div>
-          <button
-            type="button"
-            onClick={onToggleSound}
-            className="rounded-full border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-1.5 text-sm text-[var(--app-text)]"
-            aria-label="Звук"
-          >
-            {settings.sound ? "Вкл" : "Выкл"}
-          </button>
         </div>
       </div>
     </Modal>
