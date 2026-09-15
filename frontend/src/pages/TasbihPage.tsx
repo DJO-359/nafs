@@ -181,16 +181,14 @@ export default function TasbihPage() {
     const completesRound =
       safeTarget !== null && (dayProgress + 1) % safeTarget === 0;
 
-    incrementMutation.mutate(selectedCounter.id, {
-      onSuccess: () => {
-        if (settings.vibration) {
-          haptic("tasbih");
-          if (completesRound) {
-            window.setTimeout(() => haptic("tasbih"), 90);
-          }
-        }
-      },
-    });
+    if (settings.vibration) {
+      haptic("tasbih");
+      if (completesRound) {
+        window.setTimeout(() => haptic("tasbih"), 90);
+      }
+    }
+
+    incrementMutation.mutate(selectedCounter.id);
 
     if (settings.sound) {
       playTasbihClick();
