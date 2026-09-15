@@ -187,6 +187,7 @@ export class TasbihService {
     return this.tasbihCounterModel.create({
       userId,
       name: dto.name,
+      color: dto.color ?? 'emerald',
       target: dto.isInfinite ? null : dto.target,
       count: dto.count ?? 0,
       isInfinite: dto.isInfinite ?? false,
@@ -213,6 +214,10 @@ export class TasbihService {
 
     if (dto.name !== undefined) {
       counter.name = dto.name;
+    }
+
+    if (dto.color !== undefined) {
+      counter.color = dto.color;
     }
 
     // Отслеживаем, изменился ли target или count, для пересчёта dailyCompleted

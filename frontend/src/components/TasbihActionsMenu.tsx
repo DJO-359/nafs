@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 
 interface Props {
   onEdit: () => void;
+  onColor: () => void;
   onReset: () => void;
   onDelete: () => void;
 }
@@ -14,6 +15,7 @@ interface MenuPosition {
 
 export default function TasbihActionsMenu({
   onEdit,
+  onColor,
   onReset,
   onDelete,
 }: Props) {
@@ -137,6 +139,14 @@ export default function TasbihActionsMenu({
               className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-[var(--app-text)] transition hover:bg-[var(--app-bg)]"
             >
               ✏️ Изменить
+            </button>
+
+            <button
+              type="button"
+              onClick={() => runAction(onColor)}
+              className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-[var(--app-text)] transition hover:bg-[var(--app-bg)]"
+            >
+              🎨 Изменить цвет
             </button>
 
             <button

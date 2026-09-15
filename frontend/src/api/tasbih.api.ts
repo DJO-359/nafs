@@ -8,6 +8,7 @@ export interface TasbihCounter {
   id: string;
   userId: string;
   name: string;
+  color: string;
   target: number | null;
   count: number;
   isInfinite: boolean;
@@ -23,6 +24,7 @@ export interface TasbihCounter {
  */
 export interface CreateTasbihCounterPayload {
   name: string;
+  color?: string;
   target?: number;
   count?: number;
   isInfinite?: boolean;

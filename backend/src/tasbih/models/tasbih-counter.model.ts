@@ -46,6 +46,13 @@ export class TasbihCounter extends Model<TasbihCounter> {
   declare name: string;
 
   @Column({
+    type: DataType.STRING,
+    allowNull: false,
+    defaultValue: 'emerald',
+  })
+  declare color: string;
+
+  @Column({
     type: DataType.INTEGER,
     allowNull: true,
   })

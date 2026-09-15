@@ -6,15 +6,21 @@ import CreateTasbihModal from "../components/CreateTasbihModal";
 import EditTasbihModal from "../components/EditTasbihModal";
 import TasbihActionsMenu from "../components/TasbihActionsMenu";
 import TasbihSettingsModal from "../components/TasbihSettingsModal";
+import TasbihColorPickerModal from "../components/TasbihColorPickerModal";
 import {
   useTasbih,
   useIncrementTasbih,
   useResetTasbih,
   useDeleteTasbih,
+  useUpdateTasbih,
 } from "../hooks/useTasbih";
 import { useBackButton } from "../hooks/useBackButton";
 import { haptic } from "../lib/telegram";
 import type { TasbihCounter } from "../api/tasbih.api";
+import {
+  getTasbihColor,
+  type TasbihColorKey,
+} from "../constants/tasbih-colors";
 
 const TASBIH_SETTINGS_KEY = "tasbih_settings";
 const DEFAULT_TASBIH_SETTINGS = {
@@ -51,11 +57,13 @@ export default function TasbihPage() {
   const incrementMutation = useIncrementTasbih();
   const resetMutation = useResetTasbih();
   const deleteMutation = useDeleteTasbih();
+  const updateMutation = useUpdateTasbih();
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isColorModalOpen, setIsColorModalOpen] = useState(false);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [settings, setSettings] = useState<TasbihSettings>(readTasbihSettings);
@@ -120,6 +128,7 @@ export default function TasbihPage() {
   const ringStrokeOffset =
     ringCircumference -
     (Math.min(100, Math.max(0, ringProgress)) / 100) * ringCircumference;
+  const ringColor = getTasbihColor(selectedCounter?.color);
 
   const handlePrevious = () => {
     if (selectedIndex > 0) {
@@ -416,6 +425,7 @@ export default function TasbihPage() {
             </div>
             <TasbihActionsMenu
               onEdit={() => setIsEditModalOpen(true)}
+              onColor={() => setIsColorModalOpen(true)}
               onReset={handleReset}
               onDelete={handleDelete}
             />
@@ -448,7 +458,7 @@ export default function TasbihPage() {
                     cy={ringSize / 2}
                     r={ringRadius}
                     fill="none"
-                    stroke="var(--app-primary, #22c55e)"
+                    stroke={ringColor.main}
                     strokeWidth="14"
                     strokeLinecap="round"
                     strokeDasharray={ringCircumference}
@@ -513,6 +523,20 @@ export default function TasbihPage() {
             sound: !current.sound,
           }))
         }
+      />
+
+      <TasbihColorPickerModal
+        open={isColorModalOpen}
+        selectedColor={ringColor.key}
+        pending={updateMutation.isPending}
+        onClose={() => setIsColorModalOpen(false)}
+        onSelect={(color: TasbihColorKey) => {
+          if (!selectedCounter) return;
+          updateMutation.mutate(
+            { id: selectedCounter.id, payload: { color } },
+            { onSuccess: () => setIsColorModalOpen(false) },
+          );
+        }}
       />
 
       {/* Create Modal */}

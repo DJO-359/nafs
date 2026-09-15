@@ -23,6 +23,11 @@ export class UpdateTasbihCounterDto {
   @MaxLength(255)
   name?: string;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  color?: string;
+
   /**
    * Для обычного счётчика: целое число >= 1.
    * Для бесконечного счётчика: не должно быть.
