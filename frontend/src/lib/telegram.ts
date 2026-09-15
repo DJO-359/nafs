@@ -184,7 +184,7 @@ export function haptic(
   }
 
   if (type === "tasbih") {
-    feedback.impactOccurred("medium");
+    feedback.impactOccurred("heavy");
     return;
   }
 
