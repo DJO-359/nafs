@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
-import type { Habit } from "../api/habit.api";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { reactivateHabit, suspendHabit, type Habit } from "../api/habit.api";
+import { describeError } from "../lib/errors";
+import { useInvalidateDayData } from "./useInvalidateDayData";
 import {
-  getHabitConsecutiveMissedDays,
   getHabitMissedDayIndexes,
+  shouldSuspendHabit,
   toDateKey,
 } from "../lib/habit-progress";
 
@@ -29,13 +33,31 @@ function dateFromMissedIndex(habit: Habit, index: number): string {
 }
 
 export function useHabitSuspensions(habits: Habit[]) {
+  const invalidate = useInvalidateDayData();
+  const suspendMutation = useMutation({
+    mutationFn: (habitId: string) => suspendHabit(habitId),
+    onSuccess: invalidate,
+  });
+  const reactivateMutation = useMutation({
+    mutationFn: (habitId: string) => reactivateHabit(habitId),
+    onSuccess: invalidate,
+  });
   const [todayKey, setTodayKey] = useState(() => toDateKey(new Date()));
   const [suspendedIds, setSuspendedIds] = useState<Set<string>>(
     () => new Set(),
   );
   const [expiredHabitIds, setExpiredHabitIds] = useState<string[]>([]);
 
-  function clearSuspension(habitId: string) {
+  async function clearSuspension(habitId: string): Promise<boolean> {
+    try {
+      await reactivateMutation.mutateAsync(habitId);
+    } catch {
+      toast.error(
+        `Не удалось активировать привычку: ${describeError(reactivateMutation.error)}`,
+      );
+      return false;
+    }
+
     localStorage.removeItem(getStorageKey(habitId));
     localStorage.setItem(getReactivatedStorageKey(habitId), todayKey);
     setSuspendedIds((prev) => {
@@ -43,6 +65,7 @@ export function useHabitSuspensions(habits: Habit[]) {
       next.delete(habitId);
       return next;
     });
+    return true;
   }
 
   useEffect(() => {
@@ -69,6 +92,11 @@ export function useHabitSuspensions(habits: Habit[]) {
       );
       const missedIndexes = getHabitMissedDayIndexes(habit);
 
+      if (habit.isSuspended) {
+        nextSuspendedIds.add(habit.id);
+        return;
+      }
+
       if (reactivatedDate) {
         const hasMissedAfterReactivate = missedIndexes.some((index) => {
           return dateFromMissedIndex(habit, index) >= reactivatedDate;
@@ -86,9 +114,10 @@ export function useHabitSuspensions(habits: Habit[]) {
         return;
       }
 
-      if (getHabitConsecutiveMissedDays(habit) >= 3) {
+      if (shouldSuspendHabit(habit)) {
         localStorage.setItem(storageKey, todayKey);
         nextSuspendedIds.add(habit.id);
+        suspendMutation.mutate(habit.id);
       }
     });
 

@@ -16,10 +16,10 @@ interface Props {
 
 const periodOptions = [
   { value: "30_DAYS", label: "30 дней" },
+  { value: "60_DAYS", label: "60 дней" },
   { value: "3_MONTHS", label: "3 месяца" },
   { value: "6_MONTHS", label: "6 месяцев" },
   { value: "1_YEAR", label: "1 год" },
-  { value: "CUSTOM", label: "Свой период" },
 ];
 
 const icons = ["📖", "🧘", "🕋", "💧", "🌿", "📚", "🧠", "🏃"];
@@ -39,7 +39,6 @@ function toInputDate(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
-// 1. Исправленная getPeriodDates – для CUSTOM возвращает null
 function getPeriodDates(periodType: CreateHabitDto["periodType"]) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -49,19 +48,20 @@ function getPeriodDates(periodType: CreateHabitDto["periodType"]) {
 
   switch (periodType) {
     case "30_DAYS":
-      end.setDate(end.getDate() + 30);
+      end.setDate(end.getDate() + 29);
+      break;
+    case "60_DAYS":
+      end.setDate(end.getDate() + 59);
       break;
     case "3_MONTHS":
-      end.setMonth(end.getMonth() + 3);
+      end.setDate(end.getDate() + 89);
       break;
     case "6_MONTHS":
-      end.setMonth(end.getMonth() + 6);
+      end.setDate(end.getDate() + 179);
       break;
     case "1_YEAR":
-      end.setFullYear(end.getFullYear() + 1);
+      end.setDate(end.getDate() + 364);
       break;
-    case "CUSTOM":
-      return null;
   }
 
   return {
@@ -97,9 +97,6 @@ export default function HabitForm({
   const [periodType, setPeriodType] = useState<CreateHabitDto["periodType"]>(
     initialHabit?.periodType ?? "30_DAYS",
   );
-  // Для своего периода пользователь задаёт даты напрямую, отдельного поля
-  // ввода нет — значение только передаётся на бэкенд как есть
-  const customPeriodDays = initialHabit?.customPeriodDays ?? 30;
   const [startDate, setStartDate] = useState(
     initialHabit?.startDate ?? defaultDates.startDate,
   );
@@ -107,34 +104,14 @@ export default function HabitForm({
     initialHabit?.endDate ?? defaultDates.endDate,
   );
 
-  const today = toInputDate(new Date());
-
-  // 2. Исправленная applyPeriodDates – не трогает даты при CUSTOM
   function applyPeriodDates(nextPeriodType: CreateHabitDto["periodType"]) {
     setPeriodType(nextPeriodType);
-
-    if (nextPeriodType === "CUSTOM") {
-      return;
-    }
 
     const nextDates = getPeriodDates(nextPeriodType);
     if (nextDates) {
       setStartDate(nextDates.startDate);
       setEndDate(nextDates.endDate);
     }
-  }
-
-  // 3. Исправленный handleStartDateChange
-  function handleStartDateChange(value: string) {
-    setStartDate(value);
-    if (endDate < value) {
-      setEndDate(value);
-    }
-  }
-
-  // 4. Упрощённая handleEndDateChange – проверка через min в input
-  function handleEndDateChange(value: string) {
-    setEndDate(value);
   }
 
   // Поля больше не синхронизируются эффектом: значения заданы при создании
@@ -149,7 +126,6 @@ export default function HabitForm({
       icon,
       color,
       periodType,
-      customPeriodDays: periodType === "CUSTOM" ? customPeriodDays : undefined,
       startDate,
       endDate,
     });
@@ -243,35 +219,6 @@ export default function HabitForm({
                   ))}
                 </div>
               </div>
-
-              {periodType === "CUSTOM" && (
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <p className="mb-1 text-sm text-[var(--app-hint)]">
-                      Начало
-                    </p>
-                    <input
-                      type="date"
-                      value={startDate}
-                      min={today}
-                      onChange={(e) => handleStartDateChange(e.target.value)}
-                      className="w-full rounded-lg border border-[var(--app-border)] p-2"
-                    />
-                  </div>
-                  <div>
-                    <p className="mb-1 text-sm text-[var(--app-hint)]">
-                      Окончание
-                    </p>
-                    <input
-                      type="date"
-                      value={endDate}
-                      min={startDate}
-                      onChange={(e) => handleEndDateChange(e.target.value)}
-                      className="w-full rounded-lg border border-[var(--app-border)] p-2"
-                    />
-                  </div>
-                </div>
-              )}
 
               <div className="flex flex-wrap gap-2">
                 <Button loading={loading} onClick={handleSubmit}>

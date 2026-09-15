@@ -49,4 +49,14 @@ export class HabitsController {
   toggle(@Req() req: AuthRequest, @Param('id') id: string) {
     return this.habitsService.toggle(req.user.id, req.user.timezone, id);
   }
+
+  @Post(':id/suspend')
+  suspend(@Req() req: AuthRequest, @Param('id') id: string) {
+    return this.habitsService.suspend(req.user.id, req.user.timezone, id);
+  }
+
+  @Post(':id/reactivate')
+  reactivate(@Req() req: AuthRequest, @Param('id') id: string) {
+    return this.habitsService.reactivate(req.user.id, req.user.timezone, id);
+  }
 }

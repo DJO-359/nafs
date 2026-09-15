@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -24,7 +26,7 @@ export class HabitsService {
   ) {}
 
   async create(userId: string, timezone: string, dto: CreateHabitDto) {
-    this.assertPeriodValid(dto.startDate, dto.endDate);
+    this.assertPeriodValid(dto.startDate, dto.endDate, dto.periodType);
 
     const habit = await this.habitModel.create({
       userId,
@@ -79,7 +81,14 @@ export class HabitsService {
 
     const startDate = dto.startDate ?? habit.startDate;
     const endDate = dto.endDate ?? habit.endDate;
-    this.assertPeriodValid(startDate, endDate);
+    const periodType = dto.periodType ?? habit.periodType;
+    const periodChanged =
+      dto.periodType !== undefined ||
+      dto.startDate !== undefined ||
+      dto.endDate !== undefined;
+    if (periodChanged) {
+      this.assertPeriodValid(startDate, endDate, periodType);
+    }
 
     if (dto.title !== undefined) habit.title = dto.title;
     // `?? habit.description` не давал очистить описание — теперь это возможно
@@ -132,6 +141,10 @@ export class HabitsService {
       throw new NotFoundException('Привычка не найдена');
     }
 
+    if (habit.isSuspended) {
+      throw new ForbiddenException('Привычка приостановлена');
+    }
+
     const completedDate = todayInZone(timezone);
 
     const existing = await this.habitCompletionModel.findOne({
@@ -158,10 +171,89 @@ export class HabitsService {
     return this.findOne(userId, timezone, id);
   }
 
-  private assertPeriodValid(startDate: string, endDate: string): void {
+  async suspend(userId: string, timezone: string, id: string) {
+    const habit = await this.habitModel.findOne({
+      where: { userId, id },
+      include: [{ model: this.habitCompletionModel, required: false }],
+    });
+
+    if (!habit) {
+      throw new NotFoundException('Привычка не найдена');
+    }
+
+    if (this.shouldSuspendHabit(habit, timezone)) {
+      habit.isSuspended = true;
+      await habit.save();
+    }
+
+    return this.findOne(userId, timezone, id);
+  }
+
+  async reactivate(userId: string, timezone: string, id: string) {
+    const [updatedCount] = await this.habitModel.update(
+      {
+        isSuspended: false,
+        reactivationUsed: true,
+      },
+      {
+        where: {
+          userId,
+          id,
+          isSuspended: true,
+          reactivationUsed: false,
+        },
+      },
+    );
+
+    if (updatedCount === 0) {
+      const habit = await this.habitModel.findOne({ where: { userId, id } });
+
+      if (!habit) {
+        throw new NotFoundException('Привычка не найдена');
+      }
+
+      if (habit.reactivationUsed) {
+        throw new ConflictException('Повторная активация уже использована');
+      }
+
+      throw new BadRequestException('Привычка не приостановлена');
+    }
+
+    return this.findOne(userId, timezone, id);
+  }
+
+  private assertPeriodValid(
+    startDate: string,
+    endDate: string,
+    periodType: Habit['periodType'],
+  ): void {
     if (endDate < startDate) {
       throw new BadRequestException(
         'Дата окончания не может быть раньше даты начала',
+      );
+    }
+
+    const totalDays = this.calculateTotalDays(startDate, endDate);
+    if (periodType === 'CUSTOM') {
+      if (totalDays < 30 || totalDays > 365) {
+        throw new BadRequestException(
+          'CUSTOM-период должен быть от 30 до 365 дней',
+        );
+      }
+      return;
+    }
+
+    const expectedDays: Record<string, number> = {
+      '30_DAYS': 30,
+      '60_DAYS': 60,
+      '3_MONTHS': 90,
+      '6_MONTHS': 180,
+      '1_YEAR': 365,
+    };
+    const expected = expectedDays[periodType];
+    if (expected !== undefined && totalDays !== expected) {
+      throw new BadRequestException(
+        `Период ${periodType} должен содержать ровно ${expected} дней`,
       );
     }
   }
@@ -193,6 +285,8 @@ export class HabitsService {
       startDate: habit.startDate,
       endDate: habit.endDate,
       isArchived: habit.isArchived,
+      isSuspended: habit.isSuspended,
+      reactivationUsed: habit.reactivationUsed,
       createdAt: habit.createdAt,
       updatedAt: habit.updatedAt,
       completedDays,
@@ -221,5 +315,63 @@ export class HabitsService {
     const diffInDays = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
 
     return Math.max(1, diffInDays);
+  }
+
+  private shouldSuspendHabit(habit: Habit, timezone: string): boolean {
+    const today = todayInZone(timezone);
+    const yesterday = this.shiftDate(today, -1);
+    const periodEnd = habit.endDate < yesterday ? habit.endDate : yesterday;
+
+    if (habit.startDate > periodEnd) return false;
+
+    const completedDates = new Set(
+      (habit.completions ?? []).map((completion) => completion.completedDate),
+    );
+    let missedDays = 0;
+    let currentDate = habit.startDate;
+
+    while (currentDate <= periodEnd) {
+      if (!completedDates.has(currentDate)) missedDays += 1;
+      currentDate = this.shiftDate(currentDate, 1);
+    }
+
+    return missedDays > this.getHabitMissLimit(habit);
+  }
+
+  private getHabitMissLimit(habit: Habit): number {
+    const totalDays = this.calculateTotalDays(habit.startDate, habit.endDate);
+    const points = [
+      { days: 30, limit: 2 },
+      { days: 60, limit: 5 },
+      { days: 90, limit: 8 },
+      { days: 180, limit: 15 },
+      { days: 365, limit: 30 },
+    ];
+
+    if (totalDays <= points[0].days) return points[0].limit;
+    if (totalDays >= points[points.length - 1].days) {
+      return points[points.length - 1].limit;
+    }
+
+    for (let index = 1; index < points.length; index += 1) {
+      const previous = points[index - 1];
+      const current = points[index];
+      if (totalDays <= current.days) {
+        const ratio =
+          (totalDays - previous.days) / (current.days - previous.days);
+        return Math.round(
+          previous.limit + ratio * (current.limit - previous.limit),
+        );
+      }
+    }
+
+    return points[points.length - 1].limit;
+  }
+
+  private shiftDate(dateKey: string, days: number): string {
+    const [year, month, day] = dateKey.split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    date.setUTCDate(date.getUTCDate() + days);
+    return date.toISOString().slice(0, 10);
   }
 }

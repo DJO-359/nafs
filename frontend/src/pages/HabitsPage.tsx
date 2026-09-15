@@ -11,9 +11,15 @@ import {
 } from "../hooks/useHabits";
 import HabitForm from "../components/habits/HabitForm";
 import SuspendedHabitModal from "../components/habits/SuspendedHabitModal";
+import HabitMissesInfoModal from "../components/habits/HabitMissesInfoModal";
 import ConfirmModal from "../components/ui/ConfirmModal";
 import type { CreateHabitDto, Habit } from "../api/habit.api";
-import { getHabitMissedDayIndexes } from "../lib/habit-progress";
+import {
+  getHabitDisplayedMissedDayIndexes,
+  getHabitMissedDayCount,
+  getHabitMissLimit,
+  getHabitMissedDayIndexes,
+} from "../lib/habit-progress";
 import { useHabitSuspensions } from "../hooks/useHabitSuspension";
 
 const WEEK_DAYS = [
@@ -29,10 +35,15 @@ const WEEK_DAYS = [
 function formatPeriodLabel(habit: Habit) {
   switch (habit.periodType) {
     case "30_DAYS":
+      return "30 дней";
+    case "60_DAYS":
+      return "60 дней";
     case "3_MONTHS":
+      return "3 месяца";
     case "6_MONTHS":
+      return "6 месяцев";
     case "1_YEAR":
-      return "Ежедневно";
+      return "1 год";
     case "CUSTOM":
       return "Пользовательский";
     default:
@@ -78,7 +89,7 @@ interface HabitPageRowProps {
   habit: Habit;
   isSuspended: boolean;
   toggle: () => void;
-  onClearSuspension: () => void;
+  onClearSuspension: () => Promise<boolean>;
   onDelete: () => void;
 }
 
@@ -219,25 +230,29 @@ function HabitPageRow({
                 </span>
               </div>
               <div className="mt-1 flex h-3 items-center gap-1">
-                {getHabitMissedDayIndexes(habit).map((dayIndex) => (
-                  <span
-                    key={dayIndex}
-                    aria-hidden="true"
-                    className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-500 motion-safe:animate-[habit-missed-dot_320ms_ease-out]"
-                  />
-                ))}
+                {getHabitDisplayedMissedDayIndexes(habit, isSuspended).map(
+                  (dayIndex) => (
+                    <span
+                      key={dayIndex}
+                      aria-hidden="true"
+                      className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-500 motion-safe:animate-[habit-missed-dot_320ms_ease-out]"
+                    />
+                  ),
+                )}
               </div>
             </div>
           </div>
         </div>
         <SuspendedHabitModal
           open={modalOpen}
+          missedDays={getHabitMissedDayCount(habit)}
+          missLimit={getHabitMissLimit(habit)}
           onClose={() => {
             setModalOpen(false);
           }}
-          onContinue={() => {
-            setModalOpen(false);
-            onClearSuspension();
+          onContinue={async () => {
+            const reactivated = await onClearSuspension();
+            if (reactivated) setModalOpen(false);
           }}
         />
         <ConfirmModal
@@ -263,6 +278,8 @@ function HabitPageRow({
 export default function HabitsPage() {
   const [open, setOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
+  const [formResetVersion, setFormResetVersion] = useState(0);
+  const [warningOpen, setWarningOpen] = useState(false);
   const { data: habits = [] } = useHabits();
 
   useBackButton();
@@ -278,6 +295,11 @@ export default function HabitsPage() {
   const activeHabits = useMemo(
     () => habits.filter((habit) => !habit.isArchived),
     [habits],
+  );
+  const hasMissedActiveHabits = useMemo(
+    () =>
+      activeHabits.some((habit) => getHabitMissedDayIndexes(habit).length > 0),
+    [activeHabits],
   );
   const {
     suspendedIds: suspendedHabitIds,
@@ -332,6 +354,7 @@ export default function HabitsPage() {
 
     setOpen(false);
     setEditingHabit(null);
+    setFormResetVersion((version) => version + 1);
   }
 
   return (
@@ -356,7 +379,7 @@ export default function HabitsPage() {
       </div>
 
       <HabitForm
-        key={editingHabit?.id ?? "new"}
+        key={`${editingHabit?.id ?? "new"}-${formResetVersion}`}
         open={open}
         initialHabit={editingHabit}
         onClose={() => {
@@ -380,8 +403,18 @@ export default function HabitsPage() {
 
       <Card className="space-y-4 bg-(--app-surface) p-3">
         <div className="flex items-center justify-between gap-3">
-          <div>
+          <div className="flex items-center gap-2">
             <h1 className="text-2xl font-semibold">Привычки</h1>
+            {hasMissedActiveHabits && (
+              <button
+                type="button"
+                aria-label="Показать объяснение красных точек"
+                onClick={() => setWarningOpen(true)}
+                className="rounded-full px-1 text-lg font-bold text-amber-600 transition hover:scale-105"
+              >
+                !
+              </button>
+            )}
           </div>
           <div className="rounded-full bg-(--app-bg) px-3 py-2 text-right">
             <p className="text-[11px] uppercase tracking-[0.24em] text-(--app-hint)">
@@ -422,6 +455,11 @@ export default function HabitsPage() {
           )}
         </div>
       </Card>
+
+      <HabitMissesInfoModal
+        open={warningOpen}
+        onClose={() => setWarningOpen(false)}
+      />
 
       {archivedHabits.length > 0 && (
         <div className="space-y-3">

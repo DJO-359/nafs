@@ -12,11 +12,19 @@ export interface Habit {
   description?: string | null;
   icon: string;
   color: string;
-  periodType: "30_DAYS" | "3_MONTHS" | "6_MONTHS" | "1_YEAR" | "CUSTOM";
+  periodType:
+    | "30_DAYS"
+    | "60_DAYS"
+    | "3_MONTHS"
+    | "6_MONTHS"
+    | "1_YEAR"
+    | "CUSTOM";
   customPeriodDays?: number | null;
   startDate: string;
   endDate: string;
   isArchived: boolean;
+  isSuspended: boolean;
+  reactivationUsed: boolean;
   createdAt: string;
   updatedAt: string;
   completedDays: number;
@@ -67,5 +75,15 @@ export async function deleteHabit(id: string): Promise<{ deleted: boolean }> {
 
 export async function toggleHabit(id: string): Promise<Habit> {
   const { data } = await api.post<Habit>(`/habits/${id}/toggle`);
+  return data;
+}
+
+export async function suspendHabit(id: string): Promise<Habit> {
+  const { data } = await api.post<Habit>(`/habits/${id}/suspend`);
+  return data;
+}
+
+export async function reactivateHabit(id: string): Promise<Habit> {
+  const { data } = await api.post<Habit>(`/habits/${id}/reactivate`);
   return data;
 }

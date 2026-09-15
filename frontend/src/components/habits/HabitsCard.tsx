@@ -16,10 +16,15 @@ import {
 } from "../../hooks/useHabits";
 import HabitForm from "./HabitForm";
 import SuspendedHabitModal from "./SuspendedHabitModal";
+import HabitMissesInfoModal from "./HabitMissesInfoModal";
 import ConfirmModal from "../ui/ConfirmModal";
-import Modal from "../ui/Modal";
 import type { CreateHabitDto, Habit } from "../../api/habit.api";
-import { getHabitMissedDayIndexes } from "../../lib/habit-progress";
+import {
+  getHabitDisplayedMissedDayIndexes,
+  getHabitMissedDayCount,
+  getHabitMissLimit,
+  getHabitMissedDayIndexes,
+} from "../../lib/habit-progress";
 import { useHabitSuspensions } from "../../hooks/useHabitSuspension";
 
 export interface HabitsCardHandle {
@@ -39,7 +44,7 @@ interface HabitRowProps {
   habit: Habit;
   isSuspended: boolean;
   toggle: () => void;
-  onClearSuspension: () => void;
+  onClearSuspension: () => Promise<boolean>;
   onDelete: () => void;
 }
 
@@ -182,13 +187,15 @@ function HabitRow({
               </div>
 
               <div className="mt-1 flex h-3 items-center gap-1">
-                {getHabitMissedDayIndexes(habit).map((dayIndex) => (
-                  <span
-                    key={dayIndex}
-                    aria-hidden="true"
-                    className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-500 shadow-sm shadow-red-950/40 motion-safe:animate-[habit-missed-dot_320ms_ease-out]"
-                  />
-                ))}
+                {getHabitDisplayedMissedDayIndexes(habit, isSuspended).map(
+                  (dayIndex) => (
+                    <span
+                      key={dayIndex}
+                      aria-hidden="true"
+                      className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-500 shadow-sm shadow-red-950/40 motion-safe:animate-[habit-missed-dot_320ms_ease-out]"
+                    />
+                  ),
+                )}
               </div>
             </div>
           </div>
@@ -226,12 +233,14 @@ function HabitRow({
         </div>
         <SuspendedHabitModal
           open={modalOpen}
+          missedDays={getHabitMissedDayCount(habit)}
+          missLimit={getHabitMissLimit(habit)}
           onClose={() => {
             setModalOpen(false);
           }}
-          onContinue={() => {
-            setModalOpen(false);
-            onClearSuspension();
+          onContinue={async () => {
+            const reactivated = await onClearSuspension();
+            if (reactivated) setModalOpen(false);
           }}
         />
         <ConfirmModal
@@ -373,7 +382,7 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
                   onClick={() => setWarningOpen(true)}
                   className="shrink-0 rounded-full px-1 text-lg font-bold text-amber-600 transition hover:scale-105"
                 >
-                  ⚠️
+                  !
                 </button>
               )}
             </div>
@@ -383,39 +392,10 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
           </span>
         </div>
 
-        <Modal
+        <HabitMissesInfoModal
           open={warningOpen}
-          title="⚠️ Внимание"
           onClose={() => setWarningOpen(false)}
-          showCancel={false}
-          footer={
-            <button
-              type="button"
-              onClick={() => setWarningOpen(false)}
-              className="rounded-lg border border-(--app-border) px-4 py-2 text-sm font-medium text-(--app-text) transition hover:bg-(--app-bg)"
-            >
-              Понятно
-            </button>
-          }
-        >
-          <div className="space-y-3 text-sm text-(--app-hint)">
-            <p className="font-medium text-(--app-text)">
-              Красные точки показывают пропущенные дни.
-            </p>
-            <div className="space-y-1">
-              <p>🔴 1 точка — 1 пропущенный день</p>
-              <p>🔴 🔴 2 точки — 2 пропущенных дня</p>
-              <p>и т.д.</p>
-            </div>
-            <div className="space-y-1">
-              <p>30 дней → 2 пропуска</p>
-              <p>60 дней → 5 пропусков</p>
-              <p>90 дней → 8 пропусков</p>
-              <p>180 дней → 15 пропусков</p>
-              <p>365 дней → 30 пропусков</p>
-            </div>
-          </div>
-        </Modal>
+        />
 
         <HabitForm
           key={`${editingHabit?.id ?? "new"}-${formResetVersion}`}

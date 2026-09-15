@@ -4,18 +4,22 @@ import Modal from "../ui/Modal";
 interface Props {
   open: boolean;
   onClose: () => void;
-  onContinue: () => void;
+  onContinue: () => Promise<void>;
+  missedDays: number;
+  missLimit: number;
 }
 
 export default function SuspendedHabitModal({
   open,
   onClose,
   onContinue,
+  missedDays,
+  missLimit,
 }: Props) {
   return (
     <Modal
       open={open}
-      title="Привычка приостановлена"
+      title="Лимит пропусков исчерпан"
       onClose={onClose}
       showCancel={false}
       footer={
@@ -34,9 +38,12 @@ export default function SuspendedHabitModal({
       }
     >
       <div className="space-y-3 text-(--app-hint)">
-        <p>Вы превысили допустимое количество пропусков.</p>
+        <p>
+          Вы пропустили {missedDays} дней при допустимом лимите {missLimit}.
+        </p>
         <p className="font-medium text-amber-700">
-          Если вы пропустите ещё один день, привычка будет удалена безвозвратно.
+          Если вы пропустите ещё один день после активации, привычка будет
+          удалена безвозвратно.
         </p>
       </div>
     </Modal>

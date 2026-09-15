@@ -15,6 +15,7 @@ import { HabitCompletion } from './habit-completion.model';
 
 export enum PeriodType {
   THIRTY_DAYS = '30_DAYS',
+  SIXTY_DAYS = '60_DAYS',
   THREE_MONTHS = '3_MONTHS',
   SIX_MONTHS = '6_MONTHS',
   ONE_YEAR = '1_YEAR',
@@ -97,6 +98,20 @@ export class Habit extends Model<Habit> {
     defaultValue: false,
   })
   declare isArchived: boolean;
+
+  @Column({
+    type: DataType.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  })
+  declare isSuspended: boolean;
+
+  @Column({
+    type: DataType.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  })
+  declare reactivationUsed: boolean;
 
   @HasMany(() => HabitCompletion, { onDelete: 'CASCADE', hooks: true })
   declare completions: HabitCompletion[];
