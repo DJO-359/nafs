@@ -18,15 +18,19 @@ export default function AddToHomeScreenCard() {
       const nextStatus = result?.status ?? "missed";
       setStatus(nextStatus);
     };
+    const handleHomeScreenAdded = () => {
+      setStatus("added");
+    };
 
     sync();
 
     webApp.onEvent?.("homeScreenChecked", sync);
-    webApp.onEvent?.("homeScreenAdded", () => {
-      setStatus("added");
-    });
+    webApp.onEvent?.("homeScreenAdded", handleHomeScreenAdded);
 
-    return undefined;
+    return () => {
+      webApp.offEvent?.("homeScreenChecked", sync);
+      webApp.offEvent?.("homeScreenAdded", handleHomeScreenAdded);
+    };
   }, [webApp]);
 
   if (!webApp || typeof webApp.checkHomeScreenStatus !== "function") {
