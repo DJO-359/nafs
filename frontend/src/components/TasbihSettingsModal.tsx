@@ -51,10 +51,14 @@ export default function TasbihSettingsModal({
           <button
             type="button"
             onClick={onToggleVibration}
-            className="rounded-full border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-1.5 text-sm text-[var(--app-text)]"
+            className={`settings-toggle ${settings.vibration ? "is-on" : ""}`}
             aria-label="Виброотклик"
+            aria-pressed={settings.vibration}
           >
-            {settings.vibration ? "Вкл" : "Выкл"}
+            <span className="settings-toggle__label">
+              {settings.vibration ? "Вкл" : "Выкл"}
+            </span>
+            <span className="settings-toggle__thumb" aria-hidden="true" />
           </button>
         </div>
 
