@@ -22,7 +22,7 @@ const TASBIH_QUERY_KEY = ["tasbih"] as const;
 export function useTasbih() {
   return useQuery({
     queryKey: TASBIH_QUERY_KEY,
-    queryFn: getTasbihCounters,
+    queryFn: ({ signal }) => getTasbihCounters(signal),
   });
 }
 

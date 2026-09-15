@@ -7,7 +7,7 @@ import { haptic } from "../lib/telegram";
 import { useInvalidateDayData } from "./useInvalidateDayData";
 
 export function useIntention() {
-  const invalidate = useInvalidateDayData();
+  const invalidate = useInvalidateDayData(["day", "stats", "calendar"]);
 
   const createMutation = useMutation({
     mutationFn: createIntention,

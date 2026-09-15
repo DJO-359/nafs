@@ -50,8 +50,8 @@ export interface CreateHabitDto {
 
 export type UpdateHabitDto = Partial<CreateHabitDto>;
 
-export async function getHabits(): Promise<Habit[]> {
-  const { data } = await api.get<Habit[]>("/habits");
+export async function getHabits(signal?: AbortSignal): Promise<Habit[]> {
+  const { data } = await api.get<Habit[]>("/habits", { signal });
   return data;
 }
 

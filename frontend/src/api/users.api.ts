@@ -19,8 +19,10 @@ export interface CompleteOnboardingRequest {
   eveningReminderEnabled: boolean;
 }
 
-export async function getUserProfile(): Promise<UserProfile> {
-  const { data } = await api.get<UserProfile>("/users/me");
+export async function getUserProfile(
+  signal?: AbortSignal,
+): Promise<UserProfile> {
+  const { data } = await api.get<UserProfile>("/users/me", { signal });
   return data;
 }
 

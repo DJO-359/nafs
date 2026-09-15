@@ -7,7 +7,7 @@ import { haptic } from "../lib/telegram";
 import { useInvalidateDayData } from "./useInvalidateDayData";
 
 export function useUpdateReminder() {
-  const invalidate = useInvalidateDayData();
+  const invalidate = useInvalidateDayData(["day", "stats", "calendar"]);
 
   return useMutation({
     // Передаём весь DTO целиком: раньше сюда проходили только title и

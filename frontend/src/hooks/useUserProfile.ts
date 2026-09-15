@@ -4,7 +4,7 @@ import { getUserProfile } from "../api/users.api";
 export function useUserProfile() {
   return useQuery({
     queryKey: ["user-profile"],
-    queryFn: getUserProfile,
+    queryFn: ({ signal }) => getUserProfile(signal),
     staleTime: Infinity,
     refetchOnWindowFocus: false,
   });

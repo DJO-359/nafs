@@ -80,18 +80,18 @@ function isForeignSession(): boolean {
 }
 
 /** Выполняет вход и сохраняет сессию. */
-export async function login(): Promise<void> {
+export async function login(signal?: AbortSignal): Promise<void> {
   const timezone = getTimezone();
   const initData = getInitData();
 
   try {
     if (initData) {
-      saveSession(await loginTelegram(initData, timezone));
+      saveSession(await loginTelegram(initData, timezone, signal));
       return;
     }
 
     // Вне Telegram остаётся только dev-вход; в production его нет
-    saveSession(await loginDev(timezone));
+    saveSession(await loginDev(timezone, signal));
   } catch (error) {
     const status = (error as { response?: { status?: number } }).response
       ?.status;
@@ -113,7 +113,7 @@ export async function login(): Promise<void> {
  * Гарантирует наличие рабочей сессии.
  * Возвращает управление только когда токен точно пригоден.
  */
-export async function ensureAuth(): Promise<void> {
+export async function ensureAuth(signal?: AbortSignal): Promise<void> {
   if (isForeignSession()) {
     clearSession();
   }
@@ -125,5 +125,5 @@ export async function ensureAuth(): Promise<void> {
   }
 
   clearSession();
-  await login();
+  await login(signal);
 }

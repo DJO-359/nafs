@@ -10,7 +10,7 @@ export interface StatsResponse {
   activeDays: number;
 }
 
-export async function getStats() {
-  const { data } = await api.get<StatsResponse>("/stats");
+export async function getStats(signal?: AbortSignal) {
+  const { data } = await api.get<StatsResponse>("/stats", { signal });
   return data;
 }

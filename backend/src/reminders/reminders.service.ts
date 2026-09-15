@@ -108,7 +108,6 @@ export class RemindersService {
 
   getByDate(userId: string, timezone: string, date: string) {
     const { start, end } = dayRangeInZone(date, timezone);
-    this.logger.log('[RemindersService.getByDate] before Sequelize findAll');
 
     return this.reminderModel
       .findAll({
@@ -118,12 +117,6 @@ export class RemindersService {
           remindAt: { [Op.gte]: start, [Op.lt]: end },
         },
         order: [['remindAt', 'ASC']],
-      })
-      .then((result) => {
-        this.logger.log(
-          '[RemindersService.getByDate] Sequelize findAll succeeded',
-        );
-        return result;
       })
       .catch((error) => {
         this.logger.error(
@@ -146,10 +139,6 @@ export class RemindersService {
       timezone,
     );
 
-    this.logger.log(
-      '[RemindersService.getUpcomingReminders] before Sequelize findAll',
-    );
-
     const reminders = await this.reminderModel
       .findAll({
         where: {
@@ -165,10 +154,6 @@ export class RemindersService {
         );
         throw error;
       });
-
-    this.logger.log(
-      '[RemindersService.getUpcomingReminders] Sequelize findAll succeeded',
-    );
 
     const todayItems: Reminder[] = [];
     const tomorrowItems: Reminder[] = [];
@@ -242,8 +227,6 @@ export class RemindersService {
 
   /** Напоминания за период — для календаря вместо выгрузки всей истории. */
   getBetween(userId: string, from: Date, to: Date) {
-    this.logger.log('[RemindersService.getBetween] before Sequelize findAll');
-
     return this.reminderModel
       .findAll({
         where: {
@@ -251,12 +234,6 @@ export class RemindersService {
           remindAt: { [Op.gte]: from, [Op.lt]: to },
         },
         order: [['remindAt', 'ASC']],
-      })
-      .then((result) => {
-        this.logger.log(
-          '[RemindersService.getBetween] Sequelize findAll succeeded',
-        );
-        return result;
       })
       .catch((error) => {
         this.logger.error(

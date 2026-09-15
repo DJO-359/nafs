@@ -80,17 +80,9 @@ export class IntentionService {
   }
 
   getByDate(userId: string, date: string) {
-    this.logger.log('[IntentionService.getByDate] before Sequelize findOne');
-
     return this.intentionModel
       .findOne({
         where: { userId, date },
-      })
-      .then((result) => {
-        this.logger.log(
-          '[IntentionService.getByDate] Sequelize findOne succeeded',
-        );
-        return result;
       })
       .catch((error) => {
         this.logger.error(
@@ -126,10 +118,6 @@ export class IntentionService {
 
   /** Даты активности до указанного дня включительно — для расчёта серии. */
   async getActiveDates(userId: string, until: string): Promise<string[]> {
-    this.logger.log(
-      '[IntentionService.getActiveDates] before Sequelize findAll',
-    );
-
     try {
       const rows = await this.intentionModel.findAll({
         where: { userId, date: { [Op.lte]: until } },
@@ -137,9 +125,6 @@ export class IntentionService {
         raw: true,
       });
 
-      this.logger.log(
-        '[IntentionService.getActiveDates] Sequelize findAll succeeded',
-      );
       return rows.map((row) => row.date);
     } catch (error) {
       this.logger.error(

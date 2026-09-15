@@ -17,12 +17,12 @@ import { useInvalidateDayData } from "./useInvalidateDayData";
 export function useHabits() {
   return useQuery({
     queryKey: ["habits"],
-    queryFn: getHabits,
+    queryFn: ({ signal }) => getHabits(signal),
   });
 }
 
 export function useCreateHabit() {
-  const invalidate = useInvalidateDayData();
+  const invalidate = useInvalidateDayData(["day", "habits"]);
 
   return useMutation({
     mutationFn: (dto: CreateHabitDto) => createHabit(dto),
@@ -41,7 +41,7 @@ export function useCreateHabit() {
 }
 
 export function useUpdateHabit() {
-  const invalidate = useInvalidateDayData();
+  const invalidate = useInvalidateDayData(["day", "habits"]);
 
   return useMutation({
     mutationFn: ({ id, dto }: { id: string; dto: UpdateHabitDto }) =>
@@ -59,7 +59,7 @@ export function useUpdateHabit() {
 }
 
 export function useDeleteHabit() {
-  const invalidate = useInvalidateDayData();
+  const invalidate = useInvalidateDayData(["day", "habits"]);
 
   return useMutation({
     mutationFn: (id: string) => deleteHabit(id),
@@ -76,7 +76,7 @@ export function useDeleteHabit() {
 }
 
 export function useToggleHabit() {
-  const invalidate = useInvalidateDayData();
+  const invalidate = useInvalidateDayData(["day", "habits"]);
 
   return useMutation({
     mutationFn: (id: string) => toggleHabit(id),

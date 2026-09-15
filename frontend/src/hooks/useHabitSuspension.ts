@@ -33,7 +33,7 @@ function dateFromMissedIndex(habit: Habit, index: number): string {
 }
 
 export function useHabitSuspensions(habits: Habit[]) {
-  const invalidate = useInvalidateDayData();
+  const invalidate = useInvalidateDayData(["day", "habits"]);
   const suspendMutation = useMutation({
     mutationFn: (habitId: string) => suspendHabit(habitId),
     onSuccess: invalidate,

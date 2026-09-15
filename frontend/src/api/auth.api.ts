@@ -24,11 +24,13 @@ export interface LoginResponse {
 export async function loginTelegram(
   initData: string,
   timezone: string,
+  signal?: AbortSignal,
 ): Promise<LoginResponse> {
-  const { data } = await api.post<LoginResponse>("/auth/telegram", {
-    initData,
-    timezone,
-  });
+  const { data } = await api.post<LoginResponse>(
+    "/auth/telegram",
+    { initData, timezone },
+    { signal },
+  );
 
   return data;
 }
@@ -37,8 +39,15 @@ export async function loginTelegram(
  * Вход для локальной разработки вне Telegram.
  * На проде эндпоинт отвечает 404 — подставить чужой аккаунт им нельзя.
  */
-export async function loginDev(timezone: string): Promise<LoginResponse> {
-  const { data } = await api.post<LoginResponse>("/auth/dev", { timezone });
+export async function loginDev(
+  timezone: string,
+  signal?: AbortSignal,
+): Promise<LoginResponse> {
+  const { data } = await api.post<LoginResponse>(
+    "/auth/dev",
+    { timezone },
+    { signal },
+  );
 
   return data;
 }

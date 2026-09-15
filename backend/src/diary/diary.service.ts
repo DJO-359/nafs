@@ -72,8 +72,6 @@ export class DiaryService {
    * Получить записи за конкретную дату.
    */
   async getByDate(userId: string, date: string) {
-    this.logger.log('[DiaryService.getByDate] before Sequelize findAll');
-
     return this.diaryModel
       .findAll({
         where: {
@@ -81,10 +79,6 @@ export class DiaryService {
           date,
         },
         order: [['createdAt', 'DESC']],
-      })
-      .then((result) => {
-        this.logger.log('[DiaryService.getByDate] Sequelize findAll succeeded');
-        return result;
       })
       .catch((error) => {
         this.logger.error(
@@ -175,8 +169,6 @@ export class DiaryService {
    * Даты активности пользователя.
    */
   async getActiveDates(userId: string, until: string): Promise<string[]> {
-    this.logger.log('[DiaryService.getActiveDates] before Sequelize findAll');
-
     try {
       const rows = await this.diaryModel.findAll({
         where: {
@@ -189,9 +181,6 @@ export class DiaryService {
         raw: true,
       });
 
-      this.logger.log(
-        '[DiaryService.getActiveDates] Sequelize findAll succeeded',
-      );
       return (rows as { date: string }[]).map((row) => row.date);
     } catch (error) {
       this.logger.error(

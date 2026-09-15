@@ -27,8 +27,10 @@ export async function updateDiary(
   return data;
 }
 
-export async function getDiaryHistory(): Promise<DiaryEntry[]> {
-  const { data } = await api.get<DiaryEntry[]>("/diary/history");
+export async function getDiaryHistory(
+  signal?: AbortSignal,
+): Promise<DiaryEntry[]> {
+  const { data } = await api.get<DiaryEntry[]>("/diary/history", { signal });
   return data;
 }
 

@@ -7,7 +7,7 @@ import { haptic } from "../lib/telegram";
 import { useInvalidateDayData } from "./useInvalidateDayData";
 
 export function useCompleteReminder() {
-  const invalidate = useInvalidateDayData();
+  const invalidate = useInvalidateDayData(["day", "stats", "calendar"]);
 
   return useMutation({
     mutationFn: completeReminder,

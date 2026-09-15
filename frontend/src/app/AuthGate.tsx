@@ -21,8 +21,8 @@ interface Props {
 export default function AuthGate({ children }: Props) {
   const auth = useQuery({
     queryKey: ["auth-session"],
-    queryFn: async () => {
-      await ensureAuth();
+    queryFn: async ({ signal }) => {
+      await ensureAuth(signal);
       return true;
     },
     retry: false,

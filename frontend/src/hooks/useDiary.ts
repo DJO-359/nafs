@@ -14,7 +14,12 @@ interface DiaryPayload {
 }
 
 export function useDiary() {
-  const invalidate = useInvalidateDayData();
+  const invalidate = useInvalidateDayData([
+    "day",
+    "stats",
+    "calendar",
+    "diary-history",
+  ]);
 
   return useMutation<DiaryEntry, unknown, DiaryPayload>({
     mutationFn: async ({ text, id, color }) => {

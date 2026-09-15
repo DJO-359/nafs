@@ -23,6 +23,23 @@ interface RetriableConfig extends InternalAxiosRequestConfig {
   _retried?: boolean;
 }
 
+let refreshPromise: Promise<void> | null = null;
+
+function refreshSession(): Promise<void> {
+  if (!refreshPromise) {
+    refreshPromise = import("../hooks/useAuth")
+      .then(({ clearSession, login }) => {
+        clearSession();
+        return login();
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+
+  return refreshPromise;
+}
+
 /**
  * Обработка 401: сбрасываем протухший токен, перелогиниваемся один раз
  * и повторяем запрос. Раньше response-интерцептора не было вовсе, поэтому
@@ -47,11 +64,8 @@ api.interceptors.response.use(
 
     config._retried = true;
 
-    const { clearSession, login } = await import("../hooks/useAuth");
-
     try {
-      clearSession();
-      await login();
+      await refreshSession();
     } catch {
       return Promise.reject(error);
     }

@@ -16,14 +16,6 @@ import { TasbihCounter } from '../tasbih/models/tasbih-counter.model';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        // ---- ВРЕМЕННЫЕ ЛОГИ ДЛЯ ОТЛАДКИ ----
-        console.log('DB_SYNC =', configService.get('DB_SYNC'));
-        console.log('DB_SSL =', configService.get('DB_SSL'));
-        console.log('DB_HOST =', configService.get('DB_HOST'));
-        console.log('DB_NAME =', configService.get('DB_NAME'));
-        console.log('DB_USER =', configService.get('DB_USER'));
-        // -------------------------------------
-
         return {
           dialect: 'postgres' as const,
           host: configService.getOrThrow<string>('DB_HOST'),
@@ -56,7 +48,7 @@ import { TasbihCounter } from '../tasbih/models/tasbih-counter.model';
            * sync() умеет молча терять данные при изменении типа колонки.
            */
           synchronize: configService.get<boolean>('DB_SYNC') === true,
-          logging: true, // Принудительно включено для отладки
+          logging: configService.get<boolean>('DB_LOGGING') === true,
         };
       },
     }),

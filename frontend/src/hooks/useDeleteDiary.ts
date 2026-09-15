@@ -7,7 +7,12 @@ import { haptic } from "../lib/telegram";
 import { useInvalidateDayData } from "./useInvalidateDayData";
 
 export function useDeleteDiary() {
-  const invalidate = useInvalidateDayData();
+  const invalidate = useInvalidateDayData([
+    "day",
+    "stats",
+    "calendar",
+    "diary-history",
+  ]);
 
   return useMutation({
     mutationFn: deleteDiary,

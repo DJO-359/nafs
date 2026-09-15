@@ -6,7 +6,7 @@ import { router } from "./router";
 import OnboardingPage from "../pages/OnboardingPage";
 import { useUserProfile } from "../hooks/useUserProfile";
 
-export default function App() {
+function AuthorizedApp() {
   const { data: user, isLoading, isError } = useUserProfile();
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
 
@@ -20,12 +20,20 @@ export default function App() {
   };
 
   return (
-    <AuthGate>
+    <>
       {showOnboarding && !onboardingCompleted ? (
         <OnboardingPage onComplete={handleComplete} />
       ) : (
         <RouterProvider router={router} />
       )}
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthGate>
+      <AuthorizedApp />
     </AuthGate>
   );
 }

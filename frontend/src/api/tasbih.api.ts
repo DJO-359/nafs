@@ -40,8 +40,10 @@ export type UpdateTasbihCounterPayload = Partial<CreateTasbihCounterPayload>;
  * GET /tasbih
  * Получить все счётчики пользователя.
  */
-export async function getTasbihCounters(): Promise<TasbihCounter[]> {
-  const { data } = await api.get<TasbihCounter[]>("/tasbih");
+export async function getTasbihCounters(
+  signal?: AbortSignal,
+): Promise<TasbihCounter[]> {
+  const { data } = await api.get<TasbihCounter[]>("/tasbih", { signal });
   return data;
 }
 

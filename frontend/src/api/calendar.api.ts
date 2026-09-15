@@ -12,12 +12,17 @@ export interface CalendarResponse {
   days: CalendarDay[];
 }
 
-export async function getCalendar(year: number, month: number) {
+export async function getCalendar(
+  year: number,
+  month: number,
+  signal?: AbortSignal,
+) {
   const { data } = await api.get<CalendarResponse>("/calendar", {
     params: {
       year,
       month,
     },
+    signal,
   });
 
   return data;

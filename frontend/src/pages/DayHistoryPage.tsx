@@ -97,12 +97,12 @@ export default function DayHistoryPage() {
   const location = useLocation();
   const state = location.state as CalendarNavigationState | null;
   const query = useDayByDate(date);
-  const diaryHistoryQuery = useDiaryHistory();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isDiaryOpen, setIsDiaryOpen] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const diaryHistoryQuery = useDiaryHistory(isSearchOpen || isCalendarOpen);
   const [searchText, setSearchText] = useState("");
   const [swipedEntryId, setSwipedEntryId] = useState<string | null>(null);
 
