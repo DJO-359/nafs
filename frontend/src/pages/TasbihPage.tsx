@@ -471,7 +471,7 @@ export default function TasbihPage() {
               </svg>
 
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <p className="text-5xl font-bold leading-none text-[var(--app-text)] sm:text-6xl">
+                <p className="text-4xl font-bold leading-none text-[var(--app-text)] sm:text-5xl">
                   {selectedCounter?.count ?? 0}
                 </p>
                 <p className="mt-3 text-xs text-[var(--app-hint)] sm:text-sm">
@@ -496,9 +496,17 @@ export default function TasbihPage() {
                   }}
                   className={`h-2.5 rounded-full transition ${
                     idx === selectedIndex
-                      ? "w-6 bg-emerald-600"
+                      ? "w-6"
                       : "w-2.5 bg-[var(--app-border)]"
                   }`}
+                  style={
+                    idx === selectedIndex
+                      ? {
+                          background: ringColor.gradient,
+                          boxShadow: ringColor.shadow,
+                        }
+                      : undefined
+                  }
                   aria-label={`Переключиться на счётчик ${idx + 1}`}
                 />
               ))}
