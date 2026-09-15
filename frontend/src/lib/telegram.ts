@@ -172,7 +172,7 @@ function applyTheme(webApp: TelegramWebApp): void {
 }
 
 export function haptic(
-  type: "success" | "error" | "warning" | "selection" = "success",
+  type: "success" | "error" | "warning" | "selection" | "tasbih",
 ): void {
   const feedback = getWebApp()?.HapticFeedback;
 
@@ -180,6 +180,11 @@ export function haptic(
 
   if (type === "selection") {
     feedback.selectionChanged();
+    return;
+  }
+
+  if (type === "tasbih") {
+    feedback.impactOccurred("medium");
     return;
   }
 
