@@ -81,22 +81,21 @@ export default function DayPage() {
         const hasActiveReminders = activeRemindersCount > 0;
 
         return (
-          <div>
+          <div className="min-h-screen overflow-x-hidden bg-[#08151d]">
             <header
-              className="mb-6 overflow-hidden rounded-[28px] shadow-xl transition-all duration-300 ease-out"
+              className="relative min-h-[430px] overflow-hidden rounded-b-[32px] shadow-[0_18px_55px_rgba(0,0,0,0.32)] transition-all duration-300 ease-out sm:min-h-[500px] sm:rounded-b-[36px]"
               style={{
-                minHeight: 320,
-                backgroundImage: `linear-gradient(rgba(0,0,0,.20), rgba(0,0,0,.45)), url(${theme.image})`,
+                backgroundImage: `linear-gradient(180deg, rgba(4,16,23,.12) 0%, rgba(4,16,23,.28) 42%, rgba(4,16,23,.74) 100%), url(${theme.image})`,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
                 backgroundRepeat: "no-repeat",
               }}
             >
-              <div className="relative h-full w-full px-5 pb-4 pt-5 sm:px-7 sm:pb-5 sm:pt-6">
+              <div className="relative flex min-h-[430px] w-full flex-col px-4 pb-5 pt-[calc(env(safe-area-inset-top)+1rem)] sm:min-h-[500px] sm:px-7 sm:pb-7">
                 <button
                   type="button"
                   onClick={() => setIsRemindersOpen(true)}
-                  className="absolute right-5 top-5 z-30 flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl bg-white/10 text-white transition duration-200 ease-out hover:scale-105 hover:bg-white/15 active:scale-95 pointer-events-auto"
+                  className="pointer-events-auto absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-30 flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl border border-white/25 bg-black/15 text-white shadow-[0_8px_24px_rgba(0,0,0,0.18)] backdrop-blur-md transition duration-200 ease-out hover:scale-105 hover:bg-white/15 active:scale-95"
                   aria-label="Открыть напоминания"
                 >
                   <span className="text-xl">🔔</span>
@@ -105,8 +104,8 @@ export default function DayPage() {
                   )}
                 </button>
 
-                <div className="relative z-10 flex h-full min-h-[280px] flex-col justify-between text-white">
-                  <div className="mt-2 w-full max-w-[360px] sm:mt-3">
+                <div className="relative z-10 flex min-h-[398px] flex-1 flex-col justify-between text-white sm:min-h-[468px]">
+                  <div className="mt-16 w-full sm:mt-20">
                     <DayPlanCard
                       tasks={dayPlan.tasks}
                       onToggleTask={dayPlan.toggleTask}
@@ -114,7 +113,7 @@ export default function DayPage() {
                     />
                   </div>
 
-                  <p className="pt-2 text-sm text-white/85 sm:text-base">
+                  <p className="pt-6 text-center text-sm font-medium lowercase tracking-wide text-white/85 sm:text-base">
                     {parseDay(day.date).toLocaleDateString("ru-RU", {
                       weekday: "long",
                       day: "numeric",
@@ -204,12 +203,12 @@ export default function DayPage() {
               document.body,
             )}
 
-            <div className="mb-4 grid grid-cols-2 gap-3">
+            <div className="mb-4 grid grid-cols-2 gap-3 px-4 pt-4 sm:px-6">
               <DiaryCard diary={day.diary} />
               <TasbihCard />
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-4 px-4 sm:px-6">
               <HabitsCard />
               <AddToHomeScreenCard />
             </div>

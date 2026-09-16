@@ -33,7 +33,7 @@ export default function DiaryCard({ diary }: Props) {
     <div className="relative">
       <div
         onClick={openDiary}
-        className="relative h-[190px] w-full cursor-pointer overflow-hidden rounded-[24px] border border-white/15 bg-[linear-gradient(160deg,#0F2239_0%,#132C49_50%,#0D2036_100%)] shadow-[0_10px_26px_rgba(0,0,0,0.18)] transition duration-250 ease-in-out hover:-translate-y-0.5 active:scale-[0.98]"
+        className="relative h-[190px] w-full cursor-pointer overflow-hidden rounded-[24px] border border-white/20 bg-white/[0.09] shadow-[0_14px_34px_rgba(0,0,0,0.22)] backdrop-blur-xl transition duration-250 ease-in-out hover:-translate-y-0.5 active:scale-[0.98]"
         role="button"
         tabIndex={0}
         onKeyDown={(event) => {

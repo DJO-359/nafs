@@ -9,11 +9,12 @@ interface Props {
 export default function DayPlanCard({ tasks, onToggleTask, onOpen }: Props) {
   return (
     <section
-      className="mt-3 rounded-[20px] border border-white/25 bg-black/10 px-4 py-3 text-white"
+      className="mt-3 rounded-[24px] border border-white/25 bg-black/20 px-4 py-4 text-white shadow-[0_16px_36px_rgba(0,0,0,0.2)] transition duration-300 hover:bg-black/15"
       style={{
-        backdropFilter: "blur(14px)",
-        WebkitBackdropFilter: "blur(14px)",
-        boxShadow: "inset 0 1px rgba(255,255,255,0.12)",
+        backdropFilter: "blur(16px) saturate(125%)",
+        WebkitBackdropFilter: "blur(16px) saturate(125%)",
+        boxShadow:
+          "inset 0 1px rgba(255,255,255,0.14), 0 16px 36px rgba(0,0,0,0.2)",
       }}
       aria-label="План на сегодня"
     >
@@ -21,13 +22,13 @@ export default function DayPlanCard({ tasks, onToggleTask, onOpen }: Props) {
         <button
           type="button"
           onClick={onOpen}
-          className="flex min-h-11 flex-1 items-center justify-between text-left"
+          className="group flex min-h-11 flex-1 items-center justify-between text-left"
         >
           <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-white/70">
             ПЛАН НА СЕГОДНЯ
           </span>
           <span
-            className="text-2xl font-semibold text-white/90"
+            className="text-2xl font-light text-white/90 transition-transform duration-200 group-active:translate-x-1"
             aria-hidden="true"
           >
             &gt;
