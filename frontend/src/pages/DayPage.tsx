@@ -7,9 +7,12 @@ import DiaryCard from "../components/DiaryCard";
 import TasbihCard from "../components/TasbihCard";
 import HabitsCard from "../components/habits/HabitsCard";
 import AddToHomeScreenCard from "../components/AddToHomeScreenCard";
+import DayPlanCard from "../components/DayPlanCard";
+import DayPlanModal from "../components/DayPlanModal";
 import IntentionModal from "../components/IntentionModal";
 import QueryState from "../components/ui/QueryState";
 import { useDay } from "../hooks/useDay";
+import { useDayPlan } from "../hooks/useDayPlan";
 import { useIntention } from "../hooks/useIntention";
 import { useReminder } from "../hooks/useReminder";
 import type { CreateReminderDto } from "../api/reminder.api";
@@ -54,7 +57,9 @@ export default function DayPage() {
   const { createMutation } = useIntention();
   const reminderMutation = useReminder();
   const [isIntentionOpen, setIsIntentionOpen] = useState(false);
+  const [isDayPlanOpen, setIsDayPlanOpen] = useState(false);
   const [isRemindersOpen, setIsRemindersOpen] = useState(false);
+  const dayPlan = useDayPlan(dayQuery.data?.date ?? "");
   useBodyScrollLock(isRemindersOpen);
 
   // Контейнер и отступы даёт Layout. Раньше здесь был второй min-h-screen
@@ -101,30 +106,41 @@ export default function DayPage() {
                 </button>
 
                 <div className="relative z-10 flex h-full min-h-[280px] flex-col justify-between text-white">
-                  <button
-                    type="button"
-                    onClick={() => setIsIntentionOpen(true)}
-                    className="mt-2 block w-[76%] max-w-[320px] rounded-[20px] border border-white/30 bg-[rgba(255,255,255,0.09)] px-4 py-3 text-left text-white transition duration-250 ease-in-out hover:-translate-y-0.5 hover:bg-[rgba(255,255,255,0.12)] active:scale-[0.98] sm:mt-3"
-                    style={{
-                      backdropFilter: "blur(14px)",
-                      WebkitBackdropFilter: "blur(14px)",
-                      boxShadow: "inset 0 1px rgba(255,255,255,0.12)",
-                    }}
-                  >
-                    <div className="flex items-start justify-between gap-3">
+                  <div className="mt-2 w-full max-w-[360px] sm:mt-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsIntentionOpen(true)}
+                      className="block w-full rounded-[20px] border border-white/30 bg-[rgba(255,255,255,0.09)] px-4 py-3 text-left text-white transition duration-250 ease-in-out hover:-translate-y-0.5 hover:bg-[rgba(255,255,255,0.12)] active:scale-[0.98]"
+                      style={{
+                        backdropFilter: "blur(14px)",
+                        WebkitBackdropFilter: "blur(14px)",
+                        boxShadow: "inset 0 1px rgba(255,255,255,0.12)",
+                      }}
+                    >
                       <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-white/70">
                         НАМЕРЕНИЕ ДНЯ
                       </p>
-                      <span className="text-2xl font-semibold text-white/90">
-                        &gt;
-                      </span>
-                    </div>
-                    <p className="mt-2 text-sm font-medium leading-snug text-white sm:text-base">
-                      {day.intention?.text
-                        ? day.intention.text
-                        : "Выбери намерение"}
-                    </p>
-                  </button>
+                      <p className="mt-2 text-sm font-medium leading-snug text-white sm:text-base">
+                        {day.intention?.text
+                          ? day.intention.text
+                          : "Выбери намерение"}
+                      </p>
+                    </button>
+
+                    <DayPlanCard
+                      tasks={dayPlan.tasks}
+                      dateLabel={parseDay(day.date).toLocaleDateString(
+                        "ru-RU",
+                        {
+                          weekday: "long",
+                          day: "numeric",
+                          month: "long",
+                        },
+                      )}
+                      onToggleTask={dayPlan.toggleTask}
+                      onOpen={() => setIsDayPlanOpen(true)}
+                    />
+                  </div>
 
                   <p className="pt-2 text-sm text-white/85 sm:text-base">
                     {parseDay(day.date).toLocaleDateString("ru-RU", {
@@ -145,6 +161,15 @@ export default function DayPage() {
                 await createMutation.mutateAsync(text);
                 setIsIntentionOpen(false);
               }}
+            />
+
+            <DayPlanModal
+              open={isDayPlanOpen}
+              tasks={dayPlan.tasks}
+              onClose={() => setIsDayPlanOpen(false)}
+              onAddTask={dayPlan.addTask}
+              onRemoveTask={dayPlan.removeTask}
+              onSave={() => setIsDayPlanOpen(false)}
             />
 
             {createPortal(
