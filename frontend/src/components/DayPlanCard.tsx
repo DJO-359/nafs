@@ -2,17 +2,11 @@ import type { DayPlanTask } from "../hooks/useDayPlan";
 
 interface Props {
   tasks: DayPlanTask[];
-  dateLabel: string;
   onToggleTask: (id: string) => void;
   onOpen: () => void;
 }
 
-export default function DayPlanCard({
-  tasks,
-  dateLabel,
-  onToggleTask,
-  onOpen,
-}: Props) {
+export default function DayPlanCard({ tasks, onToggleTask, onOpen }: Props) {
   return (
     <section
       className="mt-3 rounded-[20px] border border-white/25 bg-black/10 px-4 py-3 text-white"
@@ -82,8 +76,6 @@ export default function DayPlanCard({
           </button>
         )}
       </div>
-
-      <p className="mt-2 text-xs capitalize text-white/60">{dateLabel}</p>
     </section>
   );
 }

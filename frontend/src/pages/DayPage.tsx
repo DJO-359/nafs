@@ -107,36 +107,8 @@ export default function DayPage() {
 
                 <div className="relative z-10 flex h-full min-h-[280px] flex-col justify-between text-white">
                   <div className="mt-2 w-full max-w-[360px] sm:mt-3">
-                    <button
-                      type="button"
-                      onClick={() => setIsIntentionOpen(true)}
-                      className="block w-full rounded-[20px] border border-white/30 bg-[rgba(255,255,255,0.09)] px-4 py-3 text-left text-white transition duration-250 ease-in-out hover:-translate-y-0.5 hover:bg-[rgba(255,255,255,0.12)] active:scale-[0.98]"
-                      style={{
-                        backdropFilter: "blur(14px)",
-                        WebkitBackdropFilter: "blur(14px)",
-                        boxShadow: "inset 0 1px rgba(255,255,255,0.12)",
-                      }}
-                    >
-                      <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-white/70">
-                        НАМЕРЕНИЕ ДНЯ
-                      </p>
-                      <p className="mt-2 text-sm font-medium leading-snug text-white sm:text-base">
-                        {day.intention?.text
-                          ? day.intention.text
-                          : "Выбери намерение"}
-                      </p>
-                    </button>
-
                     <DayPlanCard
                       tasks={dayPlan.tasks}
-                      dateLabel={parseDay(day.date).toLocaleDateString(
-                        "ru-RU",
-                        {
-                          weekday: "long",
-                          day: "numeric",
-                          month: "long",
-                        },
-                      )}
                       onToggleTask={dayPlan.toggleTask}
                       onOpen={() => setIsDayPlanOpen(true)}
                     />
