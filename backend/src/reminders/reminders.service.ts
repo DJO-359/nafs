@@ -31,6 +31,7 @@ export class RemindersService {
     return this.reminderModel.create({
       userId,
       title: dto.title,
+      dayPlanTaskId: dto.dayPlanTaskId ?? null,
       description: dto.description ?? null,
       remindAt: new Date(dto.remindAt),
       repeatType: dto.repeatType ?? ReminderRepeatType.NONE,
@@ -84,6 +85,9 @@ export class RemindersService {
     const reminder = await this.findOwned(userId, id);
 
     if (dto.title !== undefined) reminder.title = dto.title;
+    if (dto.dayPlanTaskId !== undefined) {
+      reminder.dayPlanTaskId = dto.dayPlanTaskId ?? null;
+    }
     if (dto.description !== undefined) {
       reminder.description = dto.description ?? null;
     }

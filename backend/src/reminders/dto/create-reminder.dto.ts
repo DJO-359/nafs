@@ -22,6 +22,11 @@ export class CreateReminderDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(200)
+  dayPlanTaskId?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(2000)
   description?: string;
 

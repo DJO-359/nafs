@@ -1,20 +1,25 @@
 import type { DayPlanTask } from "../hooks/useDayPlan";
+import type { Reminder } from "../api/reminder.api";
 
 interface Props {
   tasks: DayPlanTask[];
+  reminders: Reminder[];
   onToggleTask: (id: string) => void;
   onOpen: () => void;
-  hasActiveReminders: boolean;
-  onOpenReminders: () => void;
 }
 
 export default function DayPlanCard({
   tasks,
+  reminders,
   onToggleTask,
   onOpen,
-  hasActiveReminders,
-  onOpenReminders,
 }: Props) {
+  const hasActivePlanReminder = tasks.some((task) =>
+    reminders.some(
+      (reminder) => reminder.dayPlanTaskId === task.id && !reminder.completed,
+    ),
+  );
+
   return (
     <section
       className="mt-3 rounded-[24px] border border-white/25 bg-black/20 px-4 py-4 text-white shadow-[0_16px_36px_rgba(0,0,0,0.2)] transition duration-300 hover:bg-black/15"
@@ -32,17 +37,15 @@ export default function DayPlanCard({
         </span>
 
         <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={onOpenReminders}
-            className="relative flex h-8 w-8 items-center justify-center rounded-lg text-lg text-white/90 transition hover:bg-white/10 active:scale-95"
-            aria-label="Открыть напоминания"
+          <span
+            className="relative flex h-8 w-8 items-center justify-center text-lg text-white/90"
+            aria-hidden="true"
           >
-            <span aria-hidden="true">🔔</span>
-            {hasActiveReminders && (
-              <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-red-500" />
+            🔔
+            {hasActivePlanReminder && (
+              <span className="day-plan-reminder-dot absolute right-0.5 top-0.5 h-1.5 w-1.5 rounded-full bg-red-500" />
             )}
-          </button>
+          </span>
           <button
             type="button"
             onClick={onOpen}
@@ -79,14 +82,34 @@ export default function DayPlanCard({
               >
                 ✓
               </span>
-              <span
-                className={`min-w-0 flex-1 text-sm leading-snug transition-all duration-200 ${
-                  task.completed
-                    ? "text-white/55 line-through"
-                    : "text-white/90"
-                }`}
-              >
-                {task.title}
+              <span className="min-w-0 flex-1 text-sm leading-snug transition-all duration-200">
+                <span
+                  className={
+                    task.completed
+                      ? "text-white/55 line-through"
+                      : "text-white/90"
+                  }
+                >
+                  {task.title}
+                </span>
+                {reminders
+                  .filter(
+                    (reminder) =>
+                      reminder.dayPlanTaskId === task.id && !reminder.completed,
+                  )
+                  .slice(0, 1)
+                  .map((reminder) => (
+                    <span
+                      key={reminder.id}
+                      className="ml-2 whitespace-nowrap text-xs text-white/70"
+                    >
+                      🔔{" "}
+                      {new Date(reminder.remindAt).toLocaleTimeString("ru-RU", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  ))}
               </span>
             </button>
           ))

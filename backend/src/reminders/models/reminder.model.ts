@@ -51,6 +51,12 @@ export class Reminder extends Model<Reminder> {
   declare title: string;
 
   @Column({
+    type: DataType.STRING,
+    allowNull: true,
+  })
+  declare dayPlanTaskId: string | null;
+
+  @Column({
     type: DataType.TEXT,
     allowNull: true,
   })

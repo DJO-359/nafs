@@ -71,14 +71,11 @@ export default function DayPage() {
         const dayPart = getDayPart(currentHour);
         const theme = heroThemes[dayPart];
 
-        const activeRemindersCount =
-          day.reminders.today.filter((reminder) => !reminder.completed).length +
-          day.reminders.tomorrow.filter((reminder) => !reminder.completed)
-            .length +
-          day.reminders.upcoming
-            .flatMap((group) => group.items)
-            .filter((reminder) => !reminder.completed).length;
-        const hasActiveReminders = activeRemindersCount > 0;
+        const dayPlanReminders = [
+          ...day.reminders.today,
+          ...day.reminders.tomorrow,
+          ...day.reminders.upcoming.flatMap((group) => group.items),
+        ];
 
         return (
           <div className="min-h-dvh w-full overflow-x-hidden bg-[#08151d]">
@@ -98,10 +95,9 @@ export default function DayPage() {
                     <div className="mt-16 w-full sm:mt-20">
                       <DayPlanCard
                         tasks={dayPlan.tasks}
+                        reminders={dayPlanReminders}
                         onToggleTask={dayPlan.toggleTask}
                         onOpen={() => setIsDayPlanOpen(true)}
-                        hasActiveReminders={hasActiveReminders}
-                        onOpenReminders={() => setIsRemindersOpen(true)}
                       />
                     </div>
 
@@ -135,6 +131,8 @@ export default function DayPage() {
             <DayPlanModal
               open={isDayPlanOpen}
               tasks={dayPlan.tasks}
+              reminders={dayPlanReminders}
+              dayDate={day.date}
               onClose={() => setIsDayPlanOpen(false)}
               onAddTask={dayPlan.addTask}
               onRemoveTask={dayPlan.removeTask}

@@ -279,6 +279,24 @@ body {
   }
 }
 
+@keyframes day-plan-reminder-dot {
+  0%,
+  100% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+.day-plan-reminder-dot {
+  transform-origin: center;
+  animation: day-plan-reminder-dot 2s ease-in-out infinite;
+}
+
 /* Нижняя навигация не должна залезать под системную полосу жестов */
 .safe-bottom {
   padding-bottom: max(0.75rem, env(safe-area-inset-bottom));

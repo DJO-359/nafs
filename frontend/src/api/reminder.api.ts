@@ -11,6 +11,7 @@ export type ReminderRepeatType =
 export interface Reminder {
   id: string;
   title: string;
+  dayPlanTaskId: string | null;
   description: string | null;
   remindAt: string;
   repeatType: ReminderRepeatType;
@@ -21,6 +22,7 @@ export interface Reminder {
 
 export interface CreateReminderDto {
   title: string;
+  dayPlanTaskId?: string;
   description?: string;
   remindAt: string;
   repeatType?: ReminderRepeatType;
