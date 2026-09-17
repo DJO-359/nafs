@@ -150,7 +150,7 @@ export default function DayPlanModal({
         </button>
       }
       className="!max-w-lg !rounded-[28px] !border !border-white/15 !bg-[#10232d]/90 !text-white !shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-2xl"
-      contentClassName="!p-4 sm:!p-5"
+      contentClassName="!p-4 overscroll-contain touch-pan-y sm:!p-5"
       footerClassName="!border-white/10 !bg-black/10 !p-4"
       footer={
         <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -252,7 +252,7 @@ export default function DayPlanModal({
                         }`}
                       >
                         <span
-                          className={`absolute top-0.5 h-4.5 w-4.5 rounded-full bg-white shadow-sm transition-transform ${
+                          className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
                             reminder || reminderTaskId === task.id
                               ? "translate-x-5"
                               : "translate-x-0.5"
