@@ -5,12 +5,15 @@ import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 
 interface Props {
   open: boolean;
-  title: string;
+  title: ReactNode;
   children: ReactNode;
   onClose: () => void;
   footer?: ReactNode;
   headerAction?: ReactNode;
   showCancel?: boolean;
+  className?: string;
+  contentClassName?: string;
+  footerClassName?: string;
 }
 
 export default function Modal({
@@ -21,6 +24,9 @@ export default function Modal({
   footer,
   headerAction,
   showCancel = true,
+  className = "",
+  contentClassName = "",
+  footerClassName = "",
 }: Props) {
   useBodyScrollLock(open);
 
@@ -32,7 +38,7 @@ export default function Modal({
       onClick={onClose}
     >
       <div
-        className="flex max-h-[90dvh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-[var(--app-surface)] shadow-xl"
+        className={`flex max-h-[90dvh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-[var(--app-surface)] shadow-xl ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* HEADER */}
@@ -42,13 +48,17 @@ export default function Modal({
         </div>
 
         {/* CONTENT */}
-        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
+        <div
+          className={`min-h-0 flex-1 overflow-y-auto p-4 sm:p-5 ${contentClassName}`}
+        >
           {children}
         </div>
 
         {/* FOOTER – отображаем, только если есть footer или showCancel === true */}
         {(footer || showCancel) && (
-          <div className="flex shrink-0 justify-end gap-2 border-t p-3 sm:p-4">
+          <div
+            className={`flex shrink-0 justify-end gap-2 border-t p-3 sm:p-4 ${footerClassName}`}
+          >
             {footer}
 
             {showCancel && (

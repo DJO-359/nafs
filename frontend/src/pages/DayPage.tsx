@@ -135,6 +135,7 @@ export default function DayPage() {
               dayDate={day.date}
               onClose={() => setIsDayPlanOpen(false)}
               onAddTask={dayPlan.addTask}
+              onToggleTask={dayPlan.toggleTask}
               onRemoveTask={dayPlan.removeTask}
               onSave={() => setIsDayPlanOpen(false)}
             />
