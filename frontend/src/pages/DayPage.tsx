@@ -81,35 +81,46 @@ export default function DayPage() {
         const hasActiveReminders = activeRemindersCount > 0;
 
         return (
-          <div
-            className="min-h-dvh w-full overflow-x-hidden bg-cover bg-center bg-no-repeat"
-            style={{
-              backgroundImage: `linear-gradient(rgba(4,16,23,.38), rgba(4,16,23,.38)), url(${theme.image})`,
-            }}
-          >
-            <header className="relative min-h-[430px] overflow-hidden sm:min-h-[500px]">
-              <div className="relative flex min-h-[430px] w-full flex-col px-4 pb-5 pt-[calc(env(safe-area-inset-top)+1rem)] sm:min-h-[500px] sm:px-7 sm:pb-7">
-                <div className="relative z-10 flex min-h-[398px] flex-1 flex-col justify-between text-white sm:min-h-[468px]">
-                  <div className="mt-16 w-full sm:mt-20">
-                    <DayPlanCard
-                      tasks={dayPlan.tasks}
-                      onToggleTask={dayPlan.toggleTask}
-                      onOpen={() => setIsDayPlanOpen(true)}
-                      hasActiveReminders={hasActiveReminders}
-                      onOpenReminders={() => setIsRemindersOpen(true)}
-                    />
-                  </div>
+          <div className="min-h-dvh w-full overflow-x-hidden bg-[#08151d]">
+            <div className="relative isolate">
+              <div
+                className="pointer-events-none absolute inset-x-0 top-0 z-0 bg-cover bg-center bg-no-repeat"
+                style={{
+                  height: "calc(100% - 96px)",
+                  backgroundImage: `linear-gradient(rgba(4,16,23,.38), rgba(4,16,23,.38)), url(${theme.image})`,
+                }}
+                aria-hidden="true"
+              />
 
-                  <p className="pt-6 text-center text-sm font-medium lowercase tracking-wide text-white/85 sm:text-base">
-                    {parseDay(day.date).toLocaleDateString("ru-RU", {
-                      weekday: "long",
-                      day: "numeric",
-                      month: "long",
-                    })}
-                  </p>
+              <header className="relative z-10 min-h-[430px] overflow-hidden sm:min-h-[500px]">
+                <div className="relative flex min-h-[430px] w-full flex-col px-4 pb-5 pt-[calc(env(safe-area-inset-top)+1rem)] sm:min-h-[500px] sm:px-7 sm:pb-7">
+                  <div className="relative z-10 flex min-h-[398px] flex-1 flex-col justify-between text-white sm:min-h-[468px]">
+                    <div className="mt-16 w-full sm:mt-20">
+                      <DayPlanCard
+                        tasks={dayPlan.tasks}
+                        onToggleTask={dayPlan.toggleTask}
+                        onOpen={() => setIsDayPlanOpen(true)}
+                        hasActiveReminders={hasActiveReminders}
+                        onOpenReminders={() => setIsRemindersOpen(true)}
+                      />
+                    </div>
+
+                    <p className="pt-6 text-center text-sm font-medium lowercase tracking-wide text-white/85 sm:text-base">
+                      {parseDay(day.date).toLocaleDateString("ru-RU", {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                      })}
+                    </p>
+                  </div>
                 </div>
+              </header>
+
+              <div className="relative z-10 -mt-8 mb-4 grid grid-cols-2 gap-3 px-4 pt-4 sm:px-6">
+                <DiaryCard diary={day.diary} />
+                <TasbihCard />
               </div>
-            </header>
+            </div>
 
             <IntentionModal
               open={isIntentionOpen}
@@ -189,11 +200,6 @@ export default function DayPage() {
               </AnimatePresence>,
               document.body,
             )}
-
-            <div className="relative z-10 -mt-8 mb-4 grid grid-cols-2 gap-3 px-4 pt-4 sm:px-6">
-              <DiaryCard diary={day.diary} />
-              <TasbihCard />
-            </div>
 
             <div className="space-y-4 px-4 sm:px-6">
               <HabitsCard />
