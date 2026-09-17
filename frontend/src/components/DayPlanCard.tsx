@@ -4,9 +4,17 @@ interface Props {
   tasks: DayPlanTask[];
   onToggleTask: (id: string) => void;
   onOpen: () => void;
+  hasActiveReminders: boolean;
+  onOpenReminders: () => void;
 }
 
-export default function DayPlanCard({ tasks, onToggleTask, onOpen }: Props) {
+export default function DayPlanCard({
+  tasks,
+  onToggleTask,
+  onOpen,
+  hasActiveReminders,
+  onOpenReminders,
+}: Props) {
   return (
     <section
       className="mt-3 rounded-[24px] border border-white/25 bg-black/20 px-4 py-4 text-white shadow-[0_16px_36px_rgba(0,0,0,0.2)] transition duration-300 hover:bg-black/15"
@@ -18,22 +26,37 @@ export default function DayPlanCard({ tasks, onToggleTask, onOpen }: Props) {
       }}
       aria-label="План на сегодня"
     >
-      <div className="flex items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={onOpen}
-          className="group flex min-h-11 flex-1 items-center justify-between text-left"
-        >
-          <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-white/70">
-            ПЛАН НА СЕГОДНЯ
-          </span>
-          <span
-            className="text-2xl font-light text-white/90 transition-transform duration-200 group-active:translate-x-1"
-            aria-hidden="true"
+      <div className="flex min-h-11 items-center justify-between gap-3">
+        <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-white/70">
+          ПЛАН НА СЕГОДНЯ
+        </span>
+
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onOpenReminders}
+            className="relative flex h-8 w-8 items-center justify-center rounded-lg text-lg text-white/90 transition hover:bg-white/10 active:scale-95"
+            aria-label="Открыть напоминания"
           >
-            &gt;
-          </span>
-        </button>
+            <span aria-hidden="true">🔔</span>
+            {hasActiveReminders && (
+              <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-red-500" />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={onOpen}
+            className="group flex h-8 w-8 items-center justify-center text-left"
+            aria-label="Открыть план на сегодня"
+          >
+            <span
+              className="text-2xl font-light text-white/90 transition-transform duration-200 group-active:translate-x-1"
+              aria-hidden="true"
+            >
+              &gt;
+            </span>
+          </button>
+        </div>
       </div>
 
       <div className="mt-1 space-y-1">

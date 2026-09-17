@@ -81,35 +81,22 @@ export default function DayPage() {
         const hasActiveReminders = activeRemindersCount > 0;
 
         return (
-          <div className="min-h-screen overflow-x-hidden bg-[#08151d]">
-            <header
-              className="relative min-h-[430px] overflow-hidden rounded-b-[32px] shadow-[0_18px_55px_rgba(0,0,0,0.32)] transition-all duration-300 ease-out sm:min-h-[500px] sm:rounded-b-[36px]"
-              style={{
-                backgroundImage: `linear-gradient(180deg, rgba(4,16,23,.12) 0%, rgba(4,16,23,.28) 42%, rgba(4,16,23,.74) 100%), url(${theme.image})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
-              }}
-            >
+          <div
+            className="min-h-dvh w-full overflow-x-hidden bg-cover bg-center bg-no-repeat"
+            style={{
+              backgroundImage: `linear-gradient(rgba(4,16,23,.38), rgba(4,16,23,.38)), url(${theme.image})`,
+            }}
+          >
+            <header className="relative min-h-[430px] overflow-hidden sm:min-h-[500px]">
               <div className="relative flex min-h-[430px] w-full flex-col px-4 pb-5 pt-[calc(env(safe-area-inset-top)+1rem)] sm:min-h-[500px] sm:px-7 sm:pb-7">
-                <button
-                  type="button"
-                  onClick={() => setIsRemindersOpen(true)}
-                  className="pointer-events-auto absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-30 flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl border border-white/25 bg-black/15 text-white shadow-[0_8px_24px_rgba(0,0,0,0.18)] backdrop-blur-md transition duration-200 ease-out hover:scale-105 hover:bg-white/15 active:scale-95"
-                  aria-label="Открыть напоминания"
-                >
-                  <span className="text-xl">🔔</span>
-                  {hasActiveReminders && (
-                    <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-red-500" />
-                  )}
-                </button>
-
                 <div className="relative z-10 flex min-h-[398px] flex-1 flex-col justify-between text-white sm:min-h-[468px]">
                   <div className="mt-16 w-full sm:mt-20">
                     <DayPlanCard
                       tasks={dayPlan.tasks}
                       onToggleTask={dayPlan.toggleTask}
                       onOpen={() => setIsDayPlanOpen(true)}
+                      hasActiveReminders={hasActiveReminders}
+                      onOpenReminders={() => setIsRemindersOpen(true)}
                     />
                   </div>
 
@@ -203,7 +190,7 @@ export default function DayPage() {
               document.body,
             )}
 
-            <div className="mb-4 grid grid-cols-2 gap-3 px-4 pt-4 sm:px-6">
+            <div className="relative z-10 -mt-8 mb-4 grid grid-cols-2 gap-3 px-4 pt-4 sm:px-6">
               <DiaryCard diary={day.diary} />
               <TasbihCard />
             </div>

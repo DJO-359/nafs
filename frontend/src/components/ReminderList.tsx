@@ -61,7 +61,7 @@ export default function ReminderList({ reminders, onCreate }: Props) {
     !reminders.upcoming.length;
 
   return (
-    <Card>
+    <Card className="!rounded-[24px] !border !border-white/25 !bg-black/20 !text-white !shadow-[0_16px_36px_rgba(0,0,0,0.2)] backdrop-blur-xl">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">⏰ Напоминания</h2>
 

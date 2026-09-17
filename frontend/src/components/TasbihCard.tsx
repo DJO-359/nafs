@@ -26,7 +26,7 @@ export default function TasbihCard() {
     <div className="relative">
       <div
         onClick={handleCardClick}
-        className="relative h-[190px] w-full cursor-pointer overflow-hidden rounded-[24px] border border-white/20 bg-white/[0.09] shadow-[0_14px_34px_rgba(0,0,0,0.22)] backdrop-blur-xl transition duration-250 ease-in-out hover:-translate-y-0.5 active:scale-[0.98]"
+        className="relative h-[190px] w-full cursor-pointer overflow-hidden rounded-[24px] border border-white/25 bg-black/20 text-white shadow-[0_16px_36px_rgba(0,0,0,0.2)] backdrop-blur-xl transition duration-250 ease-in-out hover:-translate-y-0.5 active:scale-[0.98]"
         role="button"
         tabIndex={0}
         onKeyDown={(event) => {

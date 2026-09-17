@@ -349,7 +349,7 @@ const HabitsCard = forwardRef<HabitsCardHandle, object>(
     }));
 
     return (
-      <Card>
+      <Card className="!rounded-[24px] !border !border-white/25 !bg-black/20 !text-white !shadow-[0_16px_36px_rgba(0,0,0,0.2)] backdrop-blur-xl">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             {open && !editingHabit ? (
