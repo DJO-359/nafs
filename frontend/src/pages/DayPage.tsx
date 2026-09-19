@@ -130,7 +130,7 @@ export default function DayPage() {
 
             <DayPlanModal
               open={isDayPlanOpen}
-              tasks={dayPlan.tasks}
+              tasks={dayPlan.allTasksForModal}
               reminders={dayPlanReminders}
               dayDate={day.date}
               onClose={() => setIsDayPlanOpen(false)}

@@ -38,6 +38,26 @@ function formatTime(remindAt: string) {
   });
 }
 
+function formatSchedule(task: DayPlanTask, today: string) {
+  if (task.scheduleType === "today") return "Сегодня";
+  if (task.scheduleType === "tomorrow") {
+    const tomorrow = addDays(today, 1);
+    return `Завтра · ${new Date(`${tomorrow}T12:00:00`).toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" })}`;
+  }
+  if (task.scheduleType === "date" && task.scheduledDate) {
+    return new Date(`${task.scheduledDate}T12:00:00`).toLocaleDateString(
+      "ru-RU",
+      { day: "2-digit", month: "2-digit", year: "numeric" },
+    );
+  }
+  if (task.scheduleType === "weekly") {
+    return WEEK_DAYS.filter(([value]) => task.repeatDays?.includes(value))
+      .map(([, label]) => label)
+      .join(" · ");
+  }
+  return "Сегодня";
+}
+
 function getDateTimeParts(remindAt: string) {
   const date = new Date(remindAt);
   return {
@@ -359,6 +379,9 @@ export default function DayPlanModal({
                           className={`min-w-0 flex-1 text-sm ${task.completed ? "text-white/40 line-through" : "text-white/90"}`}
                         >
                           {task.title}
+                          <span className="mt-1 block text-xs text-white/50">
+                            {formatSchedule(task, getLocalDateString())}
+                          </span>
                         </span>
                         {reminder && (
                           <button

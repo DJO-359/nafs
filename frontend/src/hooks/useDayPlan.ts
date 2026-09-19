@@ -154,6 +154,11 @@ export function useDayPlan(date: string) {
     [allTasks, date],
   );
 
+  const allTasksForModal = useMemo(
+    () => allTasks.map((task) => taskForDate(task, date)),
+    [allTasks, date],
+  );
+
   function toggleTask(id: string) {
     setAllTasks((current) =>
       current.map((task) => {
@@ -196,5 +201,12 @@ export function useDayPlan(date: string) {
     );
   }
 
-  return { tasks, addTask, removeTask, toggleTask, updateTaskSchedule };
+  return {
+    tasks,
+    allTasksForModal,
+    addTask,
+    removeTask,
+    toggleTask,
+    updateTaskSchedule,
+  };
 }
