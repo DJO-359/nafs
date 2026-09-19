@@ -38,7 +38,7 @@ export default function Modal({
       onClick={onClose}
     >
       <div
-        className={`flex h-fit min-h-0 max-h-[calc(100dvh-1.5rem)] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-[var(--app-surface)] shadow-xl ${className}`}
+        className={`flex max-h-[calc(100dvh-1.5rem)] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-[var(--app-surface)] shadow-xl ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* HEADER */}
@@ -49,7 +49,7 @@ export default function Modal({
 
         {/* CONTENT */}
         <div
-          className={`min-h-0 flex-1 basis-0 overflow-y-auto overscroll-contain touch-pan-y p-4 sm:p-5 ${contentClassName}`}
+          className={`min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y p-4 sm:p-5 ${contentClassName}`}
           style={{ WebkitOverflowScrolling: "touch" }}
         >
           {children}
