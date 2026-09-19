@@ -2,7 +2,11 @@ import { createPortal } from "react-dom";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { Reminder } from "../api/reminder.api";
-import type { DayPlanTask } from "../hooks/useDayPlan";
+import type {
+  DayPlanSchedule,
+  DayPlanScheduleType,
+  DayPlanTask,
+} from "../hooks/useDayPlan";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import { useReminder } from "../hooks/useReminder";
 import { useUpdateReminder } from "../hooks/useUpdateReminder";
@@ -23,6 +27,7 @@ interface Props {
   onAddTask: (title: string) => void;
   onToggleTask: (id: string) => void;
   onRemoveTask: (id: string) => void;
+  onUpdateTaskSchedule: (id: string, schedule: DayPlanSchedule) => void;
   onSave: () => void;
 }
 
@@ -45,6 +50,50 @@ const DAY_PLAN_SCROLL_LOCK_OPTIONS = {
   allowTouchMoveWithin: ".day-plan-modal-content",
 };
 
+const WEEK_DAYS = [
+  [1, "Пн"],
+  [2, "Вт"],
+  [3, "Ср"],
+  [4, "Чт"],
+  [5, "Пт"],
+  [6, "Сб"],
+  [0, "Вс"],
+] as const;
+
+function addDays(date: string, days: number) {
+  const value = new Date(`${date}T12:00:00`);
+  value.setDate(value.getDate() + days);
+  return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
+}
+
+function getScheduleDate(
+  scheduleType: DayPlanScheduleType,
+  dayDate: string,
+  customDate: string,
+) {
+  if (scheduleType === "tomorrow") return addDays(getLocalDateString(), 1);
+  if (scheduleType === "date") return customDate;
+  return dayDate || getLocalDateString();
+}
+
+function getNextWeeklyDate(repeatDays: number[], time: string) {
+  const now = new Date();
+  const today = getLocalDateString(now);
+  const minimumToday = new Date(now.getTime() + 60_000);
+
+  for (let offset = 0; offset <= 7; offset += 1) {
+    const date = addDays(today, offset);
+    const weekday = new Date(`${date}T12:00:00`).getDay();
+    if (!repeatDays.includes(weekday)) continue;
+    if (offset === 0 && new Date(`${date}T${time}:00`) < minimumToday) {
+      continue;
+    }
+    return date;
+  }
+
+  return null;
+}
+
 export default function DayPlanModal({
   open,
   tasks,
@@ -54,12 +103,20 @@ export default function DayPlanModal({
   onAddTask,
   onToggleTask,
   onRemoveTask,
+  onUpdateTaskSchedule,
   onSave,
 }: Props) {
   const [newTask, setNewTask] = useState("");
   const [isAddingTask, setIsAddingTask] = useState(false);
-  const [dateMode, setDateMode] = useState("today");
-  const [customDate, setCustomDate] = useState(dayDate);
+  const [dateMode, setDateMode] = useState<DayPlanScheduleType>(
+    tasks[0]?.scheduleType ?? "today",
+  );
+  const [customDate, setCustomDate] = useState(
+    tasks[0]?.scheduledDate ?? dayDate,
+  );
+  const [repeatDays, setRepeatDays] = useState<number[]>(
+    tasks[0]?.repeatDays ?? [],
+  );
   const [reminderTaskId, setReminderTaskId] = useState<string | null>(null);
   const [reminderDate, setReminderDate] = useState(dayDate);
   const [reminderTime, setReminderTime] = useState("");
@@ -91,10 +148,26 @@ export default function DayPlanModal({
       return;
     }
 
-    const validationError = validateReminderDateTime(
-      reminderDate,
-      reminderTime,
-    );
+    if (dateMode === "weekly" && repeatDays.length === 0) {
+      toast.error("Выберите хотя бы один день недели");
+      return;
+    }
+
+    const schedule: DayPlanSchedule = {
+      scheduleType: dateMode,
+      scheduledDate: dateMode === "date" ? customDate : undefined,
+      repeatDays: dateMode === "weekly" ? repeatDays : undefined,
+    };
+    const targetDate =
+      dateMode === "weekly"
+        ? getNextWeeklyDate(repeatDays, reminderTime)
+        : getScheduleDate(dateMode, dayDate, customDate);
+    if (!targetDate) {
+      toast.error("Выберите хотя бы один день недели");
+      return;
+    }
+
+    const validationError = validateReminderDateTime(targetDate, reminderTime);
     if (validationError) {
       toast.error(validationError);
       return;
@@ -102,7 +175,11 @@ export default function DayPlanModal({
 
     const dto = {
       dayPlanTaskId: reminderTaskId,
-      remindAt: toReminderIso(reminderDate, reminderTime),
+      remindAt: toReminderIso(targetDate, reminderTime),
+      repeatType:
+        dateMode === "weekly" ? ("weekly" as const) : ("none" as const),
+      repeatInterval: 1,
+      repeatDays: schedule.repeatDays,
     };
 
     if (selectedReminder) {
@@ -143,6 +220,63 @@ export default function DayPlanModal({
     onAddTask(newTask);
     setNewTask("");
     setIsAddingTask(false);
+  }
+
+  async function savePlan() {
+    if (dateMode === "weekly" && repeatDays.length === 0) {
+      toast.error("Выберите хотя бы один день недели");
+      return;
+    }
+
+    const schedule: DayPlanSchedule = {
+      scheduleType: dateMode,
+      scheduledDate: dateMode === "date" ? customDate : undefined,
+      repeatDays: dateMode === "weekly" ? repeatDays : undefined,
+    };
+    const updates = [];
+
+    for (const task of tasks) {
+      const reminder = reminders.find(
+        (item) => item.dayPlanTaskId === task.id && !item.completed,
+      );
+      if (!reminder) continue;
+
+      const time = getDateTimeParts(reminder.remindAt).time;
+      const targetDate =
+        dateMode === "weekly"
+          ? getNextWeeklyDate(repeatDays, time)
+          : getScheduleDate(dateMode, dayDate, customDate);
+      if (!targetDate) {
+        toast.error("Выберите хотя бы один день недели");
+        return;
+      }
+
+      const validationError = validateReminderDateTime(targetDate, time);
+      if (validationError) {
+        toast.error(validationError);
+        return;
+      }
+
+      updates.push({
+        reminder,
+        remindAt: toReminderIso(targetDate, time),
+      });
+    }
+
+    for (const task of tasks) onUpdateTaskSchedule(task.id, schedule);
+    for (const { reminder, remindAt } of updates) {
+      await updateReminderMutation.mutateAsync({
+        id: reminder.id,
+        dto: {
+          dayPlanTaskId: reminder.dayPlanTaskId ?? undefined,
+          remindAt,
+          repeatType: dateMode === "weekly" ? "weekly" : "none",
+          repeatInterval: 1,
+          repeatDays: dateMode === "weekly" ? repeatDays : undefined,
+        },
+      });
+    }
+    onSave();
   }
 
   if (!open) return null;
@@ -363,8 +497,8 @@ export default function DayPlanModal({
                 {[
                   ["today", "Только сегодня"],
                   ["tomorrow", "Завтра"],
-                  ["custom", "Выбрать дату"],
-                  ["repeat", "Повторять"],
+                  ["date", "Выбрать дату"],
+                  ["weekly", "Повторять"],
                 ].map(([value, label]) => (
                   <label
                     key={value}
@@ -375,7 +509,9 @@ export default function DayPlanModal({
                       name="day-plan-date"
                       value={value}
                       checked={dateMode === value}
-                      onChange={(event) => setDateMode(event.target.value)}
+                      onChange={(event) =>
+                        setDateMode(event.target.value as DayPlanScheduleType)
+                      }
                       className="h-4 w-4 accent-emerald-400"
                     />
                     <span>{label}</span>
@@ -384,13 +520,37 @@ export default function DayPlanModal({
                     )}
                   </label>
                 ))}
-                {dateMode === "custom" && (
+                {dateMode === "date" && (
                   <input
                     type="date"
                     value={customDate}
                     onChange={(event) => setCustomDate(event.target.value)}
                     className="mx-3 mb-2 w-[calc(100%-1.5rem)] rounded-xl border border-white/10 bg-black/20 p-2.5 text-sm text-white"
                   />
+                )}
+                {dateMode === "weekly" && (
+                  <div className="flex flex-wrap gap-2 px-2 pb-2 pt-1">
+                    {WEEK_DAYS.map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() =>
+                          setRepeatDays((current) =>
+                            current.includes(value)
+                              ? current.filter((day) => day !== value)
+                              : [...current, value],
+                          )
+                        }
+                        className={`rounded-xl border px-3 py-2 text-xs transition ${
+                          repeatDays.includes(value)
+                            ? "border-emerald-300 bg-emerald-500 text-white"
+                            : "border-white/10 bg-white/5 text-white/60"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
             </section>
@@ -407,7 +567,7 @@ export default function DayPlanModal({
           </button>
           <button
             type="button"
-            onClick={onSave}
+            onClick={() => void savePlan()}
             className="min-h-11 rounded-xl bg-emerald-500 px-6 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(16,185,129,0.2)] transition hover:bg-emerald-400 active:scale-[0.98]"
           >
             Сохранить
