@@ -216,20 +216,6 @@ export default function DayPlanModal({
     setReminderTaskId(null);
   }
 
-  async function toggleReminder(task: DayPlanTask, reminder?: Reminder) {
-    if (reminder) {
-      await removeReminder(reminder);
-      return;
-    }
-
-    if (reminderTaskId === task.id) {
-      setReminderTaskId(null);
-      return;
-    }
-
-    openReminderEditor(task);
-  }
-
   function handleAddTask() {
     if (!newTask.trim()) return;
     onAddTask(newTask);
@@ -508,7 +494,6 @@ export default function DayPlanModal({
                     (item) => item.dayPlanTaskId === task.id,
                   );
                   const isSelected = reminderTaskId === task.id;
-                  const isEnabled = Boolean(reminder) || isSelected;
 
                   return (
                     <div
@@ -519,34 +504,15 @@ export default function DayPlanModal({
                         <span className="min-w-0 flex-1 text-sm text-white/80">
                           {task.title}
                         </span>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={isEnabled}
-                          aria-label={`${isEnabled ? "Выключить" : "Включить"} напоминание для задачи «${task.title}»`}
-                          onClick={() => void toggleReminder(task, reminder)}
-                          className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
-                            isEnabled
-                              ? "border-emerald-300/60 bg-emerald-500"
-                              : "border-white/15 bg-black/30"
-                          }`}
-                        >
-                          <span
-                            className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
-                              isEnabled ? "translate-x-5" : "translate-x-0.5"
-                            }`}
-                          />
-                        </button>
+                        {reminder && !isSelected && (
+                          <span className="text-xs text-white/65">
+                            🔔 {formatTime(reminder.remindAt)}
+                          </span>
+                        )}
                       </div>
 
-                      <div
-                        className={`grid transition-[grid-template-rows,opacity,margin-top] duration-200 ease-out ${
-                          isSelected
-                            ? "mt-3 grid-rows-[1fr] opacity-100"
-                            : "mt-0 grid-rows-[0fr] opacity-0"
-                        }`}
-                      >
-                        <div className="min-h-0 overflow-hidden">
+                      {isSelected ? (
+                        <div className="mt-3">
                           <label className="block text-xs text-white/50">
                             Время
                             <input
@@ -574,7 +540,32 @@ export default function DayPlanModal({
                             Сохранить
                           </button>
                         </div>
-                      </div>
+                      ) : reminder ? (
+                        <div className="mt-3 flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openReminderEditor(task, reminder)}
+                            className="rounded-xl border border-white/10 px-3 py-2 text-xs text-white/65 transition hover:bg-white/10 hover:text-white"
+                          >
+                            Изменить время
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void removeReminder(reminder)}
+                            className="rounded-xl border border-red-300/20 px-3 py-2 text-xs text-red-200/75 transition hover:bg-red-400/10 hover:text-red-100"
+                          >
+                            Удалить напоминание
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => openReminderEditor(task)}
+                          className="mt-3 rounded-xl border border-dashed border-white/15 px-3 py-2 text-xs text-white/60 transition hover:border-emerald-300/50 hover:text-emerald-300"
+                        >
+                          + Добавить напоминание
+                        </button>
+                      )}
                     </div>
                   );
                 })}
