@@ -87,12 +87,11 @@ function addDays(date: string, days: number) {
 
 function getScheduleDate(
   scheduleType: DayPlanScheduleType,
-  dayDate: string,
   customDate: string,
 ) {
   if (scheduleType === "tomorrow") return addDays(getLocalDateString(), 1);
   if (scheduleType === "date") return customDate;
-  return dayDate || getLocalDateString();
+  return getLocalDateString();
 }
 
 function getNextWeeklyDate(repeatDays: number[], time: string) {
@@ -177,7 +176,7 @@ export default function DayPlanModal({
     const targetDate =
       dateMode === "weekly"
         ? getNextWeeklyDate(repeatDays, reminderTime)
-        : getScheduleDate(dateMode, dayDate, customDate);
+        : getScheduleDate(dateMode, customDate);
     if (!targetDate) {
       toast.error("Выберите хотя бы один день недели");
       return;
@@ -261,7 +260,7 @@ export default function DayPlanModal({
       const targetDate =
         dateMode === "weekly"
           ? getNextWeeklyDate(repeatDays, time)
-          : getScheduleDate(dateMode, dayDate, customDate);
+          : getScheduleDate(dateMode, customDate);
       if (!targetDate) {
         toast.error("Выберите хотя бы один день недели");
         return;
@@ -446,11 +445,7 @@ export default function DayPlanModal({
                                         repeatDays,
                                         reminderTime || "00:00",
                                       ) ?? getLocalDateString())
-                                    : getScheduleDate(
-                                        dateMode,
-                                        dayDate,
-                                        customDate,
-                                      ),
+                                    : getScheduleDate(dateMode, customDate),
                                 )}
                                 onChange={(event) =>
                                   setReminderTime(event.target.value)
@@ -540,6 +535,7 @@ export default function DayPlanModal({
                   <input
                     type="date"
                     value={customDate}
+                    min={getLocalDateString()}
                     onChange={(event) => setCustomDate(event.target.value)}
                     className="mx-3 mb-2 w-[calc(100%-1.5rem)] rounded-xl border border-white/10 bg-black/20 p-2.5 text-sm text-white"
                   />
