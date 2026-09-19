@@ -396,73 +396,6 @@ export default function DayPlanModal({
                           ×
                         </button>
                       </div>
-
-                      <div className="mt-3 border-t border-white/10 pt-3">
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-xs font-medium text-white/55">
-                            Напоминание
-                          </span>
-                          <button
-                            type="button"
-                            role="switch"
-                            aria-checked={
-                              Boolean(reminder) || reminderTaskId === task.id
-                            }
-                            aria-label={`${Boolean(reminder) || reminderTaskId === task.id ? "Выключить" : "Включить"} напоминание для задачи «${task.title}»`}
-                            onClick={() => void toggleReminder(task, reminder)}
-                            className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
-                              reminder || reminderTaskId === task.id
-                                ? "border-emerald-300/60 bg-emerald-500"
-                                : "border-white/15 bg-black/30"
-                            }`}
-                          >
-                            <span
-                              className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
-                                reminder || reminderTaskId === task.id
-                                  ? "translate-x-5"
-                                  : "translate-x-0.5"
-                              }`}
-                            />
-                          </button>
-                        </div>
-
-                        <div
-                          className={`grid transition-[grid-template-rows,opacity,margin-top] duration-200 ease-out ${
-                            reminderTaskId === task.id
-                              ? "mt-3 grid-rows-[1fr] opacity-100"
-                              : "mt-0 grid-rows-[0fr] opacity-0"
-                          }`}
-                        >
-                          <div className="min-h-0 overflow-hidden">
-                            <label className="block text-xs text-white/50">
-                              Время
-                              <input
-                                type="time"
-                                value={reminderTime}
-                                min={getMinimumReminderTime(
-                                  dateMode === "weekly"
-                                    ? (getNextWeeklyDate(
-                                        repeatDays,
-                                        reminderTime || "00:00",
-                                      ) ?? getLocalDateString())
-                                    : getScheduleDate(dateMode, customDate),
-                                )}
-                                onChange={(event) =>
-                                  setReminderTime(event.target.value)
-                                }
-                                className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-2.5 text-sm text-white outline-none focus:border-emerald-400"
-                              />
-                            </label>
-                            <button
-                              type="button"
-                              onClick={() => void saveReminder()}
-                              className="mt-3 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-400"
-                            >
-                              Сохранить
-                            </button>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   );
                 })}
@@ -564,6 +497,87 @@ export default function DayPlanModal({
                     ))}
                   </div>
                 )}
+              </div>
+            </section>
+
+            <section className="space-y-3">
+              <h3 className="text-sm font-semibold text-white">Напоминание</h3>
+              <div className="space-y-2">
+                {tasks.map((task) => {
+                  const reminder = reminders.find(
+                    (item) => item.dayPlanTaskId === task.id,
+                  );
+                  const isSelected = reminderTaskId === task.id;
+                  const isEnabled = Boolean(reminder) || isSelected;
+
+                  return (
+                    <div
+                      key={task.id}
+                      className="rounded-2xl border border-white/10 bg-white/[0.04] p-3"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="min-w-0 flex-1 text-sm text-white/80">
+                          {task.title}
+                        </span>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={isEnabled}
+                          aria-label={`${isEnabled ? "Выключить" : "Включить"} напоминание для задачи «${task.title}»`}
+                          onClick={() => void toggleReminder(task, reminder)}
+                          className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
+                            isEnabled
+                              ? "border-emerald-300/60 bg-emerald-500"
+                              : "border-white/15 bg-black/30"
+                          }`}
+                        >
+                          <span
+                            className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
+                              isEnabled ? "translate-x-5" : "translate-x-0.5"
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      <div
+                        className={`grid transition-[grid-template-rows,opacity,margin-top] duration-200 ease-out ${
+                          isSelected
+                            ? "mt-3 grid-rows-[1fr] opacity-100"
+                            : "mt-0 grid-rows-[0fr] opacity-0"
+                        }`}
+                      >
+                        <div className="min-h-0 overflow-hidden">
+                          <label className="block text-xs text-white/50">
+                            Время
+                            <input
+                              type="time"
+                              value={reminderTime}
+                              min={getMinimumReminderTime(
+                                dateMode === "weekly"
+                                  ? (getNextWeeklyDate(
+                                      repeatDays,
+                                      reminderTime || "00:00",
+                                    ) ?? getLocalDateString())
+                                  : getScheduleDate(dateMode, customDate),
+                              )}
+                              onChange={(event) =>
+                                setReminderTime(event.target.value)
+                              }
+                              className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-2.5 text-sm text-white outline-none focus:border-emerald-400"
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => void saveReminder()}
+                            className="mt-3 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-400"
+                          >
+                            Сохранить
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </section>
           </div>
