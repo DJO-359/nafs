@@ -8,6 +8,12 @@ import type {
   Reminder,
   ReminderRepeatType,
 } from "../../api/reminder.api";
+import {
+  getLocalDateString,
+  getMinimumReminderTime,
+  toReminderIso,
+  validateReminderDateTime,
+} from "../../lib/reminder-date";
 
 const WEEK_DAYS = [
   { label: "Пн", value: 1 },
@@ -28,11 +34,7 @@ interface Props {
 }
 
 function todayString(): string {
-  const now = new Date();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-
-  return `${now.getFullYear()}-${month}-${day}`;
+  return getLocalDateString();
 }
 
 /** Начальные значения полей: либо из напоминания, либо пустые. */
@@ -100,6 +102,12 @@ export default function ReminderForm({
       return;
     }
 
+    const validationError = validateReminderDateTime(date, time);
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+
     if (repeatType === "weekly" && repeatDays.length === 0) {
       toast.error("Выберите хотя бы один день недели");
       return;
@@ -112,7 +120,7 @@ export default function ReminderForm({
 
     onSubmit({
       title: title.trim(),
-      remindAt: new Date(`${date}T${time}:00`).toISOString(),
+      remindAt: toReminderIso(date, time),
       repeatType,
       repeatInterval: repeatType === "interval" ? repeatInterval : undefined,
       repeatDays: repeatType === "weekly" ? repeatDays : undefined,
@@ -145,6 +153,7 @@ export default function ReminderForm({
       <input
         type="date"
         value={date}
+        min={getLocalDateString()}
         onChange={(event) => setDate(event.target.value)}
         className="mb-2 w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] p-2"
       />
@@ -152,6 +161,7 @@ export default function ReminderForm({
       <input
         type="time"
         value={time}
+        min={getMinimumReminderTime(date)}
         onChange={(event) => setTime(event.target.value)}
         className="mb-3 w-full rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] p-2"
       />

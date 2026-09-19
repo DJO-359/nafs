@@ -7,6 +7,12 @@ import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import { useReminder } from "../hooks/useReminder";
 import { useUpdateReminder } from "../hooks/useUpdateReminder";
 import { useDeleteReminder } from "../hooks/useDeleteReminder";
+import {
+  getLocalDateString,
+  getMinimumReminderTime,
+  toReminderIso,
+  validateReminderDateTime,
+} from "../lib/reminder-date";
 
 interface Props {
   open: boolean;
@@ -85,9 +91,18 @@ export default function DayPlanModal({
       return;
     }
 
+    const validationError = validateReminderDateTime(
+      reminderDate,
+      reminderTime,
+    );
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+
     const dto = {
       dayPlanTaskId: reminderTaskId,
-      remindAt: new Date(`${reminderDate}T${reminderTime}:00`).toISOString(),
+      remindAt: toReminderIso(reminderDate, reminderTime),
     };
 
     if (selectedReminder) {
@@ -273,6 +288,7 @@ export default function DayPlanModal({
                                 <input
                                   type="date"
                                   value={reminderDate}
+                                  min={getLocalDateString()}
                                   onChange={(event) =>
                                     setReminderDate(event.target.value)
                                   }
@@ -284,6 +300,7 @@ export default function DayPlanModal({
                                 <input
                                   type="time"
                                   value={reminderTime}
+                                  min={getMinimumReminderTime(reminderDate)}
                                   onChange={(event) =>
                                     setReminderTime(event.target.value)
                                   }

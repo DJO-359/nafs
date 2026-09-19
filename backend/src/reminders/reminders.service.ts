@@ -14,6 +14,7 @@ import {
   todayInZone,
   zonedTimeToUtc,
 } from '../common/utils/timezone.util';
+import { assertReminderAtInFuture } from './reminder-date.util';
 
 /** Час, на который переносится напоминание кнопкой «Завтра». */
 const TOMORROW_SNOOZE_HOUR = 9;
@@ -28,12 +29,14 @@ export class RemindersService {
   ) {}
 
   create(userId: string, dto: CreateReminderDto) {
+    const remindAt = assertReminderAtInFuture(dto.remindAt);
+
     return this.reminderModel.create({
       userId,
       title: dto.title,
       dayPlanTaskId: dto.dayPlanTaskId ?? null,
       description: dto.description ?? null,
-      remindAt: new Date(dto.remindAt),
+      remindAt,
       repeatType: dto.repeatType ?? ReminderRepeatType.NONE,
       repeatInterval: dto.repeatInterval ?? 1,
       repeatDays: dto.repeatDays ?? null,
@@ -92,7 +95,7 @@ export class RemindersService {
       reminder.description = dto.description ?? null;
     }
     if (dto.remindAt !== undefined) {
-      reminder.remindAt = new Date(dto.remindAt);
+      reminder.remindAt = assertReminderAtInFuture(dto.remindAt);
       // Изменили время — старый перенос больше не актуален
       reminder.snoozedUntil = null;
       reminder.completed = false;
