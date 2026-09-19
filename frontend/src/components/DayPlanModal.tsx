@@ -134,7 +134,7 @@ export default function DayPlanModal({
       onClick={onClose}
     >
       <div
-        className="flex h-fit max-h-[calc(100dvh-1.5rem)] w-full max-w-lg flex-col overflow-hidden rounded-[28px] border border-white/15 bg-[#10232d]/90 text-white shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-2xl"
+        className="flex h-[min(90vh,calc(100dvh-1.5rem))] max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-[28px] border border-white/15 bg-[#10232d]/90 text-white shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-2xl"
         onClick={(event) => event.stopPropagation()}
       >
         <header className="shrink-0 border-b border-white/10 p-4 sm:p-5">
@@ -163,7 +163,7 @@ export default function DayPlanModal({
         </header>
 
         <div
-          className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 touch-pan-y sm:p-5"
+          className="min-h-0 flex-[1_1_auto] overflow-x-hidden overflow-y-auto overscroll-y-contain p-4 touch-pan-y sm:p-5"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
           <div className="space-y-6">
