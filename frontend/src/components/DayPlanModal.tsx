@@ -61,7 +61,6 @@ function formatSchedule(task: DayPlanTask, today: string) {
 function getDateTimeParts(remindAt: string) {
   const date = new Date(remindAt);
   return {
-    date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`,
     time: `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`,
   };
 }
@@ -138,7 +137,6 @@ export default function DayPlanModal({
     tasks[0]?.repeatDays ?? [],
   );
   const [reminderTaskId, setReminderTaskId] = useState<string | null>(null);
-  const [reminderDate, setReminderDate] = useState(dayDate);
   const [reminderTime, setReminderTime] = useState("");
   const createReminderMutation = useReminder();
   const updateReminderMutation = useUpdateReminder();
@@ -154,17 +152,15 @@ export default function DayPlanModal({
     setReminderTaskId(task.id);
     if (reminder) {
       const parts = getDateTimeParts(reminder.remindAt);
-      setReminderDate(parts.date);
       setReminderTime(parts.time);
     } else {
-      setReminderDate(dayDate);
       setReminderTime("");
     }
   }
 
   async function saveReminder() {
-    if (!reminderTaskId || !reminderDate || !reminderTime) {
-      toast.error("Выберите дату и время");
+    if (!reminderTaskId || !reminderTime) {
+      toast.error("Выберите время");
       return;
     }
 
@@ -439,32 +435,29 @@ export default function DayPlanModal({
                           }`}
                         >
                           <div className="min-h-0 overflow-hidden">
-                            <div className="grid grid-cols-2 gap-2">
-                              <label className="text-xs text-white/50">
-                                Дата
-                                <input
-                                  type="date"
-                                  value={reminderDate}
-                                  min={getLocalDateString()}
-                                  onChange={(event) =>
-                                    setReminderDate(event.target.value)
-                                  }
-                                  className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-2.5 text-sm text-white outline-none focus:border-emerald-400"
-                                />
-                              </label>
-                              <label className="text-xs text-white/50">
-                                Время
-                                <input
-                                  type="time"
-                                  value={reminderTime}
-                                  min={getMinimumReminderTime(reminderDate)}
-                                  onChange={(event) =>
-                                    setReminderTime(event.target.value)
-                                  }
-                                  className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-2.5 text-sm text-white outline-none focus:border-emerald-400"
-                                />
-                              </label>
-                            </div>
+                            <label className="block text-xs text-white/50">
+                              Время
+                              <input
+                                type="time"
+                                value={reminderTime}
+                                min={getMinimumReminderTime(
+                                  dateMode === "weekly"
+                                    ? (getNextWeeklyDate(
+                                        repeatDays,
+                                        reminderTime || "00:00",
+                                      ) ?? getLocalDateString())
+                                    : getScheduleDate(
+                                        dateMode,
+                                        dayDate,
+                                        customDate,
+                                      ),
+                                )}
+                                onChange={(event) =>
+                                  setReminderTime(event.target.value)
+                                }
+                                className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-2.5 text-sm text-white outline-none focus:border-emerald-400"
+                              />
+                            </label>
                             <button
                               type="button"
                               onClick={() => void saveReminder()}
