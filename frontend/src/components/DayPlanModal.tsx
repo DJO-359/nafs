@@ -35,6 +35,10 @@ function getDateTimeParts(remindAt: string) {
   };
 }
 
+const DAY_PLAN_SCROLL_LOCK_OPTIONS = {
+  allowTouchMoveWithin: ".day-plan-modal-content",
+};
+
 export default function DayPlanModal({
   open,
   tasks,
@@ -57,7 +61,7 @@ export default function DayPlanModal({
   const updateReminderMutation = useUpdateReminder();
   const deleteReminderMutation = useDeleteReminder();
 
-  useBodyScrollLock(open);
+  useBodyScrollLock(open, DAY_PLAN_SCROLL_LOCK_OPTIONS);
 
   const selectedReminder = reminderTaskId
     ? (reminders.find((item) => item.dayPlanTaskId === reminderTaskId) ?? null)
@@ -163,7 +167,7 @@ export default function DayPlanModal({
         </header>
 
         <div
-          className="min-h-0 flex-[1_1_auto] overflow-x-hidden overflow-y-auto overscroll-y-contain p-4 touch-pan-y sm:p-5"
+          className="day-plan-modal-content min-h-0 flex-[1_1_auto] overflow-x-hidden overflow-y-auto overscroll-y-contain p-4 touch-pan-y sm:p-5"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
           <div className="space-y-6">
